@@ -141,8 +141,8 @@ const sheetName = workbook.SheetNames[0];
 const sheet = workbook.Sheets[sheetName];
 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-if (!rows || rows.length === 0) {
-throw new Error('Таблица пуста.');
+if (!rows || !Array.isArray(rows) || rows.length === 0) {
+throw new Error('Таблица пуста или имеет неверный формат.');
 }
 
 parseExcelRows(rows);
@@ -154,28 +154,30 @@ document.getElementById('file-status').innerHTML = `<span class="text-red-600">�
 }
 
 function parseExcelRows(rows) {
+try {
 allProducts = [];
 
 let headerRowIdx = 0;
 for (let i = 0; i < Math.min(rows.length, 15); i++) {
-if (!rows[i]) continue;
-const rowStr = rows[i].map(c => (c !== null && c !== undefined ? String(c) : '').toLowerCase()).join(' ');
-if (rowStr.includes('artikul') || rowStr.includes('brand') || rowStr.includes('wholesale') || rowStr.includes('գին')) {
+const row = rows[i];
+if (!row || !Array.isArray(row)) continue;
+const rowStr = row.map(c => (c !== null && c !== undefined ? String(c) : '').toLowerCase()).join(' ');
+if (rowStr.includes('artikul') || rowStr.includes('brand') || rowStr.includes('wholesale') || rowStr.includes('գին') || rowStr.includes('артикул')) {
 headerRowIdx = i;
 break;
 }
 }
 
-const headerRow = rows[headerRowIdx] || [];
+const headerRow = (rows[headerRowIdx] && Array.isArray(rows[headerRowIdx])) ? rows[headerRowIdx] : [];
 const headers = headerRow.map(c => (c !== null && c !== undefined ? String(c).trim() : ''));
 
 const colMap = {
-art: headers.findIndex(h => h.toLowerCase().includes('art') || h.toLowerCase().includes('артикул')),
-brand: headers.findIndex(h => h.toLowerCase().includes('brand') || h.toLowerCase().includes('бренд')),
-category: headers.findIndex(h => h.toLowerCase().includes('group') || h.toLowerCase().includes('kategoriya') || h.toLowerCase().includes('группа') || h.toLowerCase().includes('категория')),
-name: headers.findIndex(h => h.toLowerCase().includes('name') || h.toLowerCase().includes('naimenovanie') || h.toLowerCase().includes('товара') || h.toLowerCase().includes('наименование')),
-retail: headers.findIndex(h => h.includes('Զեղչված') || h.toLowerCase().includes('roznich') || h.toLowerCase().includes('discount')),
-wholesale: headers.findIndex(h => h.includes('Wholesale') || h.toLowerCase().includes('wholesale') || h.toLowerCase().includes('опт')),
+art: headers.findIndex(h => h && (h.toLowerCase().includes('art') || h.toLowerCase().includes('артикул'))),
+brand: headers.findIndex(h => h && (h.toLowerCase().includes('brand') || h.toLowerCase().includes('бренд'))),
+category: headers.findIndex(h => h && (h.toLowerCase().includes('group') || h.toLowerCase().includes('kategoriya') || h.toLowerCase().includes('группа') || h.toLowerCase().includes('категория'))),
+name: headers.findIndex(h => h && (h.toLowerCase().includes('name') || h.toLowerCase().includes('naimenovanie') || h.toLowerCase().includes('товара') || h.toLowerCase().includes('наименование'))),
+retail: headers.findIndex(h => h && (h.includes('Զեղչված') || h.toLowerCase().includes('roznich') || h.toLowerCase().includes('discount'))),
+wholesale: headers.findIndex(h => h && (h.includes('Wholesale') || h.toLowerCase().includes('wholesale') || h.toLowerCase().includes('опт'))),
 s003: headers.findIndex(h => h === '003'),
 s023: headers.findIndex(h => h === '023'),
 s026: headers.findIndex(h => h === '026'),
@@ -191,7 +193,7 @@ if (colMap.wholesale === -1) colMap.wholesale = 5;
 
 for (let i = headerRowIdx + 1; i < rows.length; i++) {
 const r = rows[i];
-if (!r || r.length === 0) continue;
+if (!r || !Array.isArray(r) || r.length === 0) continue;
 
 const artVal = r[colMap.art];
 const art = (artVal !== null && artVal !== undefined) ? String(artVal).trim() : '';
@@ -256,6 +258,10 @@ stockStatus: stockStatus
 
 initFilters();
 renderTable();
+} catch (err) {
+console.error(err);
+document.getElementById('file-status').innerHTML = `<span class="text-red-600">Ошибка парсинга: ${err.message}</span>`;
+}
 }
 
 function initFilters() {
