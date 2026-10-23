@@ -112,6 +112,7 @@ class="w-full sm:w-72 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 <th class="py-3 px-4 font-semibold">Անվանում</th>
 <th class="py-3 px-4 font-semibold">Առկայություն</th>
 <th class="py-3 px-4 font-semibold text-right">Մանրածախ</th>
+<th class="py-3 px-4 font-semibold text-center">Ռենտաբելություն</th>
 <th class="py-3 px-4 font-semibold text-right">Մեծածախ (Wholesale)</th>
 <th class="py-3 px-4 font-semibold text-center">Գործողություն</th>
 </tr>
@@ -195,8 +196,8 @@ class="w-full sm:w-72 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 let allProducts = [];
 let cart = {};
 let authorizedClient = '';
-let userSheetType = ''; // 'KP' ili 'Dealers'
-let passMap = {}; // Справочник паролей: { password: { client: name, sheet: sheetName } }
+let userSheetType = '';
+let passMap = {};
 
 const brandDomains = {
 'wanbo': 'wanbo.cn',
@@ -304,7 +305,7 @@ const errorMsg = document.getElementById('errorMsg');
 
 if (passMap[inputVal]) {
 authorizedClient = passMap[inputVal].client;
-userSheetType = passMap[inputVal].sheet; // 'KP' ili 'Dealers'
+userSheetType = passMap[inputVal].sheet;
 
 document.getElementById('authScreen').classList.add('hidden');
 document.getElementById('mainApp').classList.remove('hidden');
@@ -397,7 +398,6 @@ const artVal = r[colMap.art];
 const art = (artVal !== null && artVal !== undefined) ? String(artVal).trim() : '';
 if (!art || art.toLowerCase().includes('artikul') || art.toLowerCase().includes('արտիկուլ') || art.length > 30) continue;
 
-// Определение цены в зависимости от вкладки (KP или Dealers)
 let wholesale = 0;
 const defaultWholesale = Number(r[colMap.wholesale]) || 0;
 
@@ -413,7 +413,6 @@ if (userSheetType === 'KP') {
     wholesale = defaultWholesale;
   }
 } else {
-  // Dealers
   wholesale = defaultWholesale;
 }
 
@@ -440,6 +439,12 @@ break;
 }
 
 const retail = Number(r[colMap.retail]) || 0;
+
+// Расчет рентабельности в процентах
+let marginPercent = 0;
+if (retail > 0 && wholesale > 0) {
+  marginPercent = ((retail - wholesale) / wholesale) * 100;
+}
 
 const q003 = colMap.s003 !== -1 ? (Number(r[colMap.s003]) || 0) : 0;
 const q023 = colMap.s023 !== -1 ? (Number(r[colMap.s023]) || 0) : 0;
@@ -489,6 +494,7 @@ category: category,
 name: name,
 retail: retail,
 wholesale: wholesale,
+marginPercent: marginPercent,
 stockStatus: stockStatus
 });
 }
@@ -561,6 +567,16 @@ const stockBadgeClass = isUtochnit
 ? 'bg-amber-100 text-amber-800 border border-amber-300'
 : 'bg-emerald-100 text-emerald-800 border border-emerald-300';
 
+// Оформление рентабельности
+let marginBadge = '—';
+if (p.marginPercent > 0) {
+  let colorClass = 'bg-blue-100 text-blue-800 border-blue-200';
+  if (p.marginPercent >= 20) colorClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+  else if (p.marginPercent < 5) colorClass = 'bg-amber-100 text-amber-800 border-amber-200';
+  
+  marginBadge = `<span class="px-2 py-1 rounded-lg text-xs font-bold border ${colorClass}">+${p.marginPercent.toFixed(1)}%</span>`;
+}
+
 const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
 const cartItem = cart[p.articul];
 
@@ -597,6 +613,7 @@ ${getProductImageHtml(p.articul, p.name)}
 </td>
 <td class="py-3 px-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${stockBadgeClass}">${p.stockStatus}</span></td>
 <td class="py-3 px-4 text-right text-gray-600">${p.retail ? p.retail.toLocaleString('ru-RU') + ' ֏' : '—'}</td>
+<td class="py-3 px-4 text-center">${marginBadge}</td>
 <td class="py-3 px-4 text-right font-semibold text-gray-900">${p.wholesale ? p.wholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</td>
 <td class="py-3 px-4 text-center">${actionCellHtml}</td>
 `;
