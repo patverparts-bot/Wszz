@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Оптовый прайс-лист и каталог</title>
+<title>Optoviy prayc-list i katalog</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- SheetJS (XLSX reader) -->
@@ -21,13 +21,13 @@ body { font-family: 'Inter', sans-serif; }
 <div class="flex items-center gap-3">
 <div class="bg-blue-600 text-white p-2.5 rounded-xl font-bold text-xl shadow-md">📊</div>
 <div>
-<h1 class="text-xl font-bold text-gray-900">Оптовый каталог товаров</h1>
-<p class="text-xs text-gray-500" id="file-status">Загрузка данных из файла...</p>
+<h1 class="text-xl font-bold text-gray-900">Optoviy katalog tovarov</h1>
+<p class="text-xs text-gray-500" id="file-status">Zagruzka dannyh iz fayla...</p>
 </div>
 </div>
 <!-- Search & Controls -->
 <div class="flex items-center gap-3 w-full sm:w-auto">
-<input type="text" id="searchInput" placeholder="Поиск товара или артикула..."
+<input type="text" id="searchInput" placeholder="Poisk tovara ili artikula..."
 class="w-full sm:w-72 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
 </div>
 </div>
@@ -47,7 +47,7 @@ class="w-full sm:w-72 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 <!-- Category Filter Dropdown -->
 <div class="w-full md:w-72">
 <select id="categoryFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-<option value="">Все категории (Группы)</option>
+<option value="">Vse kategorii (Gruppy)</option>
 </select>
 </div>
 </div>
@@ -58,11 +58,11 @@ class="w-full sm:w-72 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 <table class="w-full text-left border-collapse" id="catalogTable">
 <thead>
 <tr class="bg-gray-100 text-gray-700 text-xs uppercase tracking-wider border-b border-gray-200">
-<th class="py-3 px-4 font-semibold">Артикул</th>
-<th class="py-3 px-4 font-semibold">Бренд</th>
-<th class="py-3 px-4 font-semibold">Категория (Группа)</th>
-<th class="py-3 px-4 font-semibold">Наименование товара</th>
-<th class="py-3 px-4 font-semibold text-right">Опт. цена (AMD)</th>
+<th class="py-3 px-4 font-semibold">Artikul</th>
+<th class="py-3 px-4 font-semibold">Brend</th>
+<th class="py-3 px-4 font-semibold">Kategoriya (Gruppa)</th>
+<th class="py-3 px-4 font-semibold">Naimenovanie tovara</th>
+<th class="py-3 px-4 font-semibold text-right">Opt. cena (AMD)</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-gray-200 text-sm" id="tableBody">
@@ -71,14 +71,14 @@ class="w-full sm:w-72 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 </table>
 </div>
 <div id="noResults" class="hidden p-8 text-center text-gray-500">
-Товары не найдены по вашему запросу.
+Tovary ne naydeny po vashemu zaprosu.
 </div>
 </div>
 </main>
 
 <!-- Footer -->
 <footer class="bg-white border-t border-gray-200 py-4 text-center text-xs text-gray-500">
-Автоматическое обновление из Excel файла • 2026
+Avtomaticheskoe obnovlenie iz Excel fayla • 2026
 </footer>
 
 <!-- Script to Fetch Excel and Render App -->
@@ -88,7 +88,6 @@ let selectedBrand = '';
 let selectedCategory = '';
 let searchQuery = '';
 
-// Словарь логотипов брендов (или иконок)
 const brandLogos = {
 'Sony': '📺', 'Samsung': '📱', 'LG': '🖥️', 'Xiaomi': '🔌',
 'JBL': '🎵', 'Marshall': '🎸', 'Haier': '❄️', 'Apple': '🍎',
@@ -97,46 +96,38 @@ const brandLogos = {
 
 async function loadExcelFile() {
 try {
-// Путь к файлу прайс-листа
 const response = await fetch('PriceList_3.xlsx');
-if (!response.ok) throw new Error('Не удалось загрузить файл PriceList_3.xlsx');
+if (!response.ok) throw new Error('Ne udalos zagruzit fayl PriceList_3.xlsx');
 
 const arrayBuffer = await response.arrayBuffer();
 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
 
-// Берем первый лист
 const sheetName = workbook.SheetNames[0];
 const sheet = workbook.Sheets[sheetName];
 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-// Парсим данные под структуру прайс-листа
-// Найдем строку заголовков или начнем обход со строчки, где есть артикулы
 parseData(rows);
-document.getElementById('file-status').innerText = Файл успешно загружен (${allProducts.length} товаров)`;
+document.getElementById('file-status').innerText = `Fayl uspeshno zagruzhen (${allProducts.length} tovarov)`;
 } catch (error) {
 console.error(error);
-document.getElementById('file-status').innerText = 'Ошибка загрузки файла. Проверьте наличие PriceList_3.xlsx';
+document.getElementById('file-status').innerText = 'Oshibka zagruzki fayla. Proverte nalichie PriceList_3.xlsx';
 }
 }
 
 function parseData(rows) {
 allProducts = [];
-// Пропускаем шапку, ищем строки с товарами (строки где есть артикул, бренд и цена)
-let headerPassed = false;
 
 for (let i = 0; i < rows.length; i++) {
 const r = rows[i];
 if (!r || r.length === 0) continue;
 
-// Пример определения строки товара (артикул в первой колонке или похожий формат)
 let art = r[0] ? String(r[0]).trim() : '';
-let brand = r[11] || r[1] || ''; // В зависимости от структуры столбцов бренда
+let brand = r[11] || r[1] || '';
 let group = r[15] || r[2] || '';
 let name = r[4] || r[3] || '';
 let price = r[16] || r[4] || 0;
 
-// Простая эвристика для фильтрации реальных строк товаров
-if (art && art !== 'Артикул' && !art.includes('ПОКУПАТЕЛЕ')) {
+if (art && art !== 'Artikul' && !art.includes('POKUPATELE')) {
 allProducts.push({
 articul: art,
 brand: String(brand).trim(),
@@ -147,15 +138,13 @@ price: Number(price) || 0
 }
 }
 
-// Если формат отличается, сделаем гибкий парсинг по колонкам Wholesale_Price_List_Real_Data или PriceList
 if (allProducts.length === 0) {
-// Запасной универсальный обход таблицы
 rows.forEach(r => {
 if (r.length >= 5 && r[0] && typeof r[0] === 'string' && r[0].length < 15 && !isNaN(Number(r[4]))) {
 allProducts.push({
 articul: r[0],
-brand: r[1] || 'Другие',
-category: r[2] || 'Общая',
+brand: r[1] || 'Drugie',
+category: r[2] || 'Obschaya',
 name: r[3] || '',
 price: Number(r[4]) || 0
 });
@@ -168,7 +157,6 @@ renderTable();
 }
 
 function initFilters() {
-// Бренды
 const brands = ['All', ...new Set(allProducts.map(p => p.brand).filter(b => b && b !== 'undefined'))];
 const brandContainer = document.getElementById('brandTabsContainer');
 brandContainer.innerHTML = '';
@@ -176,14 +164,15 @@ brandContainer.innerHTML = '';
 brands.forEach(b => {
 const btn = document.createElement('button');
 const isAll = b === 'All';
-const label = isAll ? 'Все бренды' : b;
+const label = isAll ? 'Vse brendy' : b;
 const icon = brandLogos[b] || '🏷️';
 
-btn.className = px-3.5 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5 border${
+btn.className = `px-3.5 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5 border ${
 (selectedBrand === b || (isAll && !selectedBrand))
 ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
 : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-}; btn.innerHTML =<span>{label}</span>`;
+}`;
+btn.innerHTML = `<span>${icon}</span> <span>${label}</span>`;
 btn.onclick = () => {
 selectedBrand = isAll ? '' : b;
 initFilters();
@@ -192,10 +181,9 @@ renderTable();
 brandContainer.appendChild(btn);
 });
 
-// Категории (Группы)
 const categories = [...new Set(allProducts.map(p => p.category).filter(c => c && c !== 'undefined'))].sort();
 const categorySelect = document.getElementById('categoryFilter');
-categorySelect.innerHTML = '<option value="">Все категории (Группы)</option>';
+categorySelect.innerHTML = '<option value="">Vse kategorii (Gruppy)</option>';
 categories.forEach(cat => {
 const opt = document.createElement('option');
 opt.value = cat;
@@ -235,24 +223,30 @@ filtered.forEach(p => {
 const tr = document.createElement('tr');
 tr.className = 'hover:bg-blue-50/40 transition-colors border-b border-gray-100';
 
-const searchUrl = https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
+const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
 
-tr.innerHTML = &lt;td class="py-3 px-4 font-mono font-medium text-blue-600"&gt; &lt;a href="${searchUrl}" target="_blank" class="hover:underline flex items-center gap-1" title="Найти на сайте Zigzag.am">
-{brandLogos[p.brand] || '🏷️'}</span> {p.category || '—'}</td>
-<td class="py-3 px-4 text-gray-800 font-medium">{p.price ? p.price.toLocaleString('ru-RU') + ' ֏' : '—'}
+tr.innerHTML = `
+<td class="py-3 px-4 font-mono font-medium text-blue-600">
+<a href="${searchUrl}" target="_blank" class="hover:underline flex items-center gap-1" title="Nayti na sayte Zigzag.am">
+${p.articul}
+</a>
+</td>
+<td class="py-3 px-4">${brandLogos[p.brand] || '🏷️'} ${p.brand || '—'}</td>
+<td class="py-3 px-4 text-gray-600">${p.category || '—'}</td>
+<td class="py-3 px-4 text-gray-900 font-medium">${p.name || '—'}</td>
+<td class="py-3 px-4 text-right font-semibold text-gray-900">
+${p.price ? p.price.toLocaleString('ru-RU') + ' ֏' : '—'}
 </td>
 `;
 tbody.appendChild(tr);
 });
 }
 
-// Поиск в реальном времени
 document.getElementById('searchInput').oninput = (e) => {
 searchQuery = e.target.value.trim();
 renderTable();
 };
 
-// Запуск при загрузке страницы
 window.onload = loadExcelFile;
 </script>
 </body>
