@@ -40,6 +40,32 @@ body { font-family: 'Inter', sans-serif; }
   left: 0;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
 }
+
+.no-img-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: auto;
+  min-width: 90px;
+  height: 36px;
+  padding: 0 8px;
+  background-color: #f3f4f6;
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
+  color: #4b5563;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.no-img-badge:hover {
+  background-color: #e5e7eb;
+  color: #1d4ed8;
+  border-color: #93c5fd;
+}
 </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col pb-24">
@@ -223,23 +249,29 @@ onerror="this.style.display='none'; this.nextElementSibling.style.display='inlin
 `;
 }
 
+function handleImgError(imgElement, searchUrl) {
+  const container = imgElement.parentElement;
+  if (!imgElement.dataset.triedPub) {
+    imgElement.dataset.triedPub = "true";
+    imgElement.src = imgElement.dataset.pubUrl;
+  } else {
+    container.outerHTML = `<a href="${searchUrl}" target="_blank" class="no-img-badge" title="Нажмите, чтобы найти на Zigzag.am">Нажать на артикул товара</a>`;
+  }
+}
+
 function getProductImageHtml(articul, productName) {
 const cleanArt = String(articul).trim();
 const a1 = cleanArt.charAt(0) || '0';
 const a2 = cleanArt.charAt(1) || '0';
 
-
-// Шаг 1: Основной путь на zigzag.am
 const url1 = `https://www.zigzag.am/media/catalog/product/${a1}/${a2}/${cleanArt}.jpg`;
-// Шаг 2: Альтернативный путь на zigzag.am (через /pub/media/)
 const url2 = `https://www.zigzag.am/pub/media/catalog/product/${a1}/${a2}/${cleanArt}.jpg`;
-// Шаг 3: Серая заглушка-плейсхолдер
-const fallbackUrl = `https://via.placeholder.com/150/f3f4f6/9ca3af?text=${encodeURIComponent(cleanArt)}`;
+const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(cleanArt)}`;
 
 return `
 <div class="product-img-container">
-<img src="${url1}" alt="${productName}" class="product-img"
-onerror="if(this.src.includes('/media/') && !this.src.includes('/pub/media/')) { this.src='${url2}'; } else { this.src='${fallbackUrl}'; }">
+<img src="${url1}" data-pub-url="${url2}" alt="${productName}" class="product-img"
+onerror="handleImgError(this, '${searchUrl}')">
 </div>
 `;
 }
