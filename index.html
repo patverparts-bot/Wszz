@@ -12,7 +12,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 body { font-family: 'Inter', sans-serif; }
 
-/* Styles for product image zoom on hover */
+/* Стиль для увеличения фото при наведении */
 .product-img-container {
   position: relative;
   width: 44px;
@@ -224,17 +224,22 @@ onerror="this.style.display='none'; this.nextElementSibling.style.display='inlin
 }
 
 function getProductImageHtml(articul, productName) {
-// Put k kartinke na zigzag.am po pervim simvolam artikula
 const cleanArt = String(articul).trim();
 const a1 = cleanArt.charAt(0) || '0';
 const a2 = cleanArt.charAt(1) || '0';
-const zigzagImgUrl = `https://www.zigzag.am/media/catalog/product/${a1}/${a2}/${cleanArt}.jpg`;
-const fallbackImgUrl = `https://via.placeholder.com/150/f3f4f6/9ca3af?text=${encodeURIComponent(cleanArt)}`;
+
+
+// Шаг 1: Основной путь на zigzag.am
+const url1 = `https://www.zigzag.am/media/catalog/product/${a1}/${a2}/${cleanArt}.jpg`;
+// Шаг 2: Альтернативный путь на zigzag.am (через /pub/media/)
+const url2 = `https://www.zigzag.am/pub/media/catalog/product/${a1}/${a2}/${cleanArt}.jpg`;
+// Шаг 3: Серая заглушка-плейсхолдер
+const fallbackUrl = `https://via.placeholder.com/150/f3f4f6/9ca3af?text=${encodeURIComponent(cleanArt)}`;
 
 return `
 <div class="product-img-container">
-<img src="${zigzagImgUrl}" alt="${productName}" class="product-img"
-onerror="this.onerror=null; this.src='${fallbackImgUrl}';">
+<img src="${url1}" alt="${productName}" class="product-img"
+onerror="if(this.src.includes('/media/') && !this.src.includes('/pub/media/')) { this.src='${url2}'; } else { this.src='${fallbackUrl}'; }">
 </div>
 `;
 }
