@@ -557,11 +557,19 @@ Object.values(cart).forEach(item => {
 const sum = item.product.wholesale * item.qty;
 totalSum += sum;
 
+const isUtochnit = item.product.stockStatus.includes('Уточнять');
+const stockBadgeClass = isUtochnit
+? 'bg-amber-100 text-amber-800 border border-amber-300'
+: 'bg-emerald-100 text-emerald-800 border border-emerald-300';
+
 const div = document.createElement('div');
 div.className = 'py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3';
 div.innerHTML = `
 <div class="flex-grow">
-<div class="font-mono text-xs text-blue-600 font-semibold">${item.product.articul}</div>
+<div class="flex items-center gap-2">
+<span class="font-mono text-xs text-blue-600 font-semibold">${item.product.articul}</span>
+<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${stockBadgeClass}">${item.product.stockStatus}</span>
+</div>
 <div class="text-gray-900 font-medium">${item.product.name || 'Товар'}</div>
 <div class="text-xs text-gray-500">Оптовая цена: ${item.product.wholesale.toLocaleString('ru-RU')} ֏</div>
 </div>
@@ -618,7 +626,7 @@ let i = 1;
 Object.values(cart).forEach(item => {
 const sum = item.product.wholesale * item.qty;
 total += sum;
-text += `${i}. Артикул: ${item.product.articul}\n   Наименование: ${item.product.name}\n   Количество: ${item.qty} шт.\n   Цена (Опт): ${item.product.wholesale.toLocaleString('ru-RU')} ֏\n   Сумма: ${sum.toLocaleString('ru-RU')} ֏\n\n`;
+text += `${i}. Артикул: ${item.product.articul}\n   Наименование: ${item.product.name}\n   Наличие: ${item.product.stockStatus}\n   Количество: ${item.qty} шт.\n   Цена (Опт): ${item.product.wholesale.toLocaleString('ru-RU')} ֏\n   Сумма: ${sum.toLocaleString('ru-RU')} ֏\n\n`;
 i++;
 });
 text += `ИТОГО СУММА: ${total.toLocaleString('ru-RU')} ֏`;
@@ -641,6 +649,7 @@ excelData.push({
 'Артикул': item.product.articul,
 'Бренд': item.product.brand,
 'Наименование': item.product.name,
+'Наличие / Склад': item.product.stockStatus,
 'Количество (шт)': item.qty,
 'Оптовая цена (AMD)': item.product.wholesale,
 'Сумма (AMD)': sum
@@ -651,6 +660,7 @@ excelData.push({
 'Артикул': '',
 'Бренд': '',
 'Наименование': 'ИТОГО',
+'Наличие / Склад': '',
 'Количество (шт)': '',
 'Оптовая цена (AMD)': '',
 'Сумма (AMD)': totalSum
@@ -660,6 +670,7 @@ excelData.push({
 'Артикул': 'Способ оплаты:',
 'Бренд': paymentMethod,
 'Наименование': '',
+'Наличие / Склад': '',
 'Количество (шт)': '',
 'Оптовая цена (AMD)': '',
 'Сумма (AMD)': ''
