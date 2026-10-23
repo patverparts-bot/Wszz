@@ -314,7 +314,7 @@ errorMsg.classList.remove('hidden');
 
 function setupTableHeader() {
 const headerRow = document.getElementById('tableHeaderRow');
-if (userSheetType === 'KP') {
+if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
   headerRow.innerHTML = `
     <th class="py-3 px-4 font-semibold">Արտիկուլ</th>
     <th class="py-3 px-4 font-semibold">Բրենդ</th>
@@ -464,13 +464,12 @@ break;
 
 const retail = Number(r[colMap.retail]) || 0;
 
-// Расчет рентабельности
 let marginVal = 0;
 if (retail > 0 && wholesale > 0) {
   if (authorizedClient === "«ԴՈՄՈՒՍ» ՓԲԸ") {
-    marginVal = retail / wholesale; // roznica / opt
+    marginVal = retail / wholesale;
   } else {
-    marginVal = (1 - (wholesale / retail)) * 100; // в процентах
+    marginVal = (1 - (wholesale / retail)) * 100;
   }
 }
 
@@ -630,7 +629,7 @@ actionCellHtml = `
 }
 
 let resaleColHtml = '';
-if (userSheetType === 'KP') {
+if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
   resaleColHtml = `<td class="py-3 px-4 text-right text-gray-700 font-medium">${p.resaleWholesale ? p.resaleWholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</td>`;
 }
 
