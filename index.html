@@ -440,10 +440,10 @@ break;
 
 const retail = Number(r[colMap.retail]) || 0;
 
-// Расчет рентабельности в процентах
+// Расчет рентабельности по формуле: (1 - (opt / roznica)) * 100%
 let marginPercent = 0;
 if (retail > 0 && wholesale > 0) {
-  marginPercent = ((retail - wholesale) / wholesale) * 100;
+  marginPercent = (1 - (wholesale / retail)) * 100;
 }
 
 const q003 = colMap.s003 !== -1 ? (Number(r[colMap.s003]) || 0) : 0;
@@ -567,14 +567,13 @@ const stockBadgeClass = isUtochnit
 ? 'bg-amber-100 text-amber-800 border border-amber-300'
 : 'bg-emerald-100 text-emerald-800 border border-emerald-300';
 
-// Оформление рентабельности
 let marginBadge = '—';
-if (p.marginPercent > 0) {
+if (p.retail > 0 && p.wholesale > 0) {
   let colorClass = 'bg-blue-100 text-blue-800 border-blue-200';
   if (p.marginPercent >= 20) colorClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
   else if (p.marginPercent < 5) colorClass = 'bg-amber-100 text-amber-800 border-amber-200';
   
-  marginBadge = `<span class="px-2 py-1 rounded-lg text-xs font-bold border ${colorClass}">+${p.marginPercent.toFixed(1)}%</span>`;
+  marginBadge = `<span class="px-2 py-1 rounded-lg text-xs font-bold border ${colorClass}">${p.marginPercent.toFixed(1)}%</span>`;
 }
 
 const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
