@@ -78,7 +78,7 @@ class="w-full sm:w-72 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 </div>
 </main>
 
-<!-- Панель заказа (вниз экрана) -->
+<!-- Панель заказа (внизу экрана) -->
 <div id="orderPanel" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 shadow-lg p-4 z-40 hidden">
 <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
 <div>
@@ -201,6 +201,13 @@ const artVal = r[colMap.art];
 const art = (artVal !== null && artVal !== undefined) ? String(artVal).trim() : '';
 if (!art || art.toLowerCase().includes('artikul') || art.length > 30) continue;
 
+const wholesale = Number(r[colMap.wholesale]) || 0;
+
+// УСЛОВИЕ 1: Если нет оптовой цены (или она <= 0) — полностью скрываем товар
+if (!wholesale || wholesale <= 0) {
+continue;
+}
+
 const brandVal = r[colMap.brand];
 const brand = (brandVal !== null && brandVal !== undefined) ? String(brandVal).trim() : 'Другие';
 
@@ -220,7 +227,6 @@ break;
 }
 
 const retail = Number(r[colMap.retail]) || 0;
-const wholesale = Number(r[colMap.wholesale]) || 0;
 
 const q003 = colMap.s003 !== -1 ? (Number(r[colMap.s003]) || 0) : 0;
 const q023 = colMap.s023 !== -1 ? (Number(r[colMap.s023]) || 0) : 0;
@@ -238,12 +244,11 @@ otherWarehousesSum += val;
 }
 }
 
-// Уточненная логика наличия:
+// Условия наличия:
 let stockStatus = '';
 let isValidStock = false;
 
 if (targetWarehousesStock >= 2) {
-// На целевых складах >= 2 шт. -> В наличии
 isValidStock = true;
 let availableIn = [];
 if (q003 > 0) availableIn.push('003');
@@ -252,10 +257,10 @@ if (q026 > 0) availableIn.push('026');
 if (q031 > 0) availableIn.push('031');
 stockStatus = `В наличии (${availableIn.join(', ')})`;
 } else if (targetWarehousesStock === 0 && otherWarehousesSum < 5) {
-// 0 шт. на целевых складах И < 5 шт. на остальных -> ИСКЛЮЧИТЬ ИЗ КАТАЛОГА
+// 0 шт. на целевых складах И < 5 шт. на остальных -> ИСКЛЮЧИТЬ
 isValidStock = false;
 } else if (targetWarehousesStock < 2 && otherWarehousesSum < 5) {
-// Меньше 2 шт. (т.е. 1 шт.) на целевых складах И < 5 шт. на остальных -> Уточнять наличие
+// Меньше 2 шт. (1 шт.) на целевых складах -> Уточнять наличие
 isValidStock = true;
 stockStatus = 'Уточнять наличие';
 } else if (targetWarehousesStock === 0 && otherWarehousesSum >= 5) {
