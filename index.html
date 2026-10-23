@@ -43,7 +43,7 @@ body { font-family: 'Inter', sans-serif; }
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
 
-<!-- ЭКРАН АВТОРИЗАЦИИ (ПАРОЛЬ) -->
+<!-- ЭКРАН АВТОРИЗАЦИИ -->
 <div id="authScreen" class="fixed inset-0 bg-gray-900/80 z-50 flex items-center justify-center p-4">
 <div class="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl text-center">
 <img src="1000021185.png" alt="ZIGZAG" class="h-12 w-auto mx-auto mb-4 object-contain" onerror="this.style.display='none'">
@@ -61,7 +61,7 @@ class="w-full px-4 py-3 border border-gray-300 rounded-xl text-center text-lg tr
 </div>
 </div>
 
-<!-- ОСНОВНОЙ КАТАЛОГ (СКРЫТ ДО ВВОДА ПАРОЛЯ) -->
+<!-- ОСНОВНОЙ КАТАЛОГ -->
 <div id="mainApp" class="hidden flex-col min-h-screen pb-24">
 <!-- Գլխավոր գլխամաս -->
 <header class="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
@@ -190,12 +190,13 @@ class="w-full sm:w-72 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 </div>
 </div>
 
-<!-- Սկրիպտ -->
+<!-- Скрипт -->
 <script>
 let allProducts = [];
 let cart = {};
 let authorizedClient = '';
-let passMap = {}; // Справочник паролей из pass.xlsx
+let userSheetType = ''; // 'KP' ili 'Dealers'
+let passMap = {}; // Справочник паролей: { password: { client: name, sheet: sheetName } }
 
 const brandDomains = {
 'wanbo': 'wanbo.cn',
@@ -272,7 +273,6 @@ onerror="handleImgError(this, '${searchUrl}')">
 `;
 }
 
-// Загрузка файла pass.xlsx и сбор паролей со всех вкладок
 async function loadPasswordsFile() {
 try {
 const response = await fetch('pass.xlsx');
@@ -288,7 +288,7 @@ if (r && r.length >= 2) {
 let p = r[0] !== null && r[0] !== undefined ? String(r[0]).trim() : '';
 let client = r[1] !== null && r[1] !== undefined ? String(r[1]).trim() : '';
 if (p) {
-passMap[p] = client;
+passMap[p] = { client: client, sheet: sheetName };
 }
 }
 });
@@ -298,28 +298,26 @@ console.error("Ошибка загрузки pass.xlsx:", e);
 }
 }
 
-// Проверка введенного пароля
 async function checkPassword() {
 const inputVal = document.getElementById('passwordInput').value.trim();
 const errorMsg = document.getElementById('errorMsg');
 
 if (passMap[inputVal]) {
-authorizedClient = passMap[inputVal];
+authorizedClient = passMap[inputVal].client;
+userSheetType = passMap[inputVal].sheet; // 'KP' ili 'Dealers'
+
 document.getElementById('authScreen').classList.add('hidden');
 document.getElementById('mainApp').classList.remove('hidden');
 document.getElementById('mainApp').classList.add('flex');
 
-// Приветствие контрагента
 document.getElementById('welcomeMsg').innerText = `Բարև ձեզ, ${authorizedClient}։`;
 
-// Загружаем основной прайс-лист
 loadExcelFile();
 } else {
 errorMsg.classList.remove('hidden');
 }
 }
 
-// Поддержка нажатия Enter в поле ввода пароля
 document.addEventListener('DOMContentLoaded', () => {
 loadPasswordsFile();
 const pwdInput = document.getElementById('passwordInput');
@@ -376,6 +374,8 @@ category: headers.findIndex(h => h && (h.toLowerCase().includes('group') || h.to
 name: headers.findIndex(h => h && (h.toLowerCase().includes('name') || h.toLowerCase().includes('naimenovanie') || h.toLowerCase().includes('наименование') || h.toLowerCase().includes('товар') || h.toLowerCase().includes('անվանում'))),
 retail: headers.findIndex(h => h && (h.includes('Զեղչված') || h.toLowerCase().includes('roznich') || h.toLowerCase().includes('discount') || h.toLowerCase().includes('մանրածախ'))),
 wholesale: headers.findIndex(h => h && (h.includes('Wholesale') || h.toLowerCase().includes('wholesale') || h.toLowerCase().includes('опт') || h.toLowerCase().includes('մեծածախ'))),
+kpPromo: headers.findIndex(h => h && h.includes("Key Partner's promo AMD")),
+kpNormal: headers.findIndex(h => h && h.includes("Key Partner's AMD")),
 s003: headers.findIndex(h => h === '003'),
 s023: headers.findIndex(h => h === '023'),
 s026: headers.findIndex(h => h === '026'),
@@ -397,7 +397,25 @@ const artVal = r[colMap.art];
 const art = (artVal !== null && artVal !== undefined) ? String(artVal).trim() : '';
 if (!art || art.toLowerCase().includes('artikul') || art.toLowerCase().includes('արտիկուլ') || art.length > 30) continue;
 
-const wholesale = Number(r[colMap.wholesale]) || 0;
+// Определение цены в зависимости от вкладки (KP или Dealers)
+let wholesale = 0;
+const defaultWholesale = Number(r[colMap.wholesale]) || 0;
+
+if (userSheetType === 'KP') {
+  const promoVal = colMap.kpPromo !== -1 ? Number(r[colMap.kpPromo]) : 0;
+  const normalVal = colMap.kpNormal !== -1 ? Number(r[colMap.kpNormal]) : 0;
+  
+  if (promoVal && promoVal > 0) {
+    wholesale = promoVal;
+  } else if (normalVal && normalVal > 0) {
+    wholesale = normalVal;
+  } else {
+    wholesale = defaultWholesale;
+  }
+} else {
+  // Dealers
+  wholesale = defaultWholesale;
+}
 
 if (!wholesale || wholesale <= 0) {
 continue;
@@ -432,7 +450,7 @@ const targetWarehousesStock = q003 + q023 + q026 + q031;
 
 let otherWarehousesSum = 0;
 for (let j = 0; j < r.length; j++) {
-if (j === colMap.art || j === colMap.brand || j === colMap.category || j === colMap.name || j === colMap.retail || j === colMap.wholesale || j === colMap.s003 || j === colMap.s023 || j === colMap.s026 || j === colMap.s031) continue;
+if (j === colMap.art || j === colMap.brand || j === colMap.category || j === colMap.name || j === colMap.retail || j === colMap.wholesale || j === colMap.kpPromo || j === colMap.kpNormal || j === colMap.s003 || j === colMap.s023 || j === colMap.s026 || j === colMap.s031) continue;
 const val = Number(r[j]);
 if (!isNaN(val) && val > 0) {
 otherWarehousesSum += val;
@@ -480,6 +498,7 @@ initFilters();
 renderTable();
 } catch (err) {
 console.error(err);
+document.getElementById('file-status').innerHTML = `<span class="text-red-600">Մշակման սխալ՝ ${err.message}</span>`;
 }
 }
 
