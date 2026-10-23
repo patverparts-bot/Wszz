@@ -149,6 +149,54 @@ class="w-full sm:w-72 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 let allProducts = [];
 let cart = {};
 
+// Baza domenov izvestnyh brendov dlya zagruzki logotipov
+const brandDomains = {
+'apple': 'apple.com',
+'samsung': 'samsung.com',
+'sony': 'sony.com',
+'lg': 'lg.com',
+'xiaomi': 'mi.com',
+'jbl': 'jbl.com',
+'marshall': 'marshallheadphones.com',
+'haier': 'haier.com',
+'philips': 'philips.com',
+'bosch': 'bosch.com',
+'dyson': 'dyson.com',
+'midea': 'midea.com',
+'tefal': 'tefal.com',
+'moulinex': 'moulinex.com',
+'delonghi': 'delonghi.com',
+'braun': 'braun.com',
+'canon': 'canon.com',
+'nikon': 'nikon.com',
+'asus': 'asus.com',
+'acer': 'acer.com',
+'lenovo': 'lenovo.com',
+'hp': 'hp.com',
+'dell': 'dell.com',
+'huawei': 'huawei.com',
+'oppo': 'oppo.com',
+'realme': 'realme.com',
+'vivo': 'vivo.com'
+};
+
+function getBrandLogoHtml(brandName) {
+if (!brandName || brandName === 'Другие' || brandName === '—') {
+return `<span class="font-medium text-gray-800">${brandName || '—'}</span>`;
+}
+
+const cleanBrand = brandName.trim().toLowerCase();
+const domain = brandDomains[cleanBrand] || `${cleanBrand.replace(/\s+/g, '')}.com`;
+const logoUrl = `https://logo.clearbit.com/${domain}`;
+
+return `
+<div class="flex items-center gap-2">
+<img src="${logoUrl}" alt="${brandName}" class="h-6 w-auto max-w-[80px] object-contain rounded" 
+onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'font-medium text-gray-800\'>${brandName}</span>';">
+</div>
+`;
+}
+
 async function loadExcelFile() {
 try {
 document.getElementById('file-status').innerText = 'Загрузка файла PriceList_3.xlsx...';
@@ -369,7 +417,6 @@ const stockBadgeClass = isUtochnit
 const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
 const cartItem = cart[p.articul];
 
-// Динамическая кнопка или селектор количества в таблице
 let actionCellHtml = '';
 if (!cartItem) {
 actionCellHtml = `
@@ -393,7 +440,7 @@ tr.innerHTML = `
 ${p.articul} 🔗
 </a>
 </td>
-<td class="py-3 px-4 font-medium text-gray-800">${p.brand}</td>
+<td class="py-3 px-4">${getBrandLogoHtml(p.brand)}</td>
 <td class="py-3 px-4 text-gray-600">${p.category}</td>
 <td class="py-3 px-4 text-gray-900 font-medium">${p.name || '—'}</td>
 <td class="py-3 px-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${stockBadgeClass}">${p.stockStatus}</span></td>
