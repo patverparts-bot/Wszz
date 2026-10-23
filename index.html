@@ -11,6 +11,35 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 body { font-family: 'Inter', sans-serif; }
+
+/* Styles for product image zoom on hover */
+.product-img-container {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.product-img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  padding: 2px;
+  transition: all 0.25s ease-in-out;
+  cursor: pointer;
+}
+
+.product-img-container:hover .product-img {
+  transform: scale(3.5);
+  z-index: 50;
+  position: absolute;
+  top: -10px;
+  left: 0;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+}
 </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col pb-24">
@@ -190,6 +219,22 @@ return `
 <img src="${logoUrl}" alt="${brandName}" class="h-5 w-5 object-contain rounded" 
 onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
 <span class="font-semibold text-gray-800 text-xs">${brandName}</span>
+</div>
+`;
+}
+
+function getProductImageHtml(articul, productName) {
+// Put k kartinke na zigzag.am po pervim simvolam artikula
+const cleanArt = String(articul).trim();
+const a1 = cleanArt.charAt(0) || '0';
+const a2 = cleanArt.charAt(1) || '0';
+const zigzagImgUrl = `https://www.zigzag.am/media/catalog/product/${a1}/${a2}/${cleanArt}.jpg`;
+const fallbackImgUrl = `https://via.placeholder.com/150/f3f4f6/9ca3af?text=${encodeURIComponent(cleanArt)}`;
+
+return `
+<div class="product-img-container">
+<img src="${zigzagImgUrl}" alt="${productName}" class="product-img"
+onerror="this.onerror=null; this.src='${fallbackImgUrl}';">
 </div>
 `;
 }
@@ -439,7 +484,12 @@ ${p.articul} 🔗
 </td>
 <td class="py-3 px-4">${getBrandLogoHtml(p.brand)}</td>
 <td class="py-3 px-4 text-gray-600">${p.category}</td>
-<td class="py-3 px-4 text-gray-900 font-medium">${p.name || '—'}</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-3">
+${getProductImageHtml(p.articul, p.name)}
+<span class="text-gray-900 font-medium">${p.name || '—'}</span>
+</div>
+</td>
 <td class="py-3 px-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${stockBadgeClass}">${p.stockStatus}</span></td>
 <td class="py-3 px-4 text-right text-gray-600">${p.retail ? p.retail.toLocaleString('ru-RU') + ' ֏' : '—'}</td>
 <td class="py-3 px-4 text-right font-semibold text-gray-900">${p.wholesale ? p.wholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</td>
