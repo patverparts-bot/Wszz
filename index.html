@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Optoviy prayc-list i katalog</title>
+<title>Оптовый прайс-лист и каталог</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- SheetJS (XLSX reader) -->
@@ -21,13 +21,13 @@ body { font-family: 'Inter', sans-serif; }
 <div class="flex items-center gap-3">
 <div class="bg-blue-600 text-white p-2.5 rounded-xl font-bold text-xl shadow-md">📊</div>
 <div>
-<h1 class="text-xl font-bold text-gray-900">Optoviy katalog tovarov</h1>
-<p class="text-xs text-gray-500" id="file-status">Zagruzka dannyh iz Excel...</p>
+<h1 class="text-xl font-bold text-gray-900">Оптовый каталог товаров</h1>
+<p class="text-xs text-blue-600 font-medium" id="file-status">Загрузка данных из Excel...</p>
 </div>
 </div>
 <!-- Search -->
 <div class="flex items-center gap-3 w-full sm:w-auto">
-<input type="text5" id="searchInput" placeholder="Poisk tovara ili artikula..."
+<input type="text" id="searchInput" placeholder="Поиск товара или артикула..."
 class="w-full sm:w-72 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
 </div>
 </div>
@@ -36,18 +36,18 @@ class="w-full sm:w-72 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 <!-- Main Container -->
 <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex-grow w-full">
 
-<!-- Filters Bar (2 otdelnyh filtra) -->
+<!-- Filters Bar -->
 <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
 <div>
-<label class="block text-xs font-semibold text-gray-500 uppercase mb-1"> Filtr po Brendu</label>
+<label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Фильтр по бренду</label>
 <select id="brandFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-<option value="">Vse brendy</option>
+<option value="">Все бренды</option>
 </select>
 </div>
 <div>
-<label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Filtr po Kategorii (Gruppe)</label>
+<label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Фильтр по категории (группе)</label>
 <select id="categoryFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-<option value="">Vse kategorii</option>
+<option value="">Все категории</option>
 </select>
 </div>
 </div>
@@ -58,14 +58,14 @@ class="w-full sm:w-72 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 <table class="w-full text-left border-collapse" id="catalogTable">
 <thead>
 <tr class="bg-gray-100 text-gray-700 text-xs uppercase tracking-wider border-b border-gray-200">
-<th class="py-3 px-4 font-semibold">Artikul</th>
-<th class="py-3 px-4 font-semibold">Brend</th>
-<th class="py-3 px-4 font-semibold">Kategoriya</th>
-<th class="py-3 px-4 font-semibold">Naimenovanie</th>
-<th class="py-3 px-4 font-semibold">Nalichie / Sklad</th>
-<th class="py-3 px-4 font-semibold text-right">Roznitsa (Զեղչված)</th>
-<th class="py-3 px-4 font-semibold text-right">Opt (Wholesale AMD)</th>
-<th class="py-3 px-4 font-semibold text-center">Deystvie</th>
+<th class="py-3 px-4 font-semibold">Артикул</th>
+<th class="py-3 px-4 font-semibold">Бренд</th>
+<th class="py-3 px-4 font-semibold">Категория</th>
+<th class="py-3 px-4 font-semibold">Наименование</th>
+<th class="py-3 px-4 font-semibold">Наличие / Склад</th>
+<th class="py-3 px-4 font-semibold text-right">Розница (Զեղչված)</th>
+<th class="py-3 px-4 font-semibold text-right">Опт (Wholesale)</th>
+<th class="py-3 px-4 font-semibold text-center">Действие</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-gray-200 text-sm" id="tableBody">
@@ -74,7 +74,7 @@ class="w-full sm:w-72 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 </table>
 </div>
 <div id="noResults" class="hidden p-8 text-center text-gray-500">
-Tovary ne naydeny po vashemu zaprosu ili usloviyam sklada.
+Товары не найдены по вашему запросу или условиям склада.
 </div>
 </div>
 </main>
@@ -83,17 +83,17 @@ Tovary ne naydeny po vashemu zaprosu ili usloviyam sklada.
 <div id="orderPanel" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 shadow-lg p-4 z-40 hidden">
 <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
 <div>
-<span class="font-bold text-gray-900 text-base">Vash zakaz: </span>
-<span id="orderCount" class="text-blue-600 font-semibold">0 tovarov</span> |
-<span class="font-bold text-gray-900"> Summa (Opt): </span>
+<span class="font-bold text-gray-900 text-base">Ваш заказ: </span>
+<span id="orderCount" class="text-blue-600 font-semibold">0 товаров</span> |
+<span class="font-bold text-gray-900"> Сумма (Опт): </span>
 <span id="orderSum" class="text-green-600 font-bold text-lg">0 ֏</span>
 </div>
 <div class="flex gap-3">
 <button onclick="clearOrder()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium transition">
-Ochistit
+Очистить
 </button>
 <button onclick="openOrderModal()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow transition">
-Oformit zakaz / Skopirovat
+Оформить заказ / Скопировать
 </button>
 </div>
 </div>
@@ -103,21 +103,20 @@ Oformit zakaz / Skopirovat
 <div id="orderModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
 <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] flex flex-col">
 <div class="flex justify-between items-center mb-4">
-<h3 class="text-lg font-bold text-gray-900">Soderzhimoe zakaza</h3>
+<h3 class="text-lg font-bold text-gray-900">Содержимое заказа</h3>
 <button onclick="closeOrderModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
 </div>
 <div id="modalItemsList" class="overflow-y-auto flex-grow divide-y divide-gray-100 mb-4 max-h-[50vh] text-sm">
-<!-- Items -->
 </div>
 <div class="border-t pt-4 flex justify-between items-center">
 <div>
-<span class="text-gray-600 text-sm">Itogo summa: </span>
+<span class="text-gray-600 text-sm">Итого сумма: </span>
 <span id="modalTotalSum" class="text-xl font-bold text-green-600">0 ֏</span>
 </div>
 <div class="flex gap-2">
-<button onclick="closeOrderModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm">Zakryt</button>
+<button onclick="closeOrderModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm">Закрыть</button>
 <button onclick="copyOrderText()" class="px-5 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg text-sm shadow">
-Skopirovat tekst zakaza
+Скопировать текст заказа
 </button>
 </div>
 </div>
@@ -127,33 +126,36 @@ Skopirovat tekst zakaza
 <!-- Script -->
 <script>
 let allProducts = [];
-let cart = {}; // articul -> {product, qty}
-let colMap = {};
+let cart = {};
 
 async function loadExcelFile() {
 try {
+document.getElementById('file-status').innerText = 'Загрузка файла PriceList_3.xlsx...';
 const response = await fetch('PriceList_3.xlsx');
-if (!response.ok) throw new Error('Ne udalos zagruzit PriceList_3.xlsx');
+if (!response.ok) throw new Error('Файл PriceList_3.xlsx не найден на сервере (ошибка 404). Проверьте имя файла.');
 
+document.getElementById('file-status').innerText = 'Чтение таблицы...';
 const arrayBuffer = await response.arrayBuffer();
 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
 const sheetName = workbook.SheetNames[0];
 const sheet = workbook.Sheets[sheetName];
 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
+if (!rows || rows.length === 0) {
+throw new Error('Таблица пуста.');
+}
+
 parseExcelRows(rows);
-document.getElementById('file-status').innerText = `Uspeshno zagruzheno tovarov: ${allProducts.length}`;
+document.getElementById('file-status').innerText = `Успешно загружено товаров: ${allProducts.length}`;
 } catch (error) {
 console.error(error);
-document.getElementById('file-status').innerText = 'Oshibka zagruzki fayla PriceList_3.xlsx';
+document.getElementById('file-status').innerHTML = `<span class="text-red-600">Ошибка: ${error.message}</span>`;
 }
 }
 
 function parseExcelRows(rows) {
 allProducts = [];
-if (rows.length === 0) return;
 
-// Ishchem stroku zagolovkov
 let headerRowIdx = 0;
 for (let i = 0; i < Math.min(rows.length, 15); i++) {
 const rowStr = rows[i].map(c => String(c).toLowerCase()).join(' ');
@@ -165,22 +167,19 @@ break;
 
 const headers = rows[headerRowIdx].map(c => String(c).trim());
 
-//opredelyaem indeksy kolonok
-colMap = {
-art: headers.findIndex(h => h.toLowerCase().includes('artikul') || h.toLowerCase().includes('art')),
+const colMap = {
+art: headers.findIndex(h => h.toLowerCase().includes('art') || h.toLowerCase().includes('артикул')),
 brand: headers.findIndex(h => h.toLowerCase().includes('brand') || h.toLowerCase().includes('бренд')),
-category: headers.findIndex(h => h.toLowerCase().includes('group') || h.toLowerCase().includes('kategoriya') || h.toLowerCase().includes('группа')),
-name: headers.findIndex(h => h.toLowerCase().includes('name') || h.toLowerCase().includes('naimenovanie') || h.toLowerCase().includes('товара')),
-retail: headers.findIndex(h => h.includes('Զեղչված գին') || h.toLowerCase().includes('roznich') || h.toLowerCase().includes('discount')),
-wholesale: headers.findIndex(h => h.includes('Wholesale AMD') || h.toLowerCase().includes('wholesale') || h.toLowerCase().includes('опт')),
-// Sklady
+category: headers.findIndex(h => h.toLowerCase().includes('group') || h.toLowerCase().includes('kategoriya') || h.toLowerCase().includes('группа') || h.toLowerCase().includes('категория')),
+name: headers.findIndex(h => h.toLowerCase().includes('name') || h.toLowerCase().includes('naimenovanie') || h.toLowerCase().includes('товара') || h.toLowerCase().includes('наименование')),
+retail: headers.findIndex(h => h.includes('Զեղչված') || h.toLowerCase().includes('roznich') || h.toLowerCase().includes('discount')),
+wholesale: headers.findIndex(h => h.includes('Wholesale') || h.toLowerCase().includes('wholesale') || h.toLowerCase().includes('опт')),
 s003: headers.findIndex(h => h === '003'),
 s023: headers.findIndex(h => h === '023'),
 s026: headers.findIndex(h => h === '026'),
 s031: headers.findIndex(h => h === '031')
 };
 
-// Esli zagolovki ne ochevidny, ispolzuem rezervnye standarty
 if (colMap.art === -1) colMap.art = 0;
 if (colMap.brand === -1) colMap.brand = 1;
 if (colMap.category === -1) colMap.category = 2;
@@ -188,7 +187,6 @@ if (colMap.name === -1) colMap.name = 3;
 if (colMap.retail === -1) colMap.retail = 4;
 if (colMap.wholesale === -1) colMap.wholesale = 5;
 
-// Obhod strok s dannymi
 for (let i = headerRowIdx + 1; i < rows.length; i++) {
 const r = rows[i];
 if (!r || r.length === 0) continue;
@@ -196,13 +194,12 @@ if (!r || r.length === 0) continue;
 const art = r[colMap.art] ? String(r[colMap.art]).trim() : '';
 if (!art || art.toLowerCase().includes('artikul') || art.length > 30) continue;
 
-const brand = r[colMap.brand] ? String(r[colMap.brand]).trim() : 'Drugie';
-const category = r[colMap.category] ? String(r[colMap.category]).trim() : 'Obshchaya';
+const brand = r[colMap.brand] ? String(r[colMap.brand]).trim() : 'Другие';
+const category = r[colMap.category] ? String(r[colMap.category]).trim() : 'Общая';
 const name = r[colMap.name] ? String(r[colMap.name]).trim() : '';
 const retail = Number(r[colMap.retail]) || 0;
 const wholesale = Number(r[colMap.wholesale]) || 0;
 
-// Schitaem ostatki na skladakh 003, 023, 026, 031
 const q003 = colMap.s003 !== -1 ? (Number(r[colMap.s003]) || 0) : 0;
 const q023 = colMap.s023 !== -1 ? (Number(r[colMap.s023]) || 0) : 0;
 const q026 = colMap.s026 !== -1 ? (Number(r[colMap.s026]) || 0) : 0;
@@ -210,7 +207,6 @@ const q031 = colMap.s031 !== -1 ? (Number(r[colMap.s031]) || 0) : 0;
 
 const targetWarehousesStock = q003 + q023 + q026 + q031;
 
-// Schitaem summu po ostalnym skladam (vse chislovyye kolonki, isklyuchaya art, brand, cat, name, ceny i 003,023,026,031)
 let otherWarehousesSum = 0;
 for (let j = 0; j < r.length; j++) {
 if (j === colMap.art || j === colMap.brand || j === colMap.category || j === colMap.name || j === colMap.retail || j === colMap.wholesale || j === colMap.s003 || j === colMap.s023 || j === colMap.s026 || j === colMap.s031) continue;
@@ -220,8 +216,6 @@ otherWarehousesSum += val;
 }
 }
 
-// Logika filtratsii po skladam:
-// 1. Est na skladah 003, 023, 026, 031 (>0) ILI summa na ostalnykh > 5
 let stockStatus = '';
 let isValidStock = false;
 
@@ -232,10 +226,10 @@ if (q003 > 0) availableIn.push('003');
 if (q023 > 0) availableIn.push('023');
 if (q026 > 0) availableIn.push('026');
 if (q031 > 0) availableIn.push('031');
-stockStatus = `V naliçii (${availableIn.join(', ')})`;
+stockStatus = `В наличии (${availableIn.join(', ')})`;
 } else if (otherWarehousesSum > 5) {
 isValidStock = true;
-stockStatus = 'Nujno utochnit';
+stockStatus = 'Нужно уточнить';
 }
 
 if (isValidStock) {
@@ -256,10 +250,9 @@ renderTable();
 }
 
 function initFilters() {
-// Brendy
 const brands = [...new Set(allProducts.map(p => p.brand).filter(b => b))].sort();
 const brandSelect = document.getElementById('brandFilter');
-brandSelect.innerHTML = '<option value="">Vse brendy</option>';
+brandSelect.innerHTML = '<option value="">Все бренды</option>';
 brands.forEach(b => {
 const opt = document.createElement('option');
 opt.value = b;
@@ -267,10 +260,9 @@ opt.textContent = b;
 brandSelect.appendChild(opt);
 });
 
-// Kategorii
 const categories = [...new Set(allProducts.map(p => p.category).filter(c => c))].sort();
 const categorySelect = document.getElementById('categoryFilter');
-categorySelect.innerHTML = '<option value="">Vse kategorii</option>';
+categorySelect.innerHTML = '<option value="">Все категории</option>';
 categories.forEach(c => {
 const opt = document.createElement('option');
 opt.value = c;
@@ -311,7 +303,7 @@ filtered.forEach(p => {
 const tr = document.createElement('tr');
 tr.className = 'hover:bg-blue-50/40 transition-colors border-b border-gray-100';
 
-const isUtochnit = p.stockStatus.includes('Utochnit');
+const isUtochnit = p.stockStatus.includes('уточнить');
 const stockBadgeClass = isUtochnit
 ? 'bg-amber-100 text-amber-800 border border-amber-300'
 : 'bg-emerald-100 text-emerald-800 border border-emerald-300';
@@ -326,7 +318,7 @@ tr.innerHTML = `
 <td class="py-3 px-4 text-right font-semibold text-gray-900">${p.wholesale ? p.wholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</td>
 <td class="py-3 px-4 text-center">
 <button onclick="addToCart('${p.articul}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition">
-V zakaz
+В заказ
 </button>
 </td>
 `;
@@ -351,14 +343,14 @@ const orderPanel = document.getElementById('orderPanel');
 let totalCount = 0;
 let totalSum = 0;
 
-Object.values(cart.forEach ? cart : Object.values(cart)).forEach(item => {
+Object.values(cart).forEach(item => {
 totalCount += item.qty;
 totalSum += (item.product.wholesale * item.qty);
 });
 
 if (totalCount > 0) {
 orderPanel.classList.remove('hidden');
-document.getElementById('orderCount').innerText = `${totalCount} tovarov`;
+document.getElementById('orderCount').innerText = `${totalCount} товаров`;
 document.getElementById('orderSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
 } else {
 orderPanel.classList.add('hidden');
@@ -385,7 +377,7 @@ div.innerHTML = `
 <div>
 <div class="font-mono text-xs text-blue-600 font-semibold">${item.product.articul}</div>
 <div class="text-gray-800 font-medium">${item.product.name}</div>
-<div class="text-xs text-gray-500">Opt: ${item.product.wholesale.toLocaleString('ru-RU')} ֏</div>
+<div class="text-xs text-gray-500">Опт: ${item.product.wholesale.toLocaleString('ru-RU')} ֏</div>
 </div>
 <div class="flex items-center gap-3">
 <div class="flex items-center border rounded-lg overflow-hidden">
@@ -418,20 +410,20 @@ document.getElementById('orderModal').classList.add('hidden');
 }
 
 function copyOrderText() {
-let text = "ZAKAZ IZ KATALOGA:\n\n";
+let text = "ЗАКАЗ ИЗ КАТАЛОГА:\n\n";
 let total = 0;
 let i = 1;
 
 Object.values(cart).forEach(item => {
 const sum = item.product.wholesale * item.qty;
 total += sum;
-text += `${i}. Artikul: ${item.product.articul}\n   Nazvanie: ${item.product.name}\n   Kolichestvo: ${item.qty} sht.\n   Tsena: ${item.product.wholesale.toLocaleString('ru-RU')} ֏ (Summa: ${sum.toLocaleString('ru-RU')} ֏)\n\n`;
+text += `${i}. Артикул: ${item.product.articul}\n   Наименование: ${item.product.name}\n   Количество: ${item.qty} шт.\n   Цена: ${item.product.wholesale.toLocaleString('ru-RU')} ֏ (Сумма: ${sum.toLocaleString('ru-RU')} ֏)\n\n`;
 i++;
 });
-text += `ITOGO SUMMA: ${total.toLocaleString('ru-RU')} ֏`;
+text += `ИТОГО СУММА: ${total.toLocaleString('ru-RU')} ֏`;
 
 navigator.clipboard.writeText(text).then(() => {
-alert('Tekst zakaza uspeshno skopirovan v bufer obmena!');
+alert('Текст заказа успешно скопирован в буфер обмена!');
 closeOrderModal();
 });
 }
