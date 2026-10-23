@@ -105,16 +105,8 @@ class="w-full sm:w-72 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 <div class="overflow-x-auto">
 <table class="w-full text-left border-collapse" id="catalogTable">
 <thead>
-<tr class="bg-gray-100 text-gray-700 text-xs uppercase tracking-wider border-b border-gray-200">
-<th class="py-3 px-4 font-semibold">Արտիկուլ</th>
-<th class="py-3 px-4 font-semibold">Բրենդ</th>
-<th class="py-3 px-4 font-semibold">Կատեգորիա</th>
-<th class="py-3 px-4 font-semibold">Անվանում</th>
-<th class="py-3 px-4 font-semibold">Առկայություն</th>
-<th class="py-3 px-4 font-semibold text-right">Մանրածախ</th>
-<th class="py-3 px-4 font-semibold text-center">Ռենտաբելություն</th>
-<th class="py-3 px-4 font-semibold text-right">Մեծածախ (Wholesale)</th>
-<th class="py-3 px-4 font-semibold text-center">Գործողություն</th>
+<tr id="tableHeaderRow" class="bg-gray-100 text-gray-700 text-xs uppercase tracking-wider border-b border-gray-200">
+<!-- Динамически заполняется шапка -->
 </tr>
 </thead>
 <tbody class="divide-y divide-gray-200 text-sm" id="tableBody">
@@ -313,9 +305,40 @@ document.getElementById('mainApp').classList.add('flex');
 
 document.getElementById('welcomeMsg').innerText = `Բարև ձեզ, ${authorizedClient}։`;
 
+setupTableHeader();
 loadExcelFile();
 } else {
 errorMsg.classList.remove('hidden');
+}
+}
+
+function setupTableHeader() {
+const headerRow = document.getElementById('tableHeaderRow');
+if (userSheetType === 'KP') {
+  headerRow.innerHTML = `
+    <th class="py-3 px-4 font-semibold">Արտիկուլ</th>
+    <th class="py-3 px-4 font-semibold">Բրենդ</th>
+    <th class="py-3 px-4 font-semibold">Կատեգորիա</th>
+    <th class="py-3 px-4 font-semibold">Անվանում</th>
+    <th class="py-3 px-4 font-semibold">Առկայություն</th>
+    <th class="py-3 px-4 font-semibold text-right">Մանրածախ</th>
+    <th class="py-3 px-4 font-semibold text-center">Ռենտաբելություն</th>
+    <th class="py-3 px-4 font-semibold text-right">Վերավաճառքի մեծածախ գին</th>
+    <th class="py-3 px-4 font-semibold text-right">Մեծածախ (Wholesale)</th>
+    <th class="py-3 px-4 font-semibold text-center">Գործողություն</th>
+  `;
+} else {
+  headerRow.innerHTML = `
+    <th class="py-3 px-4 font-semibold">Արտիկուլ</th>
+    <th class="py-3 px-4 font-semibold">Բրենդ</th>
+    <th class="py-3 px-4 font-semibold">Կատեգորիա</th>
+    <th class="py-3 px-4 font-semibold">Անվանում</th>
+    <th class="py-3 px-4 font-semibold">Առկայություն</th>
+    <th class="py-3 px-4 font-semibold text-right">Մանրածախ</th>
+    <th class="py-3 px-4 font-semibold text-center">Ռենտաբելություն</th>
+    <th class="py-3 px-4 font-semibold text-right">Մեծածախ (Wholesale)</th>
+    <th class="py-3 px-4 font-semibold text-center">Գործողություն</th>
+  `;
 }
 }
 
@@ -398,8 +421,9 @@ const artVal = r[colMap.art];
 const art = (artVal !== null && artVal !== undefined) ? String(artVal).trim() : '';
 if (!art || art.toLowerCase().includes('artikul') || art.toLowerCase().includes('արտիկուլ') || art.length > 30) continue;
 
-let wholesale = 0;
 const defaultWholesale = Number(r[colMap.wholesale]) || 0;
+let wholesale = 0;
+let resaleWholesale = defaultWholesale;
 
 if (userSheetType === 'KP') {
   const promoVal = colMap.kpPromo !== -1 ? Number(r[colMap.kpPromo]) : 0;
@@ -440,10 +464,14 @@ break;
 
 const retail = Number(r[colMap.retail]) || 0;
 
-// Расчет рентабельности по формуле: (1 - (opt / roznica)) * 100%
-let marginPercent = 0;
+// Расчет рентабельности
+let marginVal = 0;
 if (retail > 0 && wholesale > 0) {
-  marginPercent = (1 - (wholesale / retail)) * 100;
+  if (authorizedClient === "«ԴՈՄՈՒՍ» ՓԲԸ") {
+    marginVal = retail / wholesale; // roznica / opt
+  } else {
+    marginVal = (1 - (wholesale / retail)) * 100; // в процентах
+  }
 }
 
 const q003 = colMap.s003 !== -1 ? (Number(r[colMap.s003]) || 0) : 0;
@@ -494,7 +522,8 @@ category: category,
 name: name,
 retail: retail,
 wholesale: wholesale,
-marginPercent: marginPercent,
+resaleWholesale: resaleWholesale,
+marginVal: marginVal,
 stockStatus: stockStatus
 });
 }
@@ -569,11 +598,15 @@ const stockBadgeClass = isUtochnit
 
 let marginBadge = '—';
 if (p.retail > 0 && p.wholesale > 0) {
-  let colorClass = 'bg-blue-100 text-blue-800 border-blue-200';
-  if (p.marginPercent >= 20) colorClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
-  else if (p.marginPercent < 5) colorClass = 'bg-amber-100 text-amber-800 border-amber-200';
-  
-  marginBadge = `<span class="px-2 py-1 rounded-lg text-xs font-bold border ${colorClass}">${p.marginPercent.toFixed(1)}%</span>`;
+  if (authorizedClient === "«ԴՈՄՈՒՍ» ՓԲԸ") {
+    marginBadge = `<span class="px-2 py-1 rounded-lg text-xs font-bold border bg-gray-100 text-gray-800 border-gray-300">${p.marginVal.toFixed(2)}</span>`;
+  } else {
+    let colorClass = 'bg-blue-100 text-blue-800 border-blue-200';
+    if (p.marginVal >= 20) colorClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+    else if (p.marginVal < 5) colorClass = 'bg-amber-100 text-amber-800 border-amber-200';
+    
+    marginBadge = `<span class="px-2 py-1 rounded-lg text-xs font-bold border ${colorClass}">${p.marginVal.toFixed(1)}%</span>`;
+  }
 }
 
 const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
@@ -596,6 +629,11 @@ actionCellHtml = `
 `;
 }
 
+let resaleColHtml = '';
+if (userSheetType === 'KP') {
+  resaleColHtml = `<td class="py-3 px-4 text-right text-gray-700 font-medium">${p.resaleWholesale ? p.resaleWholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</td>`;
+}
+
 tr.innerHTML = `
 <td class="py-3 px-4 font-mono font-medium text-blue-600">
 <a href="${searchUrl}" target="_blank" class="hover:underline flex items-center gap-1" title="Գտնել Zigzag.am կայքում">
@@ -613,6 +651,7 @@ ${getProductImageHtml(p.articul, p.name)}
 <td class="py-3 px-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${stockBadgeClass}">${p.stockStatus}</span></td>
 <td class="py-3 px-4 text-right text-gray-600">${p.retail ? p.retail.toLocaleString('ru-RU') + ' ֏' : '—'}</td>
 <td class="py-3 px-4 text-center">${marginBadge}</td>
+${resaleColHtml}
 <td class="py-3 px-4 text-right font-semibold text-gray-900">${p.wholesale ? p.wholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</td>
 <td class="py-3 px-4 text-center">${actionCellHtml}</td>
 `;
