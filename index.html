@@ -147,27 +147,13 @@ class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 
 <!-- Պատվերի պատուհան -->
 <div id="orderModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
-<div class="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl max-h-[90vh] flex flex-col">
+<div class="bg-white rounded-2xl max-w-4xl w-full p-6 shadow-2xl max-h-[90vh] flex flex-col">
 <div class="flex justify-between items-center mb-4 border-b pb-3">
-<h3 class="text-lg font-bold text-gray-900">Պատվերի պարունակությունը</h3>
+<h3 class="text-lg font-bold text-gray-900">Պատվերի պարունակությունը (յուրաքանչյուր ապրանքի վճարման եղանակը կարող եք փոխել առանձին)</h3>
 <button onclick="closeOrderModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
 </div>
 
-<div id="modalItemsList" class="overflow-y-auto flex-grow divide-y divide-gray-100 mb-4 max-h-[40vh] text-sm">
-</div>
-
-<div class="bg-gray-50 p-3 rounded-xl border border-gray-200 mb-4">
-<label class="block text-xs font-bold text-gray-700 uppercase mb-2">Վճարման եղանակը․</label>
-<div class="flex flex-col sm:flex-row gap-4">
-<label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-800">
-<input type="radio" name="paymentMethod" value="Կանխիկ" checked class="w-4 h-4 text-blue-600 focus:ring-blue-500">
-<span>💵 Կանխիկ</span>
-</label>
-<label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-800">
-<input type="radio" name="paymentMethod" value="Բանկային փոխանցումով" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
-<span>🏦 Բանկային փոխանցումով</span>
-</label>
-</div>
+<div id="modalItemsList" class="overflow-y-auto flex-grow divide-y divide-gray-100 mb-4 max-h-[50vh] text-sm pr-2">
 </div>
 
 <div class="border-t pt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -754,7 +740,7 @@ const product = allProducts.find(p => p.articul === articul);
 if (!product) return;
 
 if (!cart[articul]) {
-cart[articul] = { product: product, qty: 1 };
+cart[articul] = { product: product, qty: 1, paymentMethod: 'Կանխիկ' };
 } else {
 cart[articul].qty += 1;
 }
@@ -802,17 +788,26 @@ const stockBadgeClass = isUtochnit
 : 'bg-emerald-100 text-emerald-800 border border-emerald-300';
 
 const div = document.createElement('div');
-div.className = 'py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3';
+div.className = 'py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-100';
 div.innerHTML = `
 <div class="flex-grow">
-<div class="flex items-center gap-2">
+<div class="flex items-center gap-2 mb-1">
 <span class="font-mono text-xs text-blue-600 font-semibold">${item.product.articul}</span>
 <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${stockBadgeClass}">${item.product.stockStatus}</span>
 </div>
 <div class="text-gray-900 font-medium">${item.product.name || 'Ապրանք'}</div>
 <div class="text-xs text-gray-500">Մեծածախ գին՝ ${item.product.wholesale.toLocaleString('ru-RU')} ֏</div>
 </div>
-<div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+
+<div class="flex items-center gap-4 flex-wrap w-full md:w-auto justify-between md:justify-end">
+<!-- Выбор способа оплаты для конкретного товара -->
+<div>
+<select onchange="updateItemPayment('${item.product.articul}', this.value)" class="px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+<option value="Կանխիկ" ${item.paymentMethod === 'Կանխիկ' ? 'selected' : ''}>💵 Կանխիկ</option>
+<option value="Բանկային փոխանցումով" ${item.paymentMethod === 'Բանկային փոխանցումով' ? 'selected' : ''}>🏦 Բանկային փոխանցումով</option>
+</select>
+</div>
+
 <div class="flex items-center border rounded-lg overflow-hidden bg-gray-50">
 <button onclick="changeQty('${item.product.articul}', -1)" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 font-bold">-</button>
 <span class="px-4 py-1 font-semibold text-sm">${item.qty}</span>
@@ -826,6 +821,12 @@ listContainer.appendChild(div);
 
 document.getElementById('modalTotalSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
 document.getElementById('orderModal').classList.remove('hidden');
+}
+
+function updateItemPayment(articul, method) {
+if (cart[articul]) {
+  cart[articul].paymentMethod = method;
+}
 }
 
 function changeQty(articul, delta) {
@@ -848,24 +849,15 @@ function closeOrderModal() {
 document.getElementById('orderModal').classList.add('hidden');
 }
 
-function getSelectedPaymentMethod() {
-const radios = document.getElementsByName('paymentMethod');
-for (let r of radios) {
-if (r.checked) return r.value;
-}
-return 'Կանխիկ';
-}
-
 function copyOrderText() {
-const paymentMethod = getSelectedPaymentMethod();
-let text = `ՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\nՎճարման եղանակը՝ ${paymentMethod}\n\n`;
+let text = `ՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\n\n`;
 let total = 0;
 let i = 1;
 
 Object.values(cart).forEach(item => {
 const sum = item.product.wholesale * item.qty;
 total += sum;
-text += `${i}. Արտիկուլ: ${item.product.articul}\n   Անվանում: ${item.product.name}\n   Առկայություն: ${item.product.stockStatus}\n   Քանակ: ${item.qty} հատ\n   Գին (Մեծածախ): ${item.product.wholesale.toLocaleString('ru-RU')} ֏\n   Գումար: ${sum.toLocaleString('ru-RU')} ֏\n\n`;
+text += `${i}. Արտիկուլ: ${item.product.articul}\n   Անվանում: ${item.product.name}\n   Առկայություն: ${item.product.stockStatus}\n   Քանակ: ${item.qty} հատ\n   Վճարում: ${item.paymentMethod}\n   Գին (Մեծածախ): ${item.product.wholesale.toLocaleString('ru-RU')} ֏\n   Գումար: ${sum.toLocaleString('ru-RU')} ֏\n\n`;
 i++;
 });
 text += `ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
@@ -877,55 +869,71 @@ closeOrderModal();
 }
 
 function downloadOrderExcel() {
-const paymentMethod = getSelectedPaymentMethod();
 const excelData = [];
-let totalSum = 0;
+let cashTotal = 0;
+let bankTotal = 0;
+
+// Разделяем корзину на две группы по способу оплаты
+const cashItems = [];
+const bankItems = [];
 
 Object.values(cart).forEach(item => {
-const sum = item.product.wholesale * item.qty;
-totalSum += sum;
-excelData.push({
-'Արտիկուլ': item.product.articul,
-'Բրենդ': item.product.brand,
-'Անվանում': item.product.name,
-'Առկայություն': item.product.stockStatus,
-'Քանակ (հատ)': item.qty,
-'Մեծածախ գին (AMD)': item.product.wholesale,
-'Գումար (AMD)': sum
-});
+if (item.paymentMethod === 'Բանկային փոխանցումով') {
+  bankItems.push(item);
+} else {
+  cashItems.push(item);
+}
 });
 
-excelData.push({
-'Արտիկուլ': '',
-'Բրենդ': '',
-'Անվանում': 'ԸՆԴՀԱՆՈՒՐ',
-'Առկայություն': '',
-'Քանակ (հատ)': '',
-'Մեծածախ գին (AMD)': '',
-'Գումար (AMD)': totalSum
-});
+// СПИСОК 1: КАНХИК (ЗЕЛЕНОВАТЫЙ / ТЕПЛЫЙ ОТТЕНОК)
+if (cashItems.length > 0) {
+  excelData.push({ 'Արտիկուլ': '--- ԿԱՆԽԻԿ ՎՃԱՐՄԱՆ ԵՂԱՆԱԿՈՎ ՊԱՏՎԵՐ ---', 'Բրենդ': '', 'Անվանում': '', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+  cashItems.forEach(item => {
+    const sum = item.product.wholesale * item.qty;
+    cashTotal += sum;
+    excelData.push({
+      'Արտիկուլ': item.product.articul,
+      'Բրենդ': item.product.brand,
+      'Անվանում': item.product.name,
+      'Առկայություն': item.product.stockStatus,
+      'Քանակ (հատ)': item.qty,
+      'Մեծածախ գին (AMD)': item.product.wholesale,
+      'Գումար (AMD)': sum,
+      'Վճարման եղանակ': 'Կանխիկ'
+    });
+  });
+  excelData.push({ 'Արտիկուլ': '', 'Բրենդ': '', 'Անվանում': 'ԸՆԴՀԱՆՈՒՐ (ԿԱՆԽԻԿ)', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': cashTotal, 'Վճարման եղանակ': 'Կանխիկ' });
+  excelData.push({ 'Արտիկուլ': '', 'Բրենդ': '', 'Անվանում': '', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+}
 
-excelData.push({
-'Արտիկուլ': 'Կոնտրագենտ:',
-'Բրենդ': authorizedClient,
-'Անվանում': '',
-'Առկայություն': '',
-'Քանակ (հատ)': '',
-'Մեծածախ գին (AMD)': '',
-'Գումար (AMD)': ''
-});
+// СПИСОК 2: БАНКОВСКИЙ ПЕРЕВОД (СИНИЙ / ХОЛОДНЫЙ ОТТЕНОԿ)
+if (bankItems.length > 0) {
+  excelData.push({ 'Արտիկուլ': '--- ԲԱՆԿԱՅԻՆ ՓՈԽԱՆՑՈՒՄՈՎ ՎՃԱՐՄԱՆ ԵՂԱՆԱԿՈՎ ՊԱՏՎԵՐ ---', 'Բրենդ': '', 'Անվանում': '', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+  bankItems.forEach(item => {
+    const sum = item.product.wholesale * item.qty;
+    bankTotal += sum;
+    excelData.push({
+      'Արտիկուլ': item.product.articul,
+      'Բրենդ': item.product.brand,
+      'Անվանում': item.product.name,
+      'Առկայություն': item.product.stockStatus,
+      'Քանակ (հատ)': item.qty,
+      'Մեծածախ գին (AMD)': item.product.wholesale,
+      'Գումար (AMD)': sum,
+      'Վճարման եղանակ': 'Բանկային փոխանցումով'
+    });
+  });
+  excelData.push({ 'Արտիկուլ': '', 'Բրենդ': '', 'Անվանում': 'ԸՆԴՀԱՆՈՒՐ (ԲԱՆԿԱՅԻՆ)', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': bankTotal, 'Վճարման եղանակ': 'Բանկային փոխանցումով' });
+}
 
-excelData.push({
-'Արտիկուլ': 'Վճարման եղանակը:',
-'Բրենդ': paymentMethod,
-'Անվանում': '',
-'Առկայություն': '',
-'Քանակ (հատ)': '',
-'Մեծածախ գին (AMD)': '',
-'Գումար (AMD)': ''
-});
+// ОБЩАЯ ИНФОРМАЦИЯ
+excelData.push({ 'Արտիկուլ': '', 'Բրենդ': '', 'Անվանում': '', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+excelData.push({ 'Արտիկուլ': 'Կոնտրագենտ:', 'Բրենդ': authorizedClient, 'Անվանում': '', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+excelData.push({ 'Արտիկուլ': 'ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ ԲՈԼՈՐԻ', 'Բրենդ': '', 'Անվանում': '', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': (cashTotal + bankTotal), 'Վճարման եղանակ': '' });
 
 const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+// Добавляем стили (цвета ячеек заголовков списков в Excel, если поддерживается)
 const workbook = XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(workbook, worksheet, "Պատվեր");
 
@@ -957,10 +965,11 @@ reader.onload = function(e) {
       if (!r || r.length === 0) return;
       let articul = '';
       let qty = 0;
+      let payMethod = 'Կանխիկ';
 
       for (let j = 0; j < r.length; j++) {
         let val = String(r[j] || '').trim();
-        if (val === 'Արտիկուլ' || val === 'Articul') {
+        if (val === 'Արտիկուլ' || val === 'Articul' || val.includes('---')) {
           return;
         }
       }
@@ -977,12 +986,20 @@ reader.onload = function(e) {
         if (!qty && r.length >= 5) {
           qty = Number(r[4]) || 1;
         }
+
+        // Проверяем способ оплаты в строке
+        for (let cell of r) {
+          let sCell = String(cell || '');
+          if (sCell.includes('Բանկային')) {
+            payMethod = 'Բանկային փոխանցումով';
+          }
+        }
       }
 
       if (articul && qty > 0) {
         const product = allProducts.find(p => p.articul === articul);
         if (product) {
-          cart[articul] = { product: product, qty: qty };
+          cart[articul] = { product: product, qty: qty, paymentMethod: payMethod };
           loadedCount++;
         }
       }
