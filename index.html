@@ -576,6 +576,7 @@ if (!response.ok) throw new Error('pass.xlsx ֆայլը չի գտնվել');
 const arrayBuffer = await response.arrayBuffer();
 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
 
+// Obkhodim vse vkladki (KP, Dealers i lyubyye drugiye)
 workbook.SheetNames.forEach(sheetName => {
 const sheet = workbook.Sheets[sheetName];
 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
@@ -619,34 +620,71 @@ for (let i = headerIdx + 1; i < rows.length; i++) {
     let addrs = [];
     let contacts = [];
 
-    headers.forEach((h, idx) => {
-      let hL = h.toLowerCase();
-      let val = r[idx] !== undefined && r[idx] !== null ? String(r[idx]).trim() : '';
-      if (!val) return;
-      if (hL.includes('организация') || hL.includes('կազմակերպություն')) orgs.push(val);
-      if (hL.includes('адрес') || hL.includes('հասցե')) addrs.push(val);
-      if (hL.includes('контакт') || hL.includes('կոնտակտ')) contacts.push(val);
-    });
+    // Proveryayem nabor ot 1 do 5 (Կազմակերպություն 1, Կազմակերպություն 2, Կազմակերպություն 3...)
+    for (let k = 1; k <= 5; k++) {
+      let orgVal = '';
+      let addrVal = '';
+      let contVal = '';
 
-    if (orgs.length === 0 && r.length > 2) {
-      for (let j = 2; j < r.length; j += 3) {
-        if (r[j]) orgs.push(String(r[j]).trim());
-        if (r[j+1]) addrs.push(String(r[j+1]).trim());
-        if (r[j+2]) contacts.push(String(r[j+2]).trim());
+      headers.forEach((h, idx) => {
+        let hClean = h.replace(/\s+/g, ' ').trim().toLowerCase();
+        let val = r[idx] !== undefined && r[idx] !== null ? String(r[idx]).trim() : '';
+        if (!val) return;
+
+        if (hClean === `կազմակերպություն ${k}` || hClean === `organization ${k}` || (k === 1 && (hClean === 'կազմակերպություն' || hClean === 'контрагент'))) {
+          orgVal = val;
+        }
+        if (hClean === `առաքման հացսե ${k}` || hClean === `առաքման հասցե ${k}` || hClean === `address ${k}` || (k === 1 && (hClean === 'առաքման հացսե' || hClean === 'առաքման հասցե'))) {
+          addrVal = val;
+        }
+        if (hClean === `կոնտակտային անձ ${k}` || hClean === `contact ${k}` || (k === 1 && (hClean === 'կոնտակտային անձ' || hClean === 'contact'))) {
+          contVal = val;
+        }
+      });
+
+      if (orgVal || addrVal || contVal) {
+        orgs.push(orgVal || client);
+        addrs.push(addrVal);
+        contacts.push(contVal);
       }
     }
 
-    if (orgs.length === 0) orgs.push(client);
-    if (addrs.length === 0) addrs.push('');
-    if (contacts.length === 0) contacts.push('');
+    // Esli vkladka KP ili netu 1,2,3 - sobiraem obshchie kolonki
+    if (orgs.length === 0) {
+      let singleOrg = client;
+      let singleAddr = '';
+      let singleCont = '';
+
+      headers.forEach((h, idx) => {
+        let hL = h.toLowerCase();
+        let val = r[idx] !== undefined && r[idx] !== null ? String(r[idx]).trim() : '';
+        if (!val) return;
+        if (hL.includes('контрагент') || hL.includes('клиент') || hL.includes('կոնտրագենտ') || hL.includes('կազմակերպություն')) singleOrg = val;
+        if (hL.includes('адрес') || hL.includes('հասցե')) singleAddr = val;
+        if (hL.includes('контакт') || hL.includes('կոնտակտ') || hL.includes('contact')) singleCont = val;
+      });
+
+      orgs.push(singleOrg);
+      addrs.push(singleAddr);
+      contacts.push(singleCont);
+    }
 
     let maxLen = Math.max(orgs.length, addrs.length, contacts.length);
     for (let k = 0; k < maxLen; k++) {
-      rowDataObj.rowsList.push({
-        organization: orgs[k] || orgs[0] || client,
-        address: addrs[k] || addrs[0] || '',
-        contact: contacts[k] || contacts[0] || ''
-      });
+      let oName = orgs[k] || orgs[0] || client;
+      let aName = addrs[k] || addrs[0] || '';
+      let cName = contacts[k] || contacts[0] || '';
+      if (oName || aName || cName) {
+        rowDataObj.rowsList.push({
+          organization: oName,
+          address: aName,
+          contact: cName
+        });
+      }
+    }
+
+    if (rowDataObj.rowsList.length === 0) {
+      rowDataObj.rowsList.push({ organization: client, address: '', contact: '' });
     }
 
     passMap[pHash] = rowDataObj;
