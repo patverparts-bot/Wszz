@@ -488,35 +488,37 @@ resetAndRender();
 }
 
 function getBrandLogoHtml(brandName) {
-  if (!brandName || brandName === 'Այլ' || brandName === '—') {
-    return `<span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-semibold">${brandName || '—'}</span>`;
-  }
-  const cleanBrand = String(brandName).trim().toLowerCase();
-  const domain = brandDomains[cleanBrand] || `${cleanBrand.replace(/\s+/g, '')}.com`;
-  const logoUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
-  return `<div class="flex items-center gap-1.5"><img src="${logoUrl}" alt="" class="w-5 h-5 object-contain" loading="lazy" onerror="this.style.display='none'"><span>${brandName}</span></div>`;
+if (!brandName || brandName === 'Այլ' || brandName === '—') {
+return <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-semibold"&gt;${brandName || '—'}</span>`;
+}
+
+const cleanBrand = brandName.trim().toLowerCase();
+const domain = brandDomains[cleanBrand] || ``${cleanBrand.replace(/\s+/g, '')}.com; const logoUrl =https://www.google.com/s2/favicons?domain=${domain}&sz=64;
+
+return &lt;div class="flex items-center gap-1.5"&gt; &lt;img src="${logoUrl}" alt="{brandName}</span>
+</div>
+`;
 }
 
 function handleImgError(imgElement, searchUrl) {
-  const container = imgElement.parentElement;
-  if (!imgElement.dataset.triedPub) {
-    imgElement.dataset.triedPub = "true";
-    if (imgElement.dataset.pubUrl) imgElement.src = imgElement.dataset.pubUrl;
-    else imgElement.src = '';
-  } else {
-    container.outerHTML = `<a href="${searchUrl}" target="_blank" rel="noopener noreferrer" class="text-xs text-blue-600 hover:underline font-medium inline-block leading-tight">Դիտել նկարագրությունը</a>`;
-  }
+const container = imgElement.parentElement;
+if (!imgElement.dataset.triedPub) {
+imgElement.dataset.triedPub = "true";
+imgElement.src = imgElement.dataset.pubUrl;
+} else {
+container.outerHTML = <a href="${searchUrl}" target="_blank" class="text-xs text-blue-600 hover:underline font-medium inline-block leading-tight">Դիտել նկարագրությունը</a>`;
+}
 }
 
 function getProductImageHtml(articul, productName) {
-  const cleanArt = String(articul ?? '').trim();
-  const a1 = cleanArt.charAt(0) || '0';
-  const a2 = cleanArt.charAt(1) || '0';
-  const url1 = `https://www.zigzag.am/media/catalog/product/${a1}/${cleanArt}.jpg`;
-  const url2 = `https://www.zigzag.am/pub/media/catalog/product/${a2}/${encodeURIComponent(cleanArt)}.jpg`;
-  const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(cleanArt)}`;
-  const safeName = String(productName || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-  return `<div class="product-img-container"><img src="${url1}" data-pub-url="${url2}" alt="${safeName}" class="product-img" loading="lazy" onerror="handleImgError(this, '${searchUrl}')"></div>`;
+const cleanArt = String(articul).trim();
+const a1 = cleanArt.charAt(0) || '0';
+const a2 = cleanArt.charAt(1) || '0';
+
+const url1 = https://www.zigzag.am/media/catalog/product/${a1}/{cleanArt}.jpg; const url2 =https://www.zigzag.am/pub/media/catalog/product/{a2}/{encodeURIComponent(cleanArt)}`;
+
+return &lt;div class="product-img-container"&gt; &lt;img src="${url1}" data-pub-url="${url2}" alt="${productName}" class="product-img" loading="lazy"
+onerror="handleImgError(this, '${searchUrl}')"&gt; &lt;/div&gt;;
 }
 
 async function loadPasswordsFile() {
@@ -602,7 +604,7 @@ document.getElementById('authScreen').classList.add('hidden');
 document.getElementById('mainApp').classList.remove('hidden');
 document.getElementById('mainApp').classList.add('flex');
 
-document.getElementById('welcomeMsg').innerText = `Բարև ձեզ, ${authorizedClient}։`;
+document.getElementById('welcomeMsg').innerText = Բարև ձեզ, ${authorizedClient}։`;
 
 setupTableHeader();
 loadExcelFile();
@@ -630,7 +632,7 @@ cols.push({ name: 'Վերավաճառքի մեծածախ գին', align: 'text-r
 cols.push({ name: 'Մեծածախ (Wholesale)', align: 'text-right' });
 cols.push({ name: 'Գործողություն', align: 'text-center' });
 
-headerRow.innerHTML = cols.map(c => `<th class="${thClass} ${c.align}">${c.name}</th>`).join('');
+headerRow.innerHTML = cols.map(c => <th class="${thClass} {c.name}</th>`).join('');
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -878,7 +880,7 @@ let isValidStock = false;
 if (authorizedClient === "Администратор") {
 if (adminStockDetails.length > 0) {
 isValidStock = true;
-stockStatus = adminStockDetails.map(s => `${s.name}: ${s.qty}`).join(', ');
+stockStatus = adminStockDetails.map(s => ${s.name}: ${s.qty}).join(', ');
 } else {
 isValidStock = false;
 }
@@ -935,13 +937,13 @@ renderCategoryDropdown(availableCategories);
 }
 
 function renderBrandDropdown(brands) {
-  const dropdown = document.getElementById('brandDropdown');
-  if (!dropdown) return;
-  if (!brands || brands.length === 0) {
-    dropdown.innerHTML = '<div class="p-2.5 text-gray-400 text-xs text-center">Ոչինչ չի գտնվել</div>';
-    return;
-  }
-  dropdown.innerHTML = brands.map(b => `<div onclick="selectBrand('${String(b).replace(/'/g, "\\'")}')" class="px-3 py-2 hover:bg-blue-50 cursor-pointer font-medium text-gray-800 transition border-b border-gray-50 last:border-none">${String(b).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div>`).join('');
+const dropdown = document.getElementById('brandDropdown');
+if (!brands || brands.length === 0) {
+dropdown.innerHTML = '<div class="p-2.5 text-gray-400 text-xs text-center">Ոչինչ չի գտնվել</div>';
+return;
+}
+dropdown.innerHTML = brands.map(b => &lt;div onclick="selectBrand('${b}')" class="px-3 py-2 hover:bg-blue-50 cursor-pointer font-medium text-gray-800 transition border-b border-gray-50 last:border-none">
+${b} &lt;/div&gt;).join('');
 }
 
 function showBrandDropdown() {
@@ -983,13 +985,13 @@ resetAndRender();
 }
 
 function renderCategoryDropdown(categories) {
-  const dropdown = document.getElementById('categoryDropdown');
-  if (!dropdown) return;
-  if (!categories || categories.length === 0) {
-    dropdown.innerHTML = '<div class="p-2.5 text-gray-400 text-xs text-center">Ոչինչ չի գտնվել</div>';
-    return;
-  }
-  dropdown.innerHTML = categories.map(c => `<div onclick="selectCategory('${String(c).replace(/'/g, "\'")}')" class="px-3 py-2 hover:bg-blue-50 cursor-pointer font-medium text-gray-800 transition border-b border-gray-50 last:border-none">${String(c).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div>`).join('');
+const dropdown = document.getElementById('categoryDropdown');
+if (!categories || categories.length === 0) {
+dropdown.innerHTML = '<div class="p-2.5 text-gray-400 text-xs text-center">Ոչինչ չի գտնվել</div>';
+return;
+}
+dropdown.innerHTML = categories.map(c => &lt;div onclick="selectCategory('${c}')" class="px-3 py-2 hover:bg-blue-50 cursor-pointer font-medium text-gray-800 transition border-b border-gray-50 last:border-none">
+${c} &lt;/div&gt;).join('');
 }
 
 function showCategoryDropdown() {
@@ -1071,7 +1073,7 @@ filteredProducts.sort((a, b) => b.marginVal - a.marginVal);
 }
 
 saveFiltersToStorage();
-document.getElementById('productCountInfo').innerText = `Գտնվել է ${filteredProducts.length} ապրանք`;
+document.getElementById('productCountInfo').innerText = Գտնվել է ${filteredProducts.length} ապրանք`;
 }
 
 function resetAndRender() {
@@ -1107,90 +1109,126 @@ displayedCount += nextBatch.length;
 
 if (displayedCount < filteredProducts.length) {
 loadMoreContainer.classList.remove('hidden');
-document.getElementById('loadMoreCounter').innerText = `(${displayedCount} / ${filteredProducts.length})`;
+document.getElementById('loadMoreCounter').innerText = (${displayedCount} / ${filteredProducts.length});
 } else {
 loadMoreContainer.classList.add('hidden');
 }
 }
 
 function createRowElement(p) {
-  const tr = document.createElement('tr');
-  tr.className = 'hover:bg-blue-50/40 transition-colors border-b border-gray-100';
-  const isUtochnit = String(p.stockStatus || '').includes('Ճշտել');
-  const stockBadgeClass = authorizedClient === "Администратор"
-    ? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-xs'
-    : (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
-  let marginBadge = '—';
-  if (p.retail > 0 && p.wholesale > 0) {
-    if (authorizedClient === "«ԴՈ繆ՈՒՍ» ՓԲԸ") {
-      marginBadge = `<span class="px-2 py-1 rounded-lg text-xs font-bold border bg-gray-100 text-gray-800 border-gray-300">${Number(p.marginVal).toFixed(2)}</span>`;
-    } else {
-      let colorClass = 'bg-blue-100 text-blue-800 border-blue-200';
-      if (p.marginVal >= 20) colorClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
-      else if (p.marginVal < 5) colorClass = 'bg-amber-100 text-amber-800 border-amber-200';
-      marginBadge = `<span class="px-2 py-1 rounded-lg text-xs font-bold border ${colorClass}">${Number(p.marginVal).toFixed(1)}%</span>`;
-    }
-  }
-  let retailCellHtml = '—';
-  if (p.retail > 0) {
-    const priceFormatted = p.retail.toLocaleString('ru-RU') + ' ֏';
-    retailCellHtml = p.isPromo
-      ? `<div class="flex flex-col items-end"><span class="text-gray-900 font-medium">${priceFormatted}</span><span class="px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-[10px] font-bold mt-0.5 border border-red-200">ԱԿՑԻԱ</span></div>`
-      : `<span class="text-gray-600">${priceFormatted}</span>`;
-  }
-  let wholesaleCellHtml = '—';
-  if (p.wholesale > 0) {
-    const wholesaleFormatted = p.wholesale.toLocaleString('ru-RU') + ' ֏';
-    wholesaleCellHtml = p.isWholesalePromo
-      ? `<div class="flex flex-col items-end"><span class="text-gray-900 font-semibold">${wholesaleFormatted}</span><span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold mt-0.5 border border-emerald-200">PROMO</span></div>`
-      : `<span class="text-gray-900 font-semibold">${wholesaleFormatted}</span>`;
-  }
-  const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
-  const cartItem = cart[p.articul];
-  const actionCellHtml = getActionControlHtml(p.articul, cartItem);
-  let resaleColHtml = '';
-  if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
-    resaleColHtml = `<td class="py-3 px-4 text-right text-gray-700 font-medium">${p.resaleWholesale ? p.resaleWholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</td>`;
-  }
-  tr.innerHTML = `<td class="py-3 px-4 font-mono font-medium text-blue-600"><a href="${searchUrl}" target="_blank" rel="noopener noreferrer" class="hover:underline flex items-center gap-1 text-xs" title="Գտնել Zigzag.am կայքում">${p.articul} <span class="text-[10px] text-gray-400 font-normal">Դիտել նկարագրությունը</span></a></td>
-    <td class="py-3 px-4">${getBrandLogoHtml(p.brand)}</td>
-    <td class="py-3 px-4 text-gray-600">${p.category || '—'}</td>
-    <td class="py-3 px-4"><div class="flex items-center gap-3">${getProductImageHtml(p.articul, p.name)}<span class="text-gray-900 font-medium">${p.name || '—'}</span></div></td>
-    <td class="py-3 px-4"><span class="px-2.5 py-1 rounded-md text-xs font-semibold ${stockBadgeClass}">${p.stockStatus || '—'}</span></td>
-    <td class="py-3 px-4 text-right">${retailCellHtml}</td><td class="py-3 px-4 text-center">${marginBadge}</td>${resaleColHtml}
-    <td class="py-3 px-4 text-right">${wholesaleCellHtml}</td><td class="py-3 px-4 text-center">${actionCellHtml}</td>`;
-  return tr;
+const tr = document.createElement('tr');
+tr.className = 'hover:bg-blue-50/40 transition-colors border-b border-gray-100';
+
+const isUtochnit = p.stockStatus.includes('Ճշտել');
+const stockBadgeClass = authorizedClient === "Администратор"
+? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-xs'
+: (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
+
+let marginBadge = '—';
+if (p.retail > 0 && p.wholesale > 0) {
+if (authorizedClient === "«ԴՈ繆ՈՒՍ» ՓԲԸ") {
+marginBadge = <span class="px-2 py-1 rounded-lg text-xs font-bold border bg-gray-100 text-gray-800 border-gray-300"&gt;${p.marginVal.toFixed(2)}</span>`;
+} else {
+let colorClass = 'bg-blue-100 text-blue-800 border-blue-200';
+if (p.marginVal >= 20) colorClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+else if (p.marginVal < 5) colorClass = 'bg-amber-100 text-amber-800 border-amber-200';
+
+marginBadge = <span class="px-2 py-1 rounded-lg text-xs font-bold border ${colorClass}">${p.marginVal.toFixed(1)}%&lt;/span>;
+}
+}
+
+let retailCellHtml = '—';
+if (p.retail > 0) {
+const priceFormatted = p.retail.toLocaleString('ru-RU') + ' ֏';
+if (p.isPromo) {
+retailCellHtml = <div class="flex flex-col items-end"&gt;&lt;span class="text-gray-900 font-medium"&gt;${priceFormatted}</span><span class="px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-[10px] font-bold mt-0.5 border border-red-200">ԱԿՑԻԱ</span></div>; } else { retailCellHtml =<span class="text-gray-600">${priceFormatted}&lt;/span>;
+}
+}
+
+let wholesaleCellHtml = '—';
+if (p.wholesale > 0) {
+const wholesaleFormatted = p.wholesale.toLocaleString('ru-RU') + ' ֏';
+if (p.isWholesalePromo) {
+wholesaleCellHtml = <div class="flex flex-col items-end"&gt;&lt;span class="text-gray-900 font-semibold"&gt;${wholesaleFormatted}</span><span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold mt-0.5 border border-emerald-200">PROMO</span></div>; } else { wholesaleCellHtml =<span class="text-gray-900 font-semibold">${wholesaleFormatted}&lt;/span>;
+}
+}
+
+const searchUrl = https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
+const cartItem = cart[p.articul];
+
+let actionCellHtml = getActionControlHtml(p.articul, cartItem);
+
+let resaleColHtml = '';
+if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
+resaleColHtml = <td class="py-3 px-4 text-right text-gray-700 font-medium"&gt;${p.resaleWholesale ? p.resaleWholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</td>`;
+}
+
+tr.innerHTML = &lt;td class="py-3 px-4 font-mono font-medium text-blue-600"&gt; &lt;a href="${searchUrl}" target="_blank" class="hover:underline flex items-center gap-1 text-xs" title="Գտնել Zigzag.am կայքում">
+${p.articul} &lt;span class="text-[10px] text-gray-400 font-normal"&gt;Դիտել նկարագրությունը&lt;/span&gt; &lt;/a&gt; &lt;/td&gt; &lt;td class="py-3 px-4"&gt;${getBrandLogoHtml(p.brand)}</td>
+<td class="py-3 px-4 text-gray-600">${p.category}&lt;/td&gt; &lt;td class="py-3 px-4"&gt; &lt;div class="flex items-center gap-3"&gt; ${getProductImageHtml(p.articul, p.name)}
+<span class="text-gray-900 font-medium">${p.name || '—'}&lt;/span&gt; &lt;/div&gt; &lt;/td&gt; &lt;td class="py-3 px-4"&gt;&lt;span class="px-2.5 py-1 rounded-md text-xs font-semibold ${stockBadgeClass}">${p.stockStatus}&lt;/span&gt;&lt;/td&gt; &lt;td class="py-3 px-4 text-right"&gt;${retailCellHtml}</td>
+<td class="py-3 px-4 text-center">${marginBadge}&lt;/td&gt; ${resaleColHtml}
+<td class="py-3 px-4 text-right">${wholesaleCellHtml}&lt;/td&gt; &lt;td class="py-3 px-4 text-center"&gt;${actionCellHtml}</td>
+`;
+return tr;
 }
 
 function createCardElement(p) {
-  const div = document.createElement('div');
-  div.className = 'bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col gap-3';
-  const isUtochnit = String(p.stockStatus || '').includes('Ճշտել');
-  const stockBadgeClass = authorizedClient === "Администратор"
-    ? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-[11px]'
-    : (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
-  const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
-  const cartItem = cart[p.articul];
-  let marginBadge = '—';
-  if (p.retail > 0 && p.wholesale > 0) {
-    let colorClass = 'bg-blue-100 text-blue-800 border-blue-200';
-    if (p.marginVal >= 20) colorClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
-    else if (p.marginVal < 5) colorClass = 'bg-amber-100 text-amber-800 border-amber-200';
-    marginBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold border ${colorClass}">${Number(p.marginVal).toFixed(1)}%</span>`;
-  }
-  div.innerHTML = `<div class="flex items-start gap-3">${getProductImageHtml(p.articul, p.name)}
-    <div class="flex-grow min-w-0"><div class="flex items-center justify-between gap-2 mb-1"><a href="${searchUrl}" target="_blank" rel="noopener noreferrer" class="font-mono text-xs font-semibold text-blue-600 hover:underline">${p.articul}</a></div>
-    <h4 class="text-sm font-semibold text-gray-900 leading-snug">${p.name || '—'}</h4><div class="text-xs text-gray-500 mt-1">${p.brand || '—'} · ${p.category || '—'}</div></div></div>
-    <div class="flex items-center justify-between pt-2 border-t border-gray-100 text-xs"><span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${p.stockStatus || '—'}</span><div class="flex items-center gap-2"><span class="text-gray-400">Եկամտաբերություն:</span>${marginBadge}</div></div>
-    <div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-lg border border-gray-100"><div><div class="text-[11px] text-gray-500">Մանրածախ: <span class="font-medium text-gray-700">${p.retail ? p.retail.toLocaleString('ru-RU') + ' ֏' : '—'}</span></div><div class="text-xs font-bold text-gray-900">Մեծածախ: <span class="text-green-600">${p.wholesale ? p.wholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</span></div></div><div id="card-action-${p.articul}">${getActionControlHtml(p.articul, cartItem)}</div></div>`;
-  return div;
+const div = document.createElement('div');
+div.className = 'bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col gap-3';
+
+const isUtochnit = p.stockStatus.includes('Ճշտել');
+const stockBadgeClass = authorizedClient === "Администратор"
+? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-[11px]'
+: (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
+
+const searchUrl = https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
+const cartItem = cart[p.articul];
+
+let marginBadge = '';
+if (p.retail > 0 && p.wholesale > 0) {
+if (authorizedClient === "«ԴՈ繆ՈՒՍ» ՓԲԸ") {
+marginBadge = <span class="px-2 py-0.5 rounded text-[11px] font-bold border bg-gray-100 text-gray-800 border-gray-300"&gt;${p.marginVal.toFixed(2)}</span>; } else { let colorClass = 'bg-blue-100 text-blue-800 border-blue-200'; if (p.marginVal &gt;= 20) colorClass = 'bg-emerald-100 text-emerald-800 border-emerald-200'; else if (p.marginVal &lt; 5) colorClass = 'bg-amber-100 text-amber-800 border-amber-200'; marginBadge =<span class="px-2 py-0.5 rounded text-[11px] font-bold border ${colorClass}"&gt;${p.marginVal.toFixed(1)}%</span>`;
+}
+}
+
+div.innerHTML = &lt;div class="flex items-start gap-3"&gt;${getProductImageHtml(p.articul, p.name)}
+<div class="flex-grow min-w-0">
+<div class="flex items-center justify-between gap-2 mb-1">
+{searchUrl}" target="_blank" class="font-mono text-xs font-semibold text-blue-600 hover:underline">
+{p.name || '—'}</h4>
+</div>
+</div>
+
+<div class="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">
+<span class="px-2 py-0.5 rounded-md font-semibold {p.stockStatus}</span>
+<div class="flex items-center gap-2">
+<span class="text-gray-400">Եկամտաբերություն:</span>
+$`{marginBadge}
+</div>
+</div>
+
+<div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+<div>
+<div class="text-[11px] text-gray-500">Մանրածախ: <span class="font-medium text-gray-700">${p.retail ? p.retail.toLocaleString('ru-RU') + ' ֏' : '—'}&lt;/span&gt;&lt;/div&gt; &lt;div class="text-xs font-bold text-gray-900"&gt;Մեծածախ: &lt;span class="text-green-600"&gt;${p.wholesale ? p.wholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</span></div>
+</div>
+<div id="card-action-${p.articul}"&gt; ${getActionControlHtml(p.articul, cartItem)}
+</div>
+</div>
+`;
+return div;
 }
 
 function getActionControlHtml(articul, cartItem) {
-  if (!cartItem) {
-    return `<button onclick="addToCart('${articul}')" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition">Պատվիրել</button>`;
-  }
-  return `<div class="inline-flex items-center border border-blue-500 rounded-lg overflow-hidden bg-blue-50"><button onclick="changeQty('${articul}', -1)" class="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">−</button><span class="px-3 py-1 text-xs font-bold text-blue-900">${cartItem.qty}</span><button onclick="changeQty('${articul}', 1)" class="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">+</button></div>`;
+if (!cartItem) {
+return &lt;button onclick="addToCart('${articul}')" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition">
+Պատվիրել
+</button>
+; } else { return
+<div class="inline-flex items-center border border-blue-500 rounded-lg overflow-hidden bg-blue-50">
+<button onclick="changeQty('{cartItem.qty}</span>
+<button onclick="changeQty('${articul}', 1)" class="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs"&gt;+&lt;/button&gt; &lt;/div&gt;;
+}
 }
 
 function saveCartToStorage() {
@@ -1220,7 +1258,7 @@ showRestoredCartToast(count);
 function showRestoredCartToast(itemCount) {
 const toast = document.getElementById('restoredCartToast');
 const txt = document.getElementById('toastRestoredText');
-txt.innerText = `Վերականգնվել է նախորդ պատվերից ${itemCount} ապրանք`;
+txt.innerText = Վերականգնվել է նախորդ պատվերի${itemCount} ապրանք:`;
 toast.classList.remove('hidden');
 setTimeout(() => {
 closeCartToast();
@@ -1292,7 +1330,7 @@ const badgeDesk = document.getElementById('headerCartBadgeDesktop');
 
 if (totalCount > 0) {
 orderPanel.classList.remove('hidden');
-document.getElementById('orderCount').innerText = `${totalCount} ապրանք`;
+document.getElementById('orderCount').innerText = ${totalCount} ապրանք`;
 document.getElementById('orderSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
 
 if (badgeDesk) { badgeDesk.innerText = totalCount; badgeDesk.classList.remove('hidden'); }
@@ -1326,25 +1364,48 @@ openOrderModal();
 }
 
 function openOrderModal() {
-  const listContainer = document.getElementById('modalItemsList');
-  listContainer.innerHTML = '';
-  let totalSum = 0;
-  Object.entries(cart).forEach(([artKey, item]) => {
-    const price = getItemWholesalePrice(item);
-    const articul = getItemArticul(artKey, item);
-    const name = getItemName(item);
-    const sum = price * item.qty;
-    totalSum += sum;
-    const stockStatus = (item.product && item.product.stockStatus) ? item.product.stockStatus : 'Առկա է';
-    const isUtochnit = String(stockStatus).includes('Ճշտել');
-    const stockBadgeClass = authorizedClient === 'Администратор' ? 'bg-gray-100 text-gray-800' : (isUtochnit ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800');
-    const div = document.createElement('div');
-    div.className = 'py-3 sm:py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-gray-100';
-    div.innerHTML = `<div class="flex-grow"><div class="flex items-center gap-2 mb-1"><span class="font-mono text-xs text-blue-600 font-semibold">${articul}</span><span class="px-2 py-0.5 rounded-md font-semibold text-[10px] ${stockBadgeClass}">${stockStatus}</span></div><div class="text-gray-900 font-medium text-xs sm:text-sm">${name}</div></div><div class="flex items-center gap-3 flex-wrap w-full md:w-auto justify-between md:justify-end"><select onchange="updateItemPayment('${articul}', this.value)" class="px-2 py-1 bg-gray-50 border border-gray-300 rounded-lg text-xs font-semibold text-gray-800"><option value="Կանխիկ" ${item.paymentMethod === 'Կանխիկ' ? 'selected' : ''}>💵 Կանխիկ</option><option value="Բանկային փոխանցումով" ${item.paymentMethod === 'Բանկային փոխանցումով' ? 'selected' : ''}>🏦 Բանկային փոխանցումով</option></select><div class="flex items-center border rounded-lg overflow-hidden bg-gray-50"><button onclick="changeQty('${articul}', -1)" class="px-2 py-1">−</button><span class="px-3 text-xs font-bold">${item.qty}</span><button onclick="changeQty('${articul}', 1)" class="px-2 py-1">+</button></div><div class="font-bold text-sm">${sum.toLocaleString('ru-RU')} ֏</div><button onclick="changeQty('${articul}', -${item.qty})" class="text-red-600 text-xs">Հեռացնել</button></div>`;
-    listContainer.appendChild(div);
-  });
-  document.getElementById('modalTotalSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
-  document.getElementById('orderModal').classList.remove('hidden');
+const listContainer = document.getElementById('modalItemsList');
+listContainer.innerHTML = '';
+let totalSum = 0;
+
+Object.entries(cart).forEach(([artKey, item]) => {
+const price = getItemWholesalePrice(item);
+const articul = getItemArticul(artKey, item);
+const name = getItemName(item);
+const sum = price * item.qty;
+totalSum += sum;
+
+const stockStatus = (item.product && item.product.stockStatus) ? item.product.stockStatus : 'Առկա է';
+const isUtochnit = stockStatus.includes('Ճշտել');
+const stockBadgeClass = authorizedClient === "Администратор"
+? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-[10px]'
+: (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
+
+const div = document.createElement('div');
+div.className = 'py-3 sm:py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-gray-100';
+div.innerHTML = &lt;div class="flex-grow"&gt; &lt;div class="flex items-center gap-2 mb-1"&gt; &lt;span class="font-mono text-xs text-blue-600 font-semibold"&gt;${articul}</span>
+<span class="px-2 py-0.5 rounded-md font-semibold {stockStatus}</span>
+</div>
+<div class="text-gray-900 font-medium text-xs sm:text-sm">$`{name}</div>
+</div>
+
+<div class="flex items-center gap-3 flex-wrap w-full md:w-auto justify-between md:justify-end">
+<div>
+<select onchange="updateItemPayment('${articul}', this.value)" class="px-2 py-1 bg-gray-50 border border-gray-300 rounded-lg text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"&gt; &lt;option value="Կանխիկ" ${item.paymentMethod === 'Կանխիկ' ? 'selected' : ''}>💵 Կանխիկ</option>
+<option value="Բանկային փոխանցումով" `${item.paymentMethod === 'Բանկային փոխանցումով' ? 'selected' : ''}>🏦 Բանկային փոխանցումով</option>
+</select>
+</div>
+
+<div class="flex items-center border rounded-lg overflow-hidden bg-gray-50">
+<button onclick="changeQty('{item.qty}</span>
+<button onclick="changeQty('{sum.toLocaleString('ru-RU')} ֏</div>
+</div>
+`;
+listContainer.appendChild(div);
+});
+
+document.getElementById('modalTotalSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
+document.getElementById('orderModal').classList.remove('hidden');
 }
 
 function updateItemPayment(articul, method) {
@@ -1376,35 +1437,51 @@ document.getElementById('orderModal').classList.add('hidden');
 }
 
 function buildEmailFormattedText() {
-  const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
-  const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
-  const comment = (document.getElementById('orderCommentInput').value || '').trim();
-  let text = `ՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\n`;
-  if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
-  if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
-  if (comment) text += `Մեկնաբանություն: ${comment}\n`;
-  text += '\n';
-  let total = 0; let i = 1;
-  Object.entries(cart).forEach(([artKey, item]) => {
-    const price = getItemWholesalePrice(item); const articul = getItemArticul(artKey, item); const name = getItemName(item); const sum = price * item.qty; total += sum;
-    text += `${i}. Արտիկուլ: ${articul}\nԱնվանում: ${name}\nՔանակ: ${item.qty} հատ | Վճարում: ${item.paymentMethod || 'Կանխիկ'}\nԳումար: ${sum.toLocaleString('ru-RU')} ֏\n\n`; i++;
-  });
-  text += `ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
-  return text;
+const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
+const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
+const comment = (document.getElementById('orderCommentInput').value || '').trim();
+
+let text = ՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\n; if (delivDate) text +=Ցանկալի առաքման ամսաթիվ: ${delivDate}\n;
+if (delivAddr) text += Առաքման հասցե: ${delivAddr}\n; if (comment) text +=Մեկնաբանություն: ${comment}\n;
+text += \n;
+
+let total = 0;
+let i = 1;
+
+Object.entries(cart).forEach(([artKey, item]) => {
+const price = getItemWholesalePrice(item);
+const articul = getItemArticul(artKey, item);
+const name = getItemName(item);
+const sum = price * item.qty;
+total += sum;
+
+text += ${i}. Արտիկուլ: ${articul}\n Անվանում: ${name}\n Քանակ: ${item.qty} հատ | Վճարում: ${item.paymentMethod || 'Կանխիկ'}\n Գումար: ${sum.toLocaleString('ru-RU')} ֏\n\n;
+i++;
+});
+
+text += ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
+return text;
 }
 
 function buildViberFormattedText() {
-  const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
-  const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
-  const comment = (document.getElementById('orderCommentInput').value || '').trim();
-  let total = 0;
-  Object.values(cart).forEach(item => { total += getItemWholesalePrice(item) * item.qty; });
-  let text = `Բարև ձեզ,\n\nՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient})\n`;
-  if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
-  if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
-  if (comment) text += `Մեկնաբանություն: ${comment}\n`;
-  text += `ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
-  return text;
+const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
+const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
+const comment = (document.getElementById('orderCommentInput').value || '').trim();
+
+let total = 0;
+Object.entries(cart).forEach(([artKey, item]) => {
+const price = getItemWholesalePrice(item);
+total += (price * item.qty);
+});
+
+let text = Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը (խնդրում ենք կցել նոր ներբեռնված ֆայլը):\n;
+if (delivDate) text += Ցանկալի առաքման ամսաթիվ:${delivDate}\n; if (delivAddr) text +=Առաքման հասցե: latex
+{delivAddr}\n`; if (comment) text += `Մեկնաբանություն: 
+
+{comment}\n`;
+
+text += \nՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\nԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏;
+return text;
 }
 
 function sendViaViber() {
@@ -1413,7 +1490,7 @@ generateAndDownloadExcel();
 
 setTimeout(() => {
 const encodedText = encodeURIComponent(viberText);
-window.open(`viber://forward?text=${encodedText}`, '_blank');
+window.open(viber://forward?text=${encodedText}`, '_blank');
 }, 800);
 }
 
@@ -1422,7 +1499,7 @@ const formattedText = buildEmailFormattedText();
 generateAndDownloadExcel();
 
 setTimeout(() => {
-const subject = encodeURIComponent(`Պատվեր կատալոգից - ${authorizedClient}`); const body = encodeURIComponent(`Բարև ձեզ,\n\n${formattedText}\n\nԽնդրում ենք կցել ներբեռնված Excel ֆայլը։`); window.location.href = `mailto:?subject=${subject}&body=${body}`;
+const subject = encodeURIComponent(Պատվեր կատալոգից -${authorizedClient}); const body = encodeURIComponent(Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը (խնդրում ենք կցել նոր ներբեռնված ֆայլը):\n\n+ formattedText); window.location.href =mailto:{subject}&body=${body};
 }, 800);
 }
 
@@ -1536,7 +1613,7 @@ const hours = pad(now.getHours());
 const minutes = pad(now.getMinutes());
 const seconds = pad(now.getSeconds());
 
-const uniqueFileName = `Zakaz_${year}-${month}-${day}_${hours}-${minutes}-${seconds}.xlsx`;
+const uniqueFileName = Zakaz_${year}-{day}_{minutes}-${seconds}.xlsx;
 
 XLSX.writeFile(workbook, uniqueFileName);
 
@@ -1620,7 +1697,7 @@ if (loadedCount > 0) {
 saveCartToStorage();
 updateOrderPanel();
 resetAndRender();
-alert(`Նախորդ պատվերը հաջողությամբ բեռնվեց: Վերականգնվել է ${loadedCount} ապրանք։`);
+alert(Նախորդ պատվերը հաջողությամբ բեռնվեց: Վերականգնվել է${loadedCount} ապրանք:`);
 } else {
 alert('Ֆայլում հնարավոր չեղավ գտնել ապրանքների ճիշտ տվյալներ։');
 }
