@@ -9,7 +9,7 @@
 <!-- SheetJS (XLSX reader/writer) -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 body { font-family: 'Inter', sans-serif; }
 
 .product-img-container {
@@ -46,7 +46,9 @@ body { font-family: 'Inter', sans-serif; }
 <!-- ЭКРАН АВТОРИЗАЦИИ -->
 <div id="authScreen" class="fixed inset-0 bg-gray-900/80 z-50 flex items-center justify-center p-4">
 <div class="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl text-center">
-<img src="1000021185.png" alt="ZIGZAG" class="h-12 w-auto mx-auto mb-4 object-contain" onerror="this.style.display='none'">
+<div class="flex justify-center mb-4">
+  <img src="logo.png" alt="ZIGZAG" class="h-14 w-auto object-contain max-w-[200px]" onerror="this.onerror=null; this.src='logo.PNG';">
+</div>
 <h2 class="text-xl font-bold text-gray-900 mb-2">Մուտքագրեք գաղտնաբառը</h2>
 <p class="text-xs text-gray-500 mb-6" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
 
@@ -67,7 +69,7 @@ class="w-full px-4 py-3 border border-gray-300 rounded-xl text-center text-lg tr
 <header class="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
 <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
 <div class="flex items-center gap-3">
-<img src="1000021185.png" alt="ZIGZAG" class="h-9 w-auto object-contain" onerror="this.style.display='none'">
+<img src="logo.png" alt="ZIGZAG" class="h-10 w-auto object-contain max-w-[150px]" onerror="this.onerror=null; this.src='logo.PNG';">
 <div>
 <h1 class="text-lg font-bold text-gray-900">Մեծածախ ապրանքների կատալոգ</h1>
 <p class="text-xs text-blue-600 font-medium" id="welcomeMsg">Բարև ձեզ...</p>
@@ -181,6 +183,25 @@ class="w-full sm:w-72 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 </div>
 </div>
 </div>
+
+<!-- ПОЛНОЭКРАННОЕ ПОЗДРАВЛЕНИЕ ПОСЛЕ ЗАКАЗА -->
+<div id="successOverlay" class="fixed inset-0 bg-gradient-to-br from-blue-900/95 via-indigo-900/95 to-slate-900/95 z-50 hidden flex flex-col items-center justify-center p-6 text-center">
+<div class="bg-white/10 backdrop-blur-md p-10 sm:p-16 rounded-3xl border border-white/20 shadow-2xl max-w-2xl w-full flex flex-col items-center">
+<div class="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mb-6 text-4xl shadow-inner border border-emerald-500/30">
+✨
+</div>
+<h2 class="text-3xl sm:text-5xl font-extrabold text-white tracking-wide mb-6 leading-tight drop-shadow-lg">
+ՄԱՂԹՈՒՄ ԵՆՔ ԲԱԶՈՒՄ ՎԱՃԱՌՔՆԵՐ
+</h2>
+<p class="text-blue-200 text-sm sm:text-base mb-8 max-w-md">
+Ձեր պատվերի ֆայլը հաջողությամբ ներբեռնվել է: Շնորհակալություն համագործակցության համար:
+</p>
+<button onclick="closeSuccessOverlay()" class="px-8 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition">
+Վերադառնալ Կատալոգ
+</button>
+</div>
+</div>
+
 </div>
 
 <!-- Скрипт -->
@@ -300,12 +321,10 @@ for (let i = startIndex; i < rows.length; i++) {
 }
 });
 
-// Добавляем пароль администратора
 passMap["538263"] = { client: "Администратор", sheet: "Dealers" };
 
 } catch (e) {
 console.error("Ошибка загрузки pass.xlsx:", e);
-// Даже если pass.xlsx не найден, админ всегда сможет зайти
 passMap["538263"] = { client: "Администратор", sheet: "Dealers" };
 }
 }
@@ -333,9 +352,7 @@ errorMsg.classList.remove('hidden');
 
 function setupTableHeader() {
 const headerRow = document.getElementById('tableHeaderRow');
-if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ" || authorizedClient === "Администратор") {
-  // Администратор видит колонку перепродажного опта (если нужно) или стандартную
-  let resaleHeader = (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") ? `<th class="py-3 px-4 font-semibold text-right">Վերավաճառքի մեծածախ գին</th>` : '';
+if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
   headerRow.innerHTML = `
     <th class="py-3 px-4 font-semibold">Արտիկուլ</th>
     <th class="py-3 px-4 font-semibold">Բրենդ</th>
@@ -344,7 +361,7 @@ if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ" || authorizedClient === "�
     <th class="py-3 px-4 font-semibold">Առկայություն</th>
     <th class="py-3 px-4 font-semibold text-right">Մանրածախ</th>
     <th class="py-3 px-4 font-semibold text-center">Եկամտաբերություն</th>
-    ${resaleHeader}
+    <th class="py-3 px-4 font-semibold text-right">Վերավաճառքի մեծածախ գին</th>
     <th class="py-3 px-4 font-semibold text-right">Մեծածախ (Wholesale)</th>
     <th class="py-3 px-4 font-semibold text-center">Գործողություն</th>
   `;
@@ -507,12 +524,11 @@ if (retail > 0 && wholesale > 0) {
   }
 }
 
-// ПРОВЕРКА НА ОТРИЦАТЕЛЬНУЮ МАРЖУ (для всех, кроме Администратора)
 if (authorizedClient !== "Администратор" && retail > 0 && wholesale > 0) {
   if (authorizedClient === "«ԴՈՄՈՒՍ» ՓԲԸ") {
-    if (marginVal < 1.0) continue; // roznica < opt
+    if (marginVal < 1.0) continue;
   } else {
-    if (marginVal < 0) continue; // отрицательный процент
+    if (marginVal < 0) continue;
   }
 }
 
@@ -882,6 +898,16 @@ const workbook = XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(workbook, worksheet, "Պատվեր");
 
 XLSX.writeFile(workbook, `Zakaz_${new Date().toISOString().slice(0,10)}.xlsx`);
+
+closeOrderModal();
+clearOrder();
+document.getElementById('successOverlay').classList.remove('hidden');
+document.getElementById('successOverlay').classList.add('flex');
+}
+
+function closeSuccessOverlay() {
+document.getElementById('successOverlay').classList.add('hidden');
+document.getElementById('successOverlay').classList.remove('flex');
 }
 
 document.getElementById('searchInput').oninput = renderTable;
