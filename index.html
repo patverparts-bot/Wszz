@@ -218,7 +218,10 @@ const brandDomains = {
 'lenovo': 'lenovo.com',
 'hp': 'hp.com',
 'dell': 'dell.com',
-'huawei': 'huawei.com'
+'huawei': 'huawei.com',
+'babyliss': 'babyliss.com',
+'elica': 'elica.com',
+'indesit': 'indesit.com'
 };
 
 function getBrandLogoHtml(brandName) {
@@ -446,6 +449,20 @@ continue;
 
 const brandVal = r[colMap.brand];
 const brand = (brandVal !== null && brandVal !== undefined) ? String(brandVal).trim() : 'Այլ';
+
+// Проверка ограничений брендов для определенных контрагентов
+const cleanBrandLower = brand.toLowerCase();
+if (authorizedClient === "ՎԵԳԱ ՈՒՈՐԼԴ" || authorizedClient === "ԷԼՄԱՐԿԵՏ ՍՊԸ" || authorizedClient === "ՎԻԷԼՎԻ ՍԵՆԹՐ ՍՊԸ") {
+  const allowedBrands = ["babyliss", "bosch", "delonghi", "elica", "indesit"];
+  if (!allowedBrands.includes(cleanBrandLower)) {
+    continue;
+  }
+} else if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
+  const allowedBrands = ["indesit", "bosch"];
+  if (!allowedBrands.includes(cleanBrandLower)) {
+    continue;
+  }
+}
 
 const catVal = r[colMap.category];
 const category = (catVal !== null && catVal !== undefined) ? String(catVal).trim() : 'Ընդհանուր';
