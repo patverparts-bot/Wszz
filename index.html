@@ -279,16 +279,29 @@ const workbook = XLSX.read(arrayBuffer, { type: 'array' });
 workbook.SheetNames.forEach(sheetName => {
 const sheet = workbook.Sheets[sheetName];
 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-rows.forEach(r => {
-if (r && r.length >= 2) {
-let p = r[0] !== null && r[0] !== undefined ? String(r[0]).trim() : '';
-let client = r[1] !== null && r[1] !== undefined ? String(r[1]).trim() : '';
-if (p) {
-passMap[p] = { client: client, sheet: sheetName };
+
+
+// Автоматически определяем, есть ли шапка (если первая ячейка содержит текст вроде "пароль" или "password")
+let startIndex = 0;
+if (rows.length > 0 && rows[0] && rows[0][0]) {
+  const firstVal = String(rows[0][0]).trim().toLowerCase();
+  if (firstVal.includes('пароль') || firstVal.includes('pass') || firstVal.includes('գաղտնաբառ')) {
+    startIndex = 1;
+  }
 }
+
+for (let i = startIndex; i < rows.length; i++) {
+  let r = rows[i];
+  if (r && r.length >= 2) {
+    let p = r[0] !== null && r[0] !== undefined ? String(r[0]).trim() : '';
+    let client = r[1] !== null && r[1] !== undefined ? String(r[1]).trim() : '';
+    if (p) {
+      passMap[p] = { client: client, sheet: sheetName };
+    }
+  }
 }
 });
-});
+console.log("Загруженные пароли:", passMap);
 } catch (e) {
 console.error("Ошибка загрузки pass.xlsx:", e);
 }
@@ -675,4 +688,189 @@ tbody.appendChild(tr);
 }
 
 function addToCart(articul) {
-const product
+const product = allProducts.find(p => p.articul === articul);
+if (!product) return;
+
+if (!cart[articul]) {
+cart[articul] = { product: product, qty: 1 };
+} else {
+cart[articul].qty += 1;
+}
+updateOrderPanel();
+renderTable();
+}
+
+function updateOrderPanel() {
+const orderPanel = document.getElementById('orderPanel');
+let totalCount = 0;
+let totalSum = 0;
+
+Object.values(cart).forEach(item => {
+totalCount += item.qty;
+totalSum += (item.product.wholesale * item.qty);
+});
+
+if (totalCount > 0) {
+orderPanel.classList.remove('hidden');
+document.getElementById('orderCount').innerText = `${totalCount} ապրանք`;
+document.getElementById('orderSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
+} else {
+orderPanel.classList.add('hidden');
+}
+}
+
+function clearOrder() {
+cart = {};
+updateOrderPanel();
+renderTable();
+}
+
+function openOrderModal() {
+const listContainer = document.getElementById('modalItemsList');
+listContainer.innerHTML = '';
+let totalSum = 0;
+
+Object.values(cart).forEach(item => {
+const sum = item.product.wholesale * item.qty;
+totalSum += sum;
+
+const isUtochnit = item.product.stockStatus.includes('Ճշտել');
+const stockBadgeClass = isUtochnit
+? 'bg-amber-100 text-amber-800 border border-amber-300'
+: 'bg-emerald-100 text-emerald-800 border border-emerald-300';
+
+const div = document.createElement('div');
+div.className = 'py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3';
+div.innerHTML = `
+<div class="flex-grow">
+<div class="flex items-center gap-2">
+<span class="font-mono text-xs text-blue-600 font-semibold">${item.product.articul}</span>
+<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${stockBadgeClass}">${item.product.stockStatus}</span>
+</div>
+<div class="text-gray-900 font-medium">${item.product.name || 'Ապրանք'}</div>
+<div class="text-xs text-gray-500">Մեծածախ գին՝ ${item.product.wholesale.toLocaleString('ru-RU')} ֏</div>
+</div>
+<div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+<div class="flex items-center border rounded-lg overflow-hidden bg-gray-50">
+<button onclick="changeQty('${item.product.articul}', -1)" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 font-bold">-</button>
+<span class="px-4 py-1 font-semibold text-sm">${item.qty}</span>
+<button onclick="changeQty('${item.product.articul}', 1)" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 font-bold">+</button>
+</div>
+<div class="font-bold text-gray-900 w-28 text-right">${sum.toLocaleString('ru-RU')} ֏</div>
+</div>
+`;
+listContainer.appendChild(div);
+});
+
+document.getElementById('modalTotalSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
+document.getElementById('orderModal').classList.remove('hidden');
+}
+
+function changeQty(articul, delta) {
+if (!cart[articul]) return;
+cart[articul].qty += delta;
+if (cart[articul].qty <= 0) {
+delete cart[articul];
+}
+updateOrderPanel();
+renderTable();
+
+if (Object.keys(cart).length === 0) {
+closeOrderModal();
+} else if (!document.getElementById('orderModal').classList.contains('hidden')) {
+openOrderModal();
+}
+}
+
+function closeOrderModal() {
+document.getElementById('orderModal').classList.add('hidden');
+}
+
+function getSelectedPaymentMethod() {
+const radios = document.getElementsByName('paymentMethod');
+for (let r of radios) {
+if (r.checked) return r.value;
+}
+return 'Կանխիկ';
+}
+
+function copyOrderText() {
+const paymentMethod = getSelectedPaymentMethod();
+let text = `ՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\nՎճարման եղանակը՝ ${paymentMethod}\n\n`;
+let total = 0;
+let i = 1;
+
+Object.values(cart).forEach(item => {
+const sum = item.product.wholesale * item.qty;
+total += sum;
+text += `${i}. Արտիկուլ: ${item.product.articul}\n   Անվանում: ${item.product.name}\n   Առկայություն: ${item.product.stockStatus}\n   Քանակ: ${item.qty} հատ\n   Գին (Մեծածախ): ${item.product.wholesale.toLocaleString('ru-RU')} ֏\n   Գումար: ${sum.toLocaleString('ru-RU')} ֏\n\n`;
+i++;
+});
+text += `ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
+
+navigator.clipboard.writeText(text).then(() => {
+alert('Պատվերի տեքստը հաջողությամբ պատճենվել է буфер обмена-ում!');
+closeOrderModal();
+});
+}
+
+function downloadOrderExcel() {
+const paymentMethod = getSelectedPaymentMethod();
+const excelData = [];
+let totalSum = 0;
+
+Object.values(cart).forEach(item => {
+const sum = item.product.wholesale * item.qty;
+totalSum += sum;
+excelData.push({
+'Արտիկուլ': item.product.articul,
+'Բրենդ': item.product.brand,
+'Անվանում': item.product.name,
+'Առկայություն': item.product.stockStatus,
+'Քանակ (հատ)': item.qty,
+'Մեծածախ գին (AMD)': item.product.wholesale,
+'Գումար (AMD)': sum
+});
+});
+
+excelData.push({
+'Արտիկուլ': '',
+'Բրենդ': '',
+'Անվանում': 'ԸՆԴՀԱՆՈՒՐ',
+'Առկայություն': '',
+'Քանակ (հատ)': '',
+'Մեծածախ գին (AMD)': '',
+'Գումար (AMD)': totalSum
+});
+
+excelData.push({
+'Արտիկուլ': 'Կոնտրագենտ:',
+'Բրենդ': authorizedClient,
+'Անվանում': '',
+'Առկայություն': '',
+'Քանակ (հատ)': '',
+'Մեծածախ գին (AMD)': '',
+'Գումար (AMD)': ''
+});
+
+excelData.push({
+'Արտիկուլ': 'Վճարման եղանակը:',
+'Բրենդ': paymentMethod,
+'Անվանում': '',
+'Առկայություն': '',
+'Քանակ (հատ)': '',
+'Մեծածախ գին (AMD)': '',
+'Գումար (AMD)': ''
+});
+
+const worksheet = XLSX.utils.json_to_sheet(excelData);
+const workbook = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(workbook, worksheet, "Պատվեր");
+
+XLSX.writeFile(workbook, `Zakaz_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+document.getElementById('searchInput').oninput = renderTable;
+</script>
+</body>
+</html>
