@@ -75,10 +75,14 @@ class="w-full px-4 py-3 border border-gray-300 rounded-xl text-center text-lg tr
 <p class="text-xs text-blue-600 font-medium" id="welcomeMsg">Բարև ձեզ...</p>
 </div>
 </div>
-<!-- Որոնում -->
-<div class="flex items-center gap-3 w-full sm:w-auto">
+<!-- Որոնում և նախորդ պատվերի ներբեռնում -->
+<div class="flex items-center gap-3 w-full sm:w-auto flex-wrap justify-end">
+<label class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold shadow transition cursor-pointer flex items-center gap-1.5" title="Բեռնել նախկինում պահպանված պատվերի Excel ֆայլը">
+  <span>📂 Բեռնել նախորդ պատվերը</span>
+  <input type="file" id="loadOrderFile" accept=".xlsx, .xls" class="hidden" onchange="importPreviousOrder(event)">
+</label>
 <input type="text" id="searchInput" placeholder="Որոնել ապրանք կամ արտիկուլ..."
-class="w-full sm:w-72 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
 </div>
 </div>
 </header>
@@ -903,6 +907,79 @@ closeOrderModal();
 clearOrder();
 document.getElementById('successOverlay').classList.remove('hidden');
 document.getElementById('successOverlay').classList.add('flex');
+}
+
+// ФУНКЦИЯ ИМПОРТА ПРЕДЫДУЩЕГО ЗАКАЗА ИЗ EXCEL
+function importPreviousOrder(event) {
+const file = event.target.files[0];
+if (!file) return;
+
+const reader = new FileReader();
+reader.onload = function(e) {
+  try {
+    const data = new Uint8Array(e.target.result);
+    const workbook = XLSX.read(data, { type: 'array' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+    cart = {};
+    let loadedCount = 0;
+
+    rows.forEach(r => {
+      if (!r || r.length === 0) return;
+      let articul = '';
+      let qty = 0;
+
+      // Ищем ячейки по тексту заголовков или позициям
+      for (let j = 0; j < r.length; j++) {
+        let val = String(r[j] || '').trim();
+        if (val === 'Արտիկուլ' || val === 'Articul') {
+          // Это строка шапки
+          return;
+        }
+      }
+
+      // Первая колонка обычно Артикул, колонка "Քանակ (հատ)" или похожая — количество
+      if (r[0] && String(r[0]).trim() !== '' && !String(r[0]).includes('Կոնտրագենտ') && !String(r[0]).includes('Վճարման') && !String(r[0]).includes('ԸՆԴՀԱՆՈՒՐ')) {
+        articul = String(r[0]).trim();
+        // Ищем число в строке, которое может быть количеством (обычно небольшое целое число в столбце индекса 4)
+        for (let j = 1; j < r.length; j++) {
+          let num = Number(r[j]);
+          // Если число похоже на количество (например, целое и меньше 10000) и следующее или предыдущее поле связано с ценой
+          if (!isNaN(num) && num > 0 && num < 10000 && (j === 4 || j === 5)) {
+            qty = num;
+            break;
+          }
+        }
+        if (!qty && r.length >= 5) {
+          qty = Number(r[4]) || 1;
+        }
+      }
+
+      if (articul && qty > 0) {
+        const product = allProducts.find(p => p.articul === articul);
+        if (product) {
+          cart[articul] = { product: product, qty: qty };
+          loadedCount++;
+        }
+      }
+    });
+
+    if (loadedCount > 0) {
+      updateOrderPanel();
+      renderTable();
+      alert(`Նախորդ պատվերը հաջողությամբ բեռնվեց: Վերականգնվել է ${loadedCount} ապրանք:`);
+    } else {
+      alert('Ֆայլում հնարավոր չեղավ գտնել ապրանքների ճيشտ տվյալներ։');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Ֆայլի կարդալու սխալ։');
+  }
+  event.target.value = '';
+};
+reader.readAsArrayBuffer(file);
 }
 
 function closeSuccessOverlay() {
