@@ -173,7 +173,7 @@ class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 </div>
 </main>
 
-<!-- Պատվերի վահանակ -->
+<!-- ՊԱՏՎԵՐԻ ՎԱՀԱՆԱԿ -->
 <div id="orderPanel" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 shadow-lg p-4 z-40 hidden">
 <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
 <div>
@@ -193,7 +193,7 @@ class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 </div>
 </div>
 
-<!-- Պատվերի պատուհան -->
+<!-- ՊԱՏՎԵՐԻ ՊԱՏՈՒՀԱՆ -->
 <div id="orderModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
 <div class="bg-white rounded-2xl max-w-4xl w-full p-6 shadow-2xl max-h-[90vh] flex flex-col">
 <div class="flex justify-between items-center mb-4 border-b pb-3">
@@ -241,19 +241,24 @@ class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 
 <!-- ПОЛНОЭКРАННОЕ ПОЗДРАВЛЕНИЕ ПОСЛЕ ЗАКАЗА -->
 <div id="successOverlay" class="fixed inset-0 bg-gradient-to-br from-blue-900/95 via-indigo-900/95 to-slate-900/95 z-50 hidden flex flex-col items-center justify-center p-6 text-center">
-<div class="bg-white/10 backdrop-blur-md p-10 sm:p-16 rounded-3xl border border-white/20 shadow-2xl max-w-2xl w-full flex flex-col items-center">
+<div class="bg-white/10 backdrop-blur-md p-10 sm:p-14 rounded-3xl border border-white/20 shadow-2xl max-w-2xl w-full flex flex-col items-center">
 <div class="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mb-6 text-4xl shadow-inner border border-emerald-500/30">
 ✨
 </div>
-<h2 class="text-3xl sm:text-5xl font-extrabold text-white tracking-wide mb-6 leading-tight drop-shadow-lg">
+<h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-wide mb-4 leading-tight drop-shadow-lg">
 ՄԱՂԹՈՒՄ ԵՆՔ ԲԱԶՈՒՄ ՎԱՃԱՌՔՆԵՐ
 </h2>
 <p class="text-blue-200 text-sm sm:text-base mb-8 max-w-md">
 Ձեր պատվերի ֆայլը հաջողությամբ ներբեռնվել է: Շնորհակալություն համագործակցության համար:
 </p>
-<button onclick="closeSuccessOverlay()" class="px-8 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition">
-Վերադառնալ Կատալոգ
+<div class="flex flex-col sm:flex-row gap-4 w-full justify-center">
+<button onclick="keepCartAndCloseSuccess()" class="px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition text-sm">
+🔄 Վերադառնալ (Պահպանել զամբյուղը)
 </button>
+<button onclick="clearCartAndCloseSuccess()" class="px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition text-sm">
+🗑️ Մաքրել զամբյուղը և վերադառնալ
+</button>
+</div>
 </div>
 </div>
 
@@ -1050,25 +1055,31 @@ return text;
 }
 
 function sendViaViber() {
-downloadOrderExcel();
+  const formattedText = buildOrderFormattedText();
+  generateAndDownloadExcel();
 
-setTimeout(() => {
-  const text = encodeURIComponent(`Պատվերի Excel ֆայլը ներբեռնված է։\n\n` + buildOrderFormattedText());
-  window.open(`viber://forward?text=${text}`, '_blank');
-}, 800);
+  setTimeout(() => {
+    const text = encodeURIComponent(`Պատվերի Excel ֆայլը ներբեռնված է։\n\n` + formattedText);
+    window.open(`viber://forward?text=${text}`, '_blank');
+  }, 800);
 }
 
 function sendViaEmail() {
-downloadOrderExcel();
+  const formattedText = buildOrderFormattedText();
+  generateAndDownloadExcel();
 
-setTimeout(() => {
-  const subject = encodeURIComponent(`Պատվեր կատալոգից - ${authorizedClient}`);
-  const body = encodeURIComponent(`Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը (խնդրում ենք կցել նոր ներբեռնված ֆայլը):\n\n` + buildOrderFormattedText());
-  window.location.href = `mailto:${TARGET_EMAIL}?subject=${subject}&body=${body}`;
-}, 800);
+  setTimeout(() => {
+    const subject = encodeURIComponent(`Պատվեր կատալոգից - ${authorizedClient}`);
+    const body = encodeURIComponent(`Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը (խնդրում ենք կցել նոր ներբեռնված ֆայլը):\n\n` + formattedText);
+    window.location.href = `mailto:${TARGET_EMAIL}?subject=${subject}&body=${body}`;
+  }, 800);
 }
 
 function downloadOrderExcel() {
+  generateAndDownloadExcel();
+}
+
+function generateAndDownloadExcel() {
 const excelData = [];
 let cashTotal = 0;
 let bankTotal = 0;
@@ -1164,9 +1175,19 @@ const uniqueFileName = `Zakaz_${year}-${month}-${day}_${hours}-${minutes}-${seco
 XLSX.writeFile(workbook, uniqueFileName);
 
 closeOrderModal();
-clearOrder();
 document.getElementById('successOverlay').classList.remove('hidden');
 document.getElementById('successOverlay').classList.add('flex');
+}
+
+function keepCartAndCloseSuccess() {
+  document.getElementById('successOverlay').classList.add('hidden');
+  document.getElementById('successOverlay').classList.remove('flex');
+}
+
+function clearCartAndCloseSuccess() {
+  clearOrder();
+  document.getElementById('successOverlay').classList.add('hidden');
+  document.getElementById('successOverlay').classList.remove('flex');
 }
 
 function importPreviousOrder(event) {
@@ -1246,8 +1267,7 @@ reader.readAsArrayBuffer(file);
 }
 
 function closeSuccessOverlay() {
-document.getElementById('successOverlay').classList.add('hidden');
-document.getElementById('successOverlay').classList.remove('flex');
+  keepCartAndCloseSuccess();
 }
 
 document.getElementById('searchInput').oninput = renderTable;
