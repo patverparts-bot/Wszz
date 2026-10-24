@@ -427,6 +427,7 @@ function toggleMobileFilters() {
 
 /* CHUVANIE I UCHITAVANJE FILTARA U LOCALSTORAGE */
 function saveFiltersToStorage() {
+  if (!authorizedClient) return;
   try {
     const filtersState = {
       brand: selectedBrand,
@@ -441,6 +442,7 @@ function saveFiltersToStorage() {
 }
 
 function loadSavedFilters() {
+  if (!authorizedClient) return;
   try {
     const saved = localStorage.getItem('zigzag_filters_' + authorizedClient);
     if (saved) {
@@ -481,9 +483,11 @@ function clearAllFilters() {
   document.getElementById('searchInput').value = '';
   document.getElementById('clearSearchBtn').classList.add('hidden');
   
-  try {
-    localStorage.removeItem('zigzag_filters_' + authorizedClient);
-  } catch(e) {}
+  if (authorizedClient) {
+    try {
+      localStorage.removeItem('zigzag_filters_' + authorizedClient);
+    } catch(e) {}
+  }
 
   resetAndRender();
 }
@@ -593,11 +597,13 @@ errorMsg.classList.remove('hidden');
 }
 
 function logout() {
-try {
-  localStorage.removeItem('zigzag_client');
-  localStorage.removeItem('zigzag_sheet');
-  localStorage.removeItem('zigzag_filters_' + authorizedClient);
-} catch(e) {}
+if (authorizedClient) {
+  try {
+    localStorage.removeItem('zigzag_client');
+    localStorage.removeItem('zigzag_sheet');
+    localStorage.removeItem('zigzag_filters_' + authorizedClient);
+  } catch(e) {}
+}
 
 authorizedClient = '';
 userSheetType = '';
@@ -717,7 +723,7 @@ throw new Error('Աղյուսակը դատարկ է։');
 parseExcelRows(rows);
 } catch (error) {
 console.error(error);
-} fontally {
+} finally {
 loader.classList.add('hidden');
 content.classList.remove('opacity-50');
 }
@@ -1285,12 +1291,14 @@ return `
 }
 
 function saveCartToStorage() {
+if (!authorizedClient) return;
 try {
   localStorage.setItem('zigzag_cart_' + authorizedClient, JSON.stringify(cart));
 } catch(e) {}
 }
 
 function loadCartFromStorage(showToast = false) {
+if (!authorizedClient) return;
 try {
   const saved = localStorage.getItem('zigzag_cart_' + authorizedClient);
   if (saved) {
