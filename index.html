@@ -90,7 +90,7 @@ class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 <!-- Հիմնական բովանդակություն -->
 <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex-grow w-full">
 
-<!-- Ֆիլտրերի և սորտավորման վահանակ (Улучшение 1) -->
+<!-- Ֆիլտրերի և սորտավորման վահանակ -->
 <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 space-y-4">
 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
 <div>
@@ -133,10 +133,10 @@ class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 </div>
 </div>
 
-<!-- Ապրանքների աղյուսակ -->
+<!-- Ապրանքների աղյուսակ (С адаптивной прокруткой для мобильных) -->
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-<div class="overflow-x-auto">
-<table class="w-full text-left border-collapse" id="catalogTable">
+<div class="overflow-x-auto -webkit-overflow-scrolling-touch">
+<table class="w-full text-left border-collapse min-w-[700px]" id="catalogTable">
 <thead>
 <tr id="tableHeaderRow" class="bg-gray-100 text-gray-700 text-xs uppercase tracking-wider border-b border-gray-200">
 <!-- Динамически заполняется шапка -->
@@ -201,13 +201,13 @@ class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 <span class="text-gray-600 text-sm">Ընդհանուր գումար՝ </span>
 <span id="modalTotalSum" class="text-xl font-bold text-green-600">0 ֏</span>
 </div>
-<!-- Кнопки действий заказа (Улучшение 4: Viber / Mail / Excel) -->
+<!-- Кнопки действий заказа -->
 <div class="flex gap-2 flex-wrap justify-end">
 <button onclick="closeOrderModal()" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-medium">Փակել</button>
-<button onclick="sendViaViber()" class="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold shadow transition flex items-center gap-1.5" title="Ուղարկել Viber-ով">
+<button onclick="sendViaViber()" class="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold shadow transition flex items-center gap-1.5" title="Ուղարկել Viber-ով (Նախ ներբեռնվում է Excel-ը)">
 <span>📱</span> Viber
 </button>
-<button onclick="sendViaEmail()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition flex items-center gap-1.5" title="Ուղարկել Էլ․ փոստով">
+<button onclick="sendViaEmail()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition flex items-center gap-1.5" title="Ուղարկել Էլ․ փոստով (Նախ ներբեռնվում է Excel-ը)">
 <span>✉️</span> Levon.Grigoryan@zigzag.am
 </button>
 <button onclick="downloadOrderExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs shadow transition flex items-center gap-1.5">
@@ -236,7 +236,7 @@ class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 </div>
 </div>
 
-<!-- КНОПКА «НАВЕРХ» (Улучшение 5) -->
+<!-- КНОПКА «НАВЕРХ» -->
 <button id="scrollTopBtn" onclick="scrollToTop()" class="fixed bottom-20 right-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-2xl z-30 hidden transition transform hover:scale-110">
 ⬆️
 </button>
@@ -356,6 +356,19 @@ if (passMap[inputVal]) {
 authorizedClient = passMap[inputVal].client;
 userSheetType = passMap[inputVal].sheet;
 
+// Сохраняем сессию в localStorage, чтобы не слетал вход при перезагрузке
+try {
+  localStorage.setItem('zigzag_client', authorizedClient);
+  localStorage.setItem('zigzag_sheet', userSheetType);
+} catch(e) {}
+
+initAppAfterAuth();
+} else {
+errorMsg.classList.remove('hidden');
+}
+}
+
+function initAppAfterAuth() {
 document.getElementById('authScreen').classList.add('hidden');
 document.getElementById('mainApp').classList.remove('hidden');
 document.getElementById('mainApp').classList.add('flex');
@@ -364,10 +377,7 @@ document.getElementById('welcomeMsg').innerText = `Բարև ձեզ, ${authorized
 
 setupTableHeader();
 loadExcelFile();
-loadCartFromStorage(); // Улучшение 3: Восстановление корзины из LocalStorage
-} else {
-errorMsg.classList.remove('hidden');
-}
+loadCartFromStorage();
 }
 
 function setupTableHeader() {
@@ -400,8 +410,20 @@ if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
 }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-loadPasswordsFile();
+document.addEventListener('DOMContentLoaded', async () => {
+await loadPasswordsFile();
+
+// Проверяем, был ли пользователь уже авторизован ранее (сохранение сессии)
+try {
+  const savedClient = localStorage.getItem('zigzag_client');
+  const savedSheet = localStorage.getItem('zigzag_sheet');
+  if (savedClient && savedSheet) {
+    authorizedClient = savedClient;
+    userSheetType = savedSheet;
+    initAppAfterAuth();
+  }
+} catch(e) {}
+
 const pwdInput = document.getElementById('passwordInput');
 if (pwdInput) {
 pwdInput.addEventListener('keypress', (e) => {
@@ -632,7 +654,6 @@ initFilters();
 renderTable();
 } catch (err) {
 console.error(err);
-document.getElementById('file-status').innerHTML = `<span class="text-red-600">Մշակման սխալ՝ ${err.message}</span>`;
 }
 }
 
@@ -686,7 +707,6 @@ const matchStock = !stockOnly || !p.stockStatus.includes('Ճշտել');
 return matchBrand && matchCategory && matchSearch && matchPromo && matchStock;
 });
 
-// Сортировка (Улучшение 1)
 if (sortBy === 'priceAsc') {
 filtered.sort((a, b) => a.wholesale - b.wholesale);
 } else if (sortBy === 'priceDesc') {
@@ -954,19 +974,23 @@ text += `ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
 return text;
 }
 
-// Отправка в Viber (Улучшение 4)
+// Отправка в Viber (сначала скачивает Excel, затем открывает Viber)
 function sendViaViber() {
-const text = encodeURIComponent(buildOrderFormattedText());
-window.open(`viber://forward?text=${text}`, '_blank');
+downloadOrderExcel();
+
+setTimeout(() => {
+  const text = encodeURIComponent(`Պատվերի Excel ֆայլը ներբեռնված է։\n\n` + buildOrderFormattedText());
+  window.open(`viber://forward?text=${text}`, '_blank');
+}, 800);
 }
 
-// Отправка на почту Levon.Grigoryan@zigzag.am (Улучшение 4: Скачивает Excel + открывает письма)
+// Отправка на почту (сначала скачивает Excel, затем открывает почту)
 function sendViaEmail() {
-downloadOrderExcel(); // Автоматически скачиваем Excel файл
+downloadOrderExcel();
 
 setTimeout(() => {
   const subject = encodeURIComponent(`Պատվեր կատալոգից - ${authorizedClient}`);
-  const body = encodeURIComponent(`Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը (խնդրում ենք կցել ներբեռնված ֆայլը):\n\n${buildOrderFormattedText()}`);
+  const body = encodeURIComponent(`Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը (խնդրում ենք կցել նոր ներբեռնված ֆայլը):\n\n` + buildOrderFormattedText());
   window.location.href = `mailto:${TARGET_EMAIL}?subject=${subject}&body=${body}`;
 }, 800);
 }
@@ -987,7 +1011,6 @@ if (item.paymentMethod === 'Բանկային փոխանցումով') {
 }
 });
 
-// СПИСОК 1: КԱՆԽԻԿ
 if (cashItems.length > 0) {
   excelData.push({ 'Արտիկուլ': '--- ԿԱՆԽԻԿ ՎՃԱՐՄԱՆ ԵՂԱՆԱԿՈՎ ՊԱՏՎԵՐ ---', 'Բրենդ': '', 'Անվանում': '', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
   cashItems.forEach(item => {
@@ -1008,7 +1031,6 @@ if (cashItems.length > 0) {
   excelData.push({ 'Արտիկուլ': '', 'Բրենդ': '', 'Անվանում': '', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 }
 
-// СПИСОК 2: ԲԱՆԿԱՅԻՆ ՓՈԽԱՆՑՈՒՄՈՎ
 if (bankItems.length > 0) {
   excelData.push({ 'Արտիկուլ': '--- ԲԱՆԿԱՅԻՆ ՓՈԽԱՆՑՈՒՄՈՎ ՎՃԱՐՄԱՆ ԵՂԱՆԱԿՈՎ ՊԱՏՎԵՐ ---', 'Բրենդ': '', 'Անվանում': '', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
   bankItems.forEach(item => {
