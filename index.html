@@ -280,8 +280,6 @@ workbook.SheetNames.forEach(sheetName => {
 const sheet = workbook.Sheets[sheetName];
 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-
-// Автоматически определяем, есть ли шапка (если первая ячейка содержит текст вроде "пароль" или "password")
 let startIndex = 0;
 if (rows.length > 0 && rows[0] && rows[0][0]) {
   const firstVal = String(rows[0][0]).trim().toLowerCase();
@@ -301,9 +299,14 @@ for (let i = startIndex; i < rows.length; i++) {
   }
 }
 });
-console.log("Загруженные пароли:", passMap);
+
+// Добавляем пароль администратора
+passMap["538263"] = { client: "Администратор", sheet: "Dealers" };
+
 } catch (e) {
 console.error("Ошибка загрузки pass.xlsx:", e);
+// Даже если pass.xlsx не найден, админ всегда сможет зайти
+passMap["538263"] = { client: "Администратор", sheet: "Dealers" };
 }
 }
 
@@ -330,7 +333,9 @@ errorMsg.classList.remove('hidden');
 
 function setupTableHeader() {
 const headerRow = document.getElementById('tableHeaderRow');
-if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
+if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ" || authorizedClient === "Администратор") {
+  // Администратор видит колонку перепродажного опта (если нужно) или стандартную
+  let resaleHeader = (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") ? `<th class="py-3 px-4 font-semibold text-right">Վերավաճառքի մեծածախ գին</th>` : '';
   headerRow.innerHTML = `
     <th class="py-3 px-4 font-semibold">Արտիկուլ</th>
     <th class="py-3 px-4 font-semibold">Բրենդ</th>
@@ -339,7 +344,7 @@ if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
     <th class="py-3 px-4 font-semibold">Առկայություն</th>
     <th class="py-3 px-4 font-semibold text-right">Մանրածախ</th>
     <th class="py-3 px-4 font-semibold text-center">Եկամտաբերություն</th>
-    <th class="py-3 px-4 font-semibold text-right">Վերավաճառքի մեծածախ գին</th>
+    ${resaleHeader}
     <th class="py-3 px-4 font-semibold text-right">Մեծածախ (Wholesale)</th>
     <th class="py-3 px-4 font-semibold text-center">Գործողություն</th>
   `;
@@ -441,7 +446,7 @@ const defaultWholesale = Number(r[colMap.wholesale]) || 0;
 let wholesale = 0;
 let resaleWholesale = defaultWholesale;
 
-if (userSheetType === 'KP') {
+if (userSheetType === 'KP' && authorizedClient !== "Администратор") {
   const promoVal = colMap.kpPromo !== -1 ? Number(r[colMap.kpPromo]) : 0;
   const normalVal = colMap.kpNormal !== -1 ? Number(r[colMap.kpNormal]) : 0;
   
@@ -499,6 +504,15 @@ if (retail > 0 && wholesale > 0) {
     marginVal = retail / wholesale;
   } else {
     marginVal = (1 - (wholesale / retail)) * 100;
+  }
+}
+
+// ПРОВЕРКА НА ОТРИЦАТЕЛЬНУЮ МАРЖУ (для всех, кроме Администратора)
+if (authorizedClient !== "Администратор" && retail > 0 && wholesale > 0) {
+  if (authorizedClient === "«ԴՈՄՈՒՍ» ՓԲԸ") {
+    if (marginVal < 1.0) continue; // roznica < opt
+  } else {
+    if (marginVal < 0) continue; // отрицательный процент
   }
 }
 
