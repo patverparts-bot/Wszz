@@ -154,7 +154,7 @@ class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 </div>
 </div>
 
-<!-- Ապրանքների աղյուսակ (Фиксированная область прокрутки с закрепленной шапкой) -->
+<!-- Ապրանքների աղյուսակ -->
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
 <div class="table-scroll-wrapper">
 <table class="w-full text-left border-collapse min-w-[700px]" id="catalogTable">
@@ -1045,51 +1045,44 @@ if (item.paymentMethod === 'Բանկային փոխանցումով') {
 });
 
 if (cashItems.length > 0) {
-  excelData.push({ 'Արտիկուլ': '--- ԿԱՆԽԻԿ ՎՃԱՐՄԱՆ ԵՂԱՆԱԿՈՎ ՊԱՏՎԵՐ ---', 'Բրենդ': '', 'Անվանում': '', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
   cashItems.forEach(item => {
     const sum = item.product.wholesale * item.qty;
     cashTotal += sum;
     excelData.push({
       'Արտիկուլ': item.product.articul,
-      'Բրենդ': item.product.brand,
       'Անվանում': item.product.name,
-      'Առկայություն': item.product.stockStatus,
       'Քանակ (հատ)': item.qty,
       'Մեծածախ գին (AMD)': item.product.wholesale,
       'Գումար (AMD)': sum,
       'Վճարման եղանակ': 'Կանխիկ'
     });
   });
-  excelData.push({ 'Արտիկուլ': '', 'Բրենդ': '', 'Անվանում': 'ԸՆԴՀԱՆՈՒՐ (ԿԱՆԽԻԿ)', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': cashTotal, 'Վճարման եղանակ': 'Կանխիկ' });
-  excelData.push({ 'Արտիկուլ': '', 'Բրենդ': '', 'Անվանում': '', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+  excelData.push({ 'Արտիկուլ': '', 'Անվանում': 'ԸՆԴՀԱՆՈՒՐ (ԿԱՆԽԻԿ)', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': cashTotal, 'Վճարման եղանակ': 'Կանխիկ' });
+  excelData.push({ 'Արտիկուլ': '', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 }
 
 if (bankItems.length > 0) {
-  excelData.push({ 'Արտիկուլ': '--- ԲԱՆԿԱՅԻՆ ՓՈԽԱՆՑՈՒՄՈՎ ՎՃԱՐՄԱՆ ԵՂԱՆԱԿՈՎ ՊԱՏՎԵՐ ---', 'Բրենդ': '', 'Անվանում': '', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
   bankItems.forEach(item => {
     const sum = item.product.wholesale * item.qty;
     bankTotal += sum;
     excelData.push({
       'Արտիկուլ': item.product.articul,
-      'Բրենդ': item.product.brand,
       'Անվանում': item.product.name,
-      'Առկայություն': item.product.stockStatus,
       'Քանակ (հատ)': item.qty,
       'Մեծածախ գին (AMD)': item.product.wholesale,
       'Գումար (AMD)': sum,
       'Վճարման եղանակ': 'Բանկային փոխանցումով'
     });
   });
-  excelData.push({ 'Արտիկուլ': '', 'Բրենդ': '', 'Անվանում': 'ԸՆԴՀԱՆՈՒՐ (ԲԱՆԿԱՅԻՆ)', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': bankTotal, 'Վճարման եղանակ': 'Բանկային փոխանցումով' });
+  excelData.push({ 'Արտիկուլ': '', 'Անվանում': 'ԸՆԴՀԱՆՈՒՐ (ԲԱՆԿԱՅԻՆ)', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': bankTotal, 'Վճարման եղանակ': 'Բանկային փոխանցումով' });
 }
 
-excelData.push({ 'Արտիկուլ': '', 'Բրենդ': '', 'Անվանում': '', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-excelData.push({ 'Արտիկուլ': 'Կոնտրագենտ:', 'Բրենդ': authorizedClient, 'Անվանում': '', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-excelData.push({ 'Արտիկուլ': 'ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ ԲՈԼՈՐԻ', 'Բրենդ': '', 'Անվանում': '', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': (cashTotal + bankTotal), 'Վճարման եղանակ': '' });
+excelData.push({ 'Արտիկուլ': '', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+excelData.push({ 'Արտիկուլ': 'Կոնտրագենտ:', 'Անվանում': authorizedClient, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+excelData.push({ 'Արտիկուլ': 'ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ ԲՈԼՈՐԻ', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': (cashTotal + bankTotal), 'Վճարման եղանակ': '' });
 
 const worksheet = XLSX.utils.json_to_sheet(excelData);
 
-// Расчет ширины колонок по длине самого длинного содержимого (автоподгонка)
 if (excelData.length > 0) {
   const colKeys = Object.keys(excelData[0]);
   const colWidths = colKeys.map(key => {
@@ -1103,7 +1096,6 @@ if (excelData.length > 0) {
         }
       }
     });
-    // Добавляем небольшой запас по ширине для читаемости
     return { wch: maxLen + 4 };
   });
   worksheet['!cols'] = colWidths;
@@ -1164,13 +1156,13 @@ reader.onload = function(e) {
         articul = String(r[0]).trim();
         for (let j = 1; j < r.length; j++) {
           let num = Number(r[j]);
-          if (!isNaN(num) && num > 0 && num < 10000 && (j === 4 || j === 5)) {
+          if (!isNaN(num) && num > 0 && num < 10000 && (j === 2 || j === 3 || j === 4)) {
             qty = num;
             break;
           }
         }
-        if (!qty && r.length >= 5) {
-          qty = Number(r[4]) || 1;
+        if (!qty && r.length >= 3) {
+          qty = Number(r[2]) || 1;
         }
 
         for (let cell of r) {
