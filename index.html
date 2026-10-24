@@ -384,7 +384,6 @@ const brandDomains = {
 'elica': 'elica.com', 'indesit': 'indesit.com'
 };
 
-// VSTROENNAYA FUNKCIYA DLYA SHIFROVANIYA SHA-256
 async function sha256(message) {
   const msgBuffer = new TextEncoder().encode(message);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -545,12 +544,12 @@ for (let i = startIndex; i < rows.length; i++) {
 }
 });
 
-// Hash dlya administratora (538263)
-passMap["8d28a381df4347f3b890a8809930f305c48b265691093f48a1d120a16b9b32e3"] = { client: "Администратор", sheet: "Dealers" };
+// Pravilnyy SHA-256 hash dlya administratora (538263)
+passMap["d5c33d07c18e87a43d93fc607e4acc15caab0f59048a60bc034fe1737d428964"] = { client: "Администратор", sheet: "Dealers" };
 
 } catch (e) {
 console.error("Ошибка загрузки pass.xlsx:", e);
-passMap["8d28a381df4347f3b890a8809930f305c48b265691093f48a1d120a16b9b32e3"] = { client: "Администратор", sheet: "Dealers" };
+passMap["d5c33d07c18e87a43d93fc607e4acc15caab0f59048a60bc034fe1737d428964"] = { client: "Администратор", sheet: "Dealers" };
 }
 }
 
@@ -560,7 +559,6 @@ const errorMsg = document.getElementById('errorMsg');
 
 if (!inputVal) return;
 
-// Vychislyayem SHA-256 khesh dlya vvedyonnogo parolya
 const inputHash = await sha256(inputVal);
 
 if (passMap[inputHash]) {
