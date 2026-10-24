@@ -153,18 +153,33 @@ body { font-family: 'Inter', sans-serif; }
   
   <div id="filtersContainer" class="p-4 space-y-3 hidden md:block">
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-      <div>
+      
+      <!-- Brend filter s poiskom i avtodopolneniyem -->
+      <div class="relative">
         <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Բրենդ</label>
-        <select id="brandFilter" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="">Բոլոր բրենդները</option>
-        </select>
+        <div class="relative">
+          <input type="text" id="brandInput" placeholder="Որոնել բրենդ..." 
+          oninput="filterBrandOptions()" onfocus="showBrandDropdown()" 
+          class="w-full px-3 py-1.5 pr-8 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <button id="clearBrandBtn" onclick="clearBrandSelection()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-xs">✕</button>
+        </div>
+        <div id="brandDropdown" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto z-50 text-sm">
+        </div>
       </div>
-      <div>
+
+      <!-- Kategoriya filter s poiskom i avtodopolneniyem -->
+      <div class="relative">
         <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Կատեգորիա</label>
-        <select id="categoryFilter" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="">Բոլոր կատեգորիաները</option>
-        </select>
+        <div class="relative">
+          <input type="text" id="categoryInput" placeholder="Որոնել կատեգորիա..." 
+          oninput="filterCategoryOptions()" onfocus="showCategoryDropdown()" 
+          class="w-full px-3 py-1.5 pr-8 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <button id="clearCategoryBtn" onclick="clearCategorySelection()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-xs">✕</button>
+        </div>
+        <div id="categoryDropdown" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto z-50 text-sm">
+        </div>
       </div>
+
       <div>
         <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Սորտավորում</label>
         <select id="sortBy" onchange="resetAndRender()" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -370,6 +385,11 @@ let authorizedClient = '';
 let userSheetType = '';
 let passMap = {};
 
+let availableBrands = [];
+let availableCategories = [];
+let selectedBrand = '';
+let selectedCategory = '';
+
 const TARGET_EMAILS = "Levon.Grigoryan@zigzag.am,Ashot.Manukyan@zigzag.am";
 
 const brandDomains = {
@@ -395,8 +415,8 @@ function toggleMobileFilters() {
 }
 
 function clearAllFilters() {
-  document.getElementById('brandFilter').value = '';
-  document.getElementById('categoryFilter').value = '';
+  clearBrandSelection();
+  clearCategorySelection();
   document.getElementById('sortBy').value = 'default';
   document.getElementById('promoOnlyFilter').checked = false;
   document.getElementById('stockOnlyFilter').checked = false;
@@ -589,6 +609,21 @@ window.onscroll = function() {
     btn.classList.add('hidden');
   }
 };
+
+// Zakrytiye vypadayushchikh spiskov pri klike vne ikh
+document.addEventListener('click', (e) => {
+  const brandDropdown = document.getElementById('brandDropdown');
+  const brandInput = document.getElementById('brandInput');
+  if (brandDropdown && !brandDropdown.contains(e.target) && e.target !== brandInput) {
+    brandDropdown.classList.add('hidden');
+  }
+
+  const categoryDropdown = document.getElementById('categoryDropdown');
+  const categoryInput = document.getElementById('categoryInput');
+  if (categoryDropdown && !categoryDropdown.contains(e.target) && e.target !== categoryInput) {
+    categoryDropdown.classList.add('hidden');
+  }
+});
 });
 
 function scrollToTop() {
@@ -837,29 +872,115 @@ console.error(err);
 }
 }
 
+/* LOKIKA DLYA DYNAMICHESKOGO POISKA BRENDOV I KATEGORIY */
 function initFilters() {
-const brands = [...new Set(allProducts.map(p => p.brand).filter(b => b))].sort();
-const brandSelect = document.getElementById('brandFilter');
-brandSelect.innerHTML = '<option value="">Բոլոր բրենդները</option>';
-brands.forEach(b => {
-const opt = document.createElement('option');
-opt.value = b;
-opt.textContent = b;
-brandSelect.appendChild(opt);
-});
+availableBrands = [...new Set(allProducts.map(p => p.brand).filter(b => b))].sort();
+availableCategories = [...new Set(allProducts.map(p => p.category).filter(c => c))].sort();
 
-const categories = [...new Set(allProducts.map(p => p.category).filter(c => c))].sort();
-const categorySelect = document.getElementById('categoryFilter');
-categorySelect.innerHTML = '<option value="">Բոլոր կատեգորիաները</option>';
-categories.forEach(c => {
-const opt = document.createElement('option');
-opt.value = c;
-opt.textContent = c;
-categorySelect.appendChild(opt);
-});
+renderBrandDropdown(availableBrands);
+renderCategoryDropdown(availableCategories);
+}
 
-brandSelect.onchange = resetAndRender;
-categorySelect.onchange = resetAndRender;
+function renderBrandDropdown(brands) {
+  const dropdown = document.getElementById('brandDropdown');
+  if (!brands || brands.length === 0) {
+    dropdown.innerHTML = '<div class="p-2.5 text-gray-400 text-xs text-center">Ոչինչ չի գտնվել</div>';
+    return;
+  }
+  dropdown.innerHTML = brands.map(b => `
+    <div onclick="selectBrand('${b}')" class="px-3 py-2 hover:bg-blue-50 cursor-pointer font-medium text-gray-800 transition border-b border-gray-50 last:border-none">
+      ${b}
+    </div>
+  `).join('');
+}
+
+function showBrandDropdown() {
+  document.getElementById('brandDropdown').classList.remove('hidden');
+}
+
+function filterBrandOptions() {
+  const query = document.getElementById('brandInput').value.trim().toLowerCase();
+  const clearBtn = document.getElementById('clearBrandBtn');
+  
+  if (query.length > 0) {
+    clearBtn.classList.remove('hidden');
+  } else {
+    clearBtn.classList.add('hidden');
+  }
+
+  const filtered = availableBrands.filter(b => b.toLowerCase().includes(query));
+  renderBrandDropdown(filtered);
+  showBrandDropdown();
+
+  selectedBrand = query;
+  resetAndRender();
+}
+
+function selectBrand(brand) {
+  selectedBrand = brand;
+  document.getElementById('brandInput').value = brand;
+  document.getElementById('clearBrandBtn').classList.remove('hidden');
+  document.getElementById('brandDropdown').classList.add('hidden');
+  resetAndRender();
+}
+
+function clearBrandSelection() {
+  selectedBrand = '';
+  document.getElementById('brandInput').value = '';
+  document.getElementById('clearBrandBtn').classList.add('hidden');
+  renderBrandDropdown(availableBrands);
+  resetAndRender();
+}
+
+function renderCategoryDropdown(categories) {
+  const dropdown = document.getElementById('categoryDropdown');
+  if (!categories || categories.length === 0) {
+    dropdown.innerHTML = '<div class="p-2.5 text-gray-400 text-xs text-center">Ոչինչ չի գտնվել</div>';
+    return;
+  }
+  dropdown.innerHTML = categories.map(c => `
+    <div onclick="selectCategory('${c}')" class="px-3 py-2 hover:bg-blue-50 cursor-pointer font-medium text-gray-800 transition border-b border-gray-50 last:border-none">
+      ${c}
+    </div>
+  `).join('');
+}
+
+function showCategoryDropdown() {
+  document.getElementById('categoryDropdown').classList.remove('hidden');
+}
+
+function filterCategoryOptions() {
+  const query = document.getElementById('categoryInput').value.trim().toLowerCase();
+  const clearBtn = document.getElementById('clearCategoryBtn');
+  
+  if (query.length > 0) {
+    clearBtn.classList.remove('hidden');
+  } else {
+    clearBtn.classList.add('hidden');
+  }
+
+  const filtered = availableCategories.filter(c => c.toLowerCase().includes(query));
+  renderCategoryDropdown(filtered);
+  showCategoryDropdown();
+
+  selectedCategory = query;
+  resetAndRender();
+}
+
+function selectCategory(category) {
+  selectedCategory = category;
+  document.getElementById('categoryInput').value = category;
+  document.getElementById('clearCategoryBtn').classList.remove('hidden');
+  document.getElementById('categoryDropdown').classList.add('hidden');
+  resetAndRender();
+}
+
+function clearCategorySelection() {
+  selectedCategory = '';
+  document.getElementById('categoryInput').value = '';
+  document.getElementById('clearCategoryBtn').classList.add('hidden');
+  renderCategoryDropdown(availableCategories);
+  resetAndRender();
 }
 
 function clearSearch() {
@@ -869,8 +990,6 @@ function clearSearch() {
 }
 
 function filterProducts() {
-const brandVal = document.getElementById('brandFilter').value;
-const categoryVal = document.getElementById('categoryFilter').value;
 const searchQuery = (document.getElementById('searchInput').value || '').trim().toLowerCase();
 const sortBy = document.getElementById('sortBy').value;
 const promoOnly = document.getElementById('promoOnlyFilter').checked;
@@ -884,8 +1003,8 @@ if (searchQuery.length > 0) {
 }
 
 filteredProducts = allProducts.filter(p => {
-const matchBrand = !brandVal || p.brand === brandVal;
-const matchCategory = !categoryVal || p.category === categoryVal;
+const matchBrand = !selectedBrand || p.brand.toLowerCase().includes(selectedBrand.toLowerCase());
+const matchCategory = !selectedCategory || p.category.toLowerCase().includes(selectedCategory.toLowerCase());
 const matchSearch = !searchQuery ||
 (p.name || '').toLowerCase().includes(searchQuery) ||
 (p.articul || '').toLowerCase().includes(searchQuery);
