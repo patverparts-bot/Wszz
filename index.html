@@ -73,25 +73,25 @@ body { font-family: 'Inter', sans-serif; }
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col relative">
 
-<!-- EKRAN AVTORIZACII S NOVYM FONOM -->
-<div id="authScreen" class="fixed inset-0 bg-cover bg-center bg-no-repeat z-50 flex items-center justify-center p-4" style="background-image: url('bg-warehouse.png');">
-  <!-- Poluprozrachnyy temnyy overley dlya kontrasta -->
-  <div class="absolute inset-0 bg-slate-900/40"></div>
+<!-- EKRAN AVTORIZACII S NOVYM FONOM (bg-warehouse.jpg) -->
+<div id="authScreen" class="fixed inset-0 bg-cover bg-center bg-no-repeat z-50 flex items-center justify-center p-4" style="background-image: url('bg-warehouse.jpg');">
+  <!-- Legkiy overley dlya uluchsheniya kontrasta -->
+  <div class="absolute inset-0 bg-slate-900/25"></div>
 
-  <!-- Kartochka avtorizacii v stile Glassmorphism -->
-  <div class="relative z-10 bg-white/85 backdrop-blur-md rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/50 text-center">
-    <h2 class="text-2xl font-extrabold text-gray-900 mb-2">Մուտքագրեք գաղտնաբառը</h2>
-    <p class="text-xs font-medium text-gray-600 mb-6" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
+  <!-- Kartochka avtorizacii s usilennoy prozrachnost'yu i lyogkim blur-effektom -->
+  <div class="relative z-10 bg-white/40 backdrop-blur-sm rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 text-center">
+    <h2 class="text-2xl font-black text-gray-900 mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
+    <p class="text-xs font-bold text-gray-800 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
 
     <div class="space-y-4">
       <input type="password" id="passwordInput" placeholder="Գաղտնաբառ..."
-      class="w-full px-4 py-3 border border-gray-300 rounded-xl text-center text-lg tracking-widest bg-white/90 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent shadow-inner">
+      class="w-full px-4 py-3 border border-gray-300/80 rounded-xl text-center text-lg tracking-widest bg-white/80 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent shadow-inner font-bold">
       
-      <button onclick="checkPassword()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-[1.01] active:scale-[0.99]">
+      <button onclick="checkPassword()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition transform hover:scale-[1.01] active:scale-[0.99]">
         Մուտք գործել
       </button>
       
-      <p id="errorMsg" class="text-red-600 text-xs hidden font-bold">Սխալ գաղտնաբառ։ Փորձեք կրկին։</p>
+      <p id="errorMsg" class="text-red-700 text-xs hidden font-black bg-white/70 py-1 px-2 rounded-lg">Սխալ գաղտնաբառ։ Փորձեք կրկին։</p>
     </div>
   </div>
 </div>
@@ -742,7 +742,7 @@ const isPromo = retail > 0 && baseRetail > 0 && retail < baseRetail;
 
 let marginVal = 0;
 if (retail > 0 && wholesale > 0) {
-  if (authorizedClient === "«ԴՈՄՈՒՍ» ՓԲԸ") {
+  if (authorizedClient === "«ԴՈ繆ՈՒՍ» ՓԲԸ") {
     marginVal = retail / wholesale;
   } else {
     marginVal = (1 - (wholesale / retail)) * 100;
@@ -750,7 +750,7 @@ if (retail > 0 && wholesale > 0) {
 }
 
 if (authorizedClient !== "Администратор" && retail > 0 && wholesale > 0) {
-  if (authorizedClient === "«ԴՈՄՈՒՍ» ՓԲԸ") {
+  if (authorizedClient === "«ԴՈ繆ՈՒՍ» ՓԲԸ") {
     if (marginVal < 1.0) continue;
   } else {
     if (marginVal < 0) continue;
@@ -957,7 +957,7 @@ const stockBadgeClass = authorizedClient === "Администратор"
 
 let marginBadge = '—';
 if (p.retail > 0 && p.wholesale > 0) {
-  if (authorizedClient === "«ԴՈՄՈՒՍ» ՓԲԸ") {
+  if (authorizedClient === "«ԴՈ繆ՈՒՍ» ՓԲԸ") {
     marginBadge = `<span class="px-2 py-1 rounded-lg text-xs font-bold border bg-gray-100 text-gray-800 border-gray-300">${p.marginVal.toFixed(2)}</span>`;
   } else {
     let colorClass = 'bg-blue-100 text-blue-800 border-blue-200';
@@ -1036,7 +1036,7 @@ const cartItem = cart[p.articul];
 
 let marginBadge = '';
 if (p.retail > 0 && p.wholesale > 0) {
-  if (authorizedClient === "«ԴՈՄՈՒՍ» ՓԲԸ") {
+  if (authorizedClient === "«ԴՈ繆ՈՒՍ» ՓԲԸ") {
     marginBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold border bg-gray-100 text-gray-800 border-gray-300">${p.marginVal.toFixed(2)}</span>`;
   } else {
     let colorClass = 'bg-blue-100 text-blue-800 border-blue-200';
