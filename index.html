@@ -55,7 +55,6 @@ body { font-family: 'Inter', sans-serif; }
   }
 }
 
-/* Konteyner tablicy s fiksiruemoy shapkoy dlya PK */
 .table-scroll-wrapper {
   max-height: calc(100vh - 220px);
   overflow: auto;
@@ -73,12 +72,10 @@ body { font-family: 'Inter', sans-serif; }
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col relative">
 
-<!-- EKRAN AVTORIZACII S NOVYM FONOM (bg-warehouse.jpg) -->
+<!-- EKRAN AVTORIZACII -->
 <div id="authScreen" class="fixed inset-0 bg-cover bg-center bg-no-repeat z-50 flex items-center justify-center p-4" style="background-image: url('bg-warehouse.jpg');">
-  <!-- Legkiy overley dlya uluchsheniya kontrasta -->
   <div class="absolute inset-0 bg-slate-900/25"></div>
 
-  <!-- Kartochka avtorizacii s usilennoy prozrachnost'yu i lyogkim blur-effektom -->
   <div class="relative z-10 bg-white/40 backdrop-blur-sm rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 text-center">
     <h2 class="text-2xl font-black text-gray-900 mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
@@ -98,7 +95,6 @@ body { font-family: 'Inter', sans-serif; }
 
 <!-- OSNOVNOY KATALOG -->
 <div id="mainApp" class="hidden flex-col min-h-screen pb-24">
-<!-- Գլխավոր գլխամաս -->
 <header class="bg-white border-b border-gray-200 shadow-sm">
 <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-3">
 <div class="flex items-center justify-between w-full sm:w-auto">
@@ -130,7 +126,6 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 </header>
 
-<!-- FIKSIRROVANNAYA STROKA POISKA V SAMOM VVERHU DLYA MOBILNYKH -->
 <div class="sticky top-0 z-40 bg-white border-b border-gray-200 p-2.5 shadow-sm">
   <div class="max-w-7xl mx-auto flex items-center gap-2">
     <div class="relative w-full">
@@ -141,10 +136,8 @@ body { font-family: 'Inter', sans-serif; }
   </div>
 </div>
 
-<!-- Հիմնական բովանդակություն -->
 <main class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex-grow w-full">
 
-<!-- Ֆիլտրերի և սորտավորման վահանակ -->
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-4 overflow-visible">
   <button onclick="toggleMobileFilters()" class="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 flex items-center justify-between text-xs sm:text-sm font-semibold text-gray-700 md:hidden transition">
     <span class="flex items-center gap-1.5">⚙️ Ֆիլտրեր և կարգավորումներ</span>
@@ -154,7 +147,6 @@ body { font-family: 'Inter', sans-serif; }
   <div id="filtersContainer" class="p-4 space-y-3 hidden md:block">
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
       
-      <!-- Brend filter s poiskom i avtodopolneniyem -->
       <div class="relative">
         <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Բրենդ</label>
         <div class="relative">
@@ -167,7 +159,6 @@ body { font-family: 'Inter', sans-serif; }
         </div>
       </div>
 
-      <!-- Kategoriya filter s poiskom i avtodopolneniyem -->
       <div class="relative">
         <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Կատեգորիա</label>
         <div class="relative">
@@ -210,15 +201,12 @@ body { font-family: 'Inter', sans-serif; }
   </div>
 </div>
 
-<!-- INDIKATOR ZAGRUZKI (SPINNER) -->
 <div id="dataLoader" class="hidden py-12 flex flex-col items-center justify-center gap-3">
   <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
   <p class="text-xs font-medium text-gray-500">Տվյալները բեռնվում են, խնդրում ենք սպասել...</p>
 </div>
 
-<!-- ԱՊՐԱՆՔՆԵՐԻ ՑՈՒՑԱԿ -->
 <div id="catalogContent">
-  <!-- TABLICA (dlya PK/Planshetov) -->
   <div class="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
   <div class="table-scroll-wrapper">
   <table class="w-full text-left border-collapse min-w-[700px]" id="catalogTable">
@@ -232,16 +220,13 @@ body { font-family: 'Inter', sans-serif; }
   </div>
   </div>
 
-  <!-- KARTOCHKI (dlya Mobilnykh) -->
   <div class="block md:hidden space-y-3" id="mobileCardsContainer">
   </div>
 
-  <!-- Net rezul'tatov -->
   <div id="noResults" class="hidden p-8 bg-white rounded-xl border text-center text-gray-500">
   Ապրանքներ չեն գտնվել Ձեր որոնման կամ պահեստի պայմաններին համապատասխան:
   </div>
 
-  <!-- KNOPKA PODGRUZKI «ZAGRUZIT' YESHCHYO» -->
   <div id="loadMoreContainer" class="hidden text-center mt-6">
     <button onclick="loadMoreProducts()" class="px-6 py-3 bg-white hover:bg-gray-50 border border-gray-300 text-blue-600 font-semibold text-sm rounded-xl shadow-sm transition transform hover:scale-105 inline-flex items-center gap-2">
       <span>🔽 Բեռնել ավելին</span>
@@ -252,7 +237,6 @@ body { font-family: 'Inter', sans-serif; }
 
 </main>
 
-<!-- ՊԱՏՎԵՐԻ ՎԱՀԱՆԱԿ -->
 <div id="orderPanel" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 shadow-lg p-3 sm:p-4 z-40 hidden">
 <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
 <div class="text-center sm:text-left">
@@ -272,7 +256,6 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 </div>
 
-<!-- ՊԱՏՎԵՐԻ ՊԱՏՈՒՀԱՆ (MODAL) -->
 <div id="orderModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-3 sm:p-4">
 <div class="bg-white rounded-2xl max-w-4xl w-full p-4 sm:p-6 shadow-2xl max-h-[92vh] flex flex-col">
 <div class="flex justify-between items-center mb-3 sm:mb-4 border-b pb-3">
@@ -295,7 +278,6 @@ body { font-family: 'Inter', sans-serif; }
 <div id="modalItemsList" class="overflow-y-auto flex-grow divide-y divide-gray-100 mb-3 sm:mb-4 max-h-[30vh] text-sm pr-1">
 </div>
 
-<!-- Blok dostavki i kommentariyev -->
 <div class="bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-200 mb-3 sm:mb-4 space-y-3">
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
     <div>
@@ -334,16 +316,13 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 </div>
 
-<!-- POLNOEKRANNOE POZDRAVLENIE V STILISTIKE ZIGZAG.AM (UVELICHENNYY LOGOTIP BEZ IKONKI) -->
 <div id="successOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex flex-col items-center justify-center p-4 text-center">
   <div class="bg-white rounded-2xl border border-gray-200 p-8 sm:p-12 shadow-2xl max-w-lg w-full flex flex-col items-center transition transform scale-100">
     
-    <!-- Uvelichennyy Logo Zigzag.am -->
     <div class="mb-6 flex justify-center">
       <img src="logo.png" alt="ZIGZAG" class="h-14 sm:h-16 w-auto object-contain max-w-[200px]" loading="lazy" onerror="this.onerror=null; this.src='logo.PNG';">
     </div>
 
-    <!-- Zagolovok i tekst -->
     <h2 class="text-xl sm:text-2xl font-black text-gray-900 tracking-tight mb-2 leading-tight">
       ՄԱՂԹՈՒՄ ԵՆՔ ԲԱԶՈՒՄ ՎԱՃԱՌՔՆԵՐ
     </h2>
@@ -351,7 +330,6 @@ body { font-family: 'Inter', sans-serif; }
       Ձեր պատվերի ֆայլը հաջողությամբ ներբեռնվել է: Շնորհակալություն համագործակցության համար:
     </p>
 
-    <!-- Knopki vozvrata -->
     <div class="flex flex-col sm:flex-row gap-2.5 w-full justify-center">
       <button onclick="keepCartAndCloseSuccess()" class="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition text-xs sm:text-sm">
         🔄 Վերադառնալ (Պահպանել)
@@ -363,7 +341,6 @@ body { font-family: 'Inter', sans-serif; }
   </div>
 </div>
 
-<!-- VSPL YVAYUSHCHEYE UVEDOMLENIE (RESTORED CART TOAST) -->
 <div id="restoredCartToast" class="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-sm bg-blue-900 text-white p-4 rounded-xl shadow-2xl z-50 hidden border border-blue-700 flex items-center justify-between gap-3 transition">
   <div class="text-xs">
     <p class="font-bold text-blue-200 mb-0.5">🛒 Զամբյուղը վերականգնվել է</p>
@@ -372,14 +349,12 @@ body { font-family: 'Inter', sans-serif; }
   <button onclick="closeCartToast()" class="text-gray-400 hover:text-white font-bold text-lg">&times;</button>
 </div>
 
-<!-- KNOPKA «NAVERKH» -->
 <button id="scrollTopBtn" onclick="scrollToTop()" class="fixed bottom-20 right-4 sm:right-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-2xl z-30 hidden transition transform hover:scale-110">
 ⬆️
 </button>
 
 </div>
 
-<!-- Skript -->
 <script>
 let allProducts = [];
 let filteredProducts = [];
@@ -409,6 +384,14 @@ const brandDomains = {
 'elica': 'elica.com', 'indesit': 'indesit.com'
 };
 
+// VSTROENNAYA FUNKCIYA DLYA SHIFROVANIYA SHA-256
+async function sha256(message) {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 function toggleMobileFilters() {
   const container = document.getElementById('filtersContainer');
   const icon = document.getElementById('filterToggleIcon');
@@ -420,7 +403,6 @@ function toggleMobileFilters() {
   }
 }
 
-/* CHUVANIE I UCHITAVANJE FILTARA U LOCALSTORAGE */
 function saveFiltersToStorage() {
   if (!authorizedClient) return;
   try {
@@ -546,7 +528,7 @@ const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 let startIndex = 0;
 if (rows.length > 0 && rows[0] && rows[0][0]) {
   const firstVal = String(rows[0][0]).trim().toLowerCase();
-  if (firstVal.includes('пароль') || firstVal.includes('pass') || firstVal.includes('գաղտնաբառ')) {
+  if (firstVal.includes('пароль') || firstVal.includes('pass') || firstVal.includes('գաղտնաբառ') || firstVal.includes('hash')) {
     startIndex = 1;
   }
 }
@@ -554,20 +536,21 @@ if (rows.length > 0 && rows[0] && rows[0][0]) {
 for (let i = startIndex; i < rows.length; i++) {
   let r = rows[i];
   if (r && r.length >= 2) {
-    let p = r[0] !== null && r[0] !== undefined ? String(r[0]).trim() : '';
+    let pHash = r[0] !== null && r[0] !== undefined ? String(r[0]).trim().toLowerCase() : '';
     let client = r[1] !== null && r[1] !== undefined ? String(r[1]).trim() : '';
-    if (p) {
-      passMap[p] = { client: client, sheet: sheetName };
+    if (pHash) {
+      passMap[pHash] = { client: client, sheet: sheetName };
     }
   }
 }
 });
 
-passMap["538263"] = { client: "Администратор", sheet: "Dealers" };
+// Hash dlya administratora (538263)
+passMap["8d28a381df4347f3b890a8809930f305c48b265691093f48a1d120a16b9b32e3"] = { client: "Администратор", sheet: "Dealers" };
 
 } catch (e) {
 console.error("Ошибка загрузки pass.xlsx:", e);
-passMap["538263"] = { client: "Администратор", sheet: "Dealers" };
+passMap["8d28a381df4347f3b890a8809930f305c48b265691093f48a1d120a16b9b32e3"] = { client: "Администратор", sheet: "Dealers" };
 }
 }
 
@@ -575,9 +558,14 @@ async function checkPassword() {
 const inputVal = document.getElementById('passwordInput').value.trim();
 const errorMsg = document.getElementById('errorMsg');
 
-if (passMap[inputVal]) {
-authorizedClient = passMap[inputVal].client;
-userSheetType = passMap[inputVal].sheet;
+if (!inputVal) return;
+
+// Vychislyayem SHA-256 khesh dlya vvedyonnogo parolya
+const inputHash = await sha256(inputVal);
+
+if (passMap[inputHash]) {
+authorizedClient = passMap[inputHash].client;
+userSheetType = passMap[inputHash].sheet;
 
 try {
   localStorage.setItem('zigzag_client', authorizedClient);
@@ -675,7 +663,6 @@ window.onscroll = function() {
   }
 };
 
-// Zakrytiye vypadayushchikh spiskov pri klike vne ikh
 document.addEventListener('click', (e) => {
   const brandDropdown = document.getElementById('brandDropdown');
   const brandInput = document.getElementById('brandInput');
@@ -938,7 +925,6 @@ console.error(err);
 }
 }
 
-/* LOKIKA DLYA DYNAMICHESKOGO POISKA BRENDOV I KATEGORIY */
 function initFilters() {
 availableBrands = [...new Set(allProducts.map(p => p.brand).filter(b => b))].sort();
 availableCategories = [...new Set(allProducts.map(p => p.category).filter(c => c))].sort();
