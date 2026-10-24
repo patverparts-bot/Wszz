@@ -466,6 +466,7 @@ if (!art || art.toLowerCase().includes('artikul') || art.toLowerCase().includes(
 
 const defaultWholesale = Number(r[colMap.wholesale]) || 0;
 let wholesale = 0;
+let isWholesalePromo = false;
 let resaleWholesale = defaultWholesale;
 
 if (userSheetType === 'KP' && authorizedClient !== "Администратор") {
@@ -474,6 +475,7 @@ if (userSheetType === 'KP' && authorizedClient !== "Администратор")
   
   if (promoVal && promoVal > 0) {
     wholesale = promoVal;
+    isWholesalePromo = true;
   } else if (normalVal && normalVal > 0) {
     wholesale = normalVal;
   } else {
@@ -521,7 +523,6 @@ break;
 const retail = Number(r[colMap.retail]) || 0;
 const baseRetail = colMap.baseRetail !== -1 ? (Number(r[colMap.baseRetail]) || retail) : retail;
 
-// Проверяем акцию: если скидочная цена (retail) меньше базовой розничной (baseRetail)
 const isPromo = retail > 0 && baseRetail > 0 && retail < baseRetail;
 
 let marginVal = 0;
@@ -590,6 +591,7 @@ name: name,
 retail: retail,
 isPromo: isPromo,
 wholesale: wholesale,
+isWholesalePromo: isWholesalePromo,
 resaleWholesale: resaleWholesale,
 marginVal: marginVal,
 stockStatus: stockStatus
@@ -677,7 +679,6 @@ if (p.retail > 0 && p.wholesale > 0) {
   }
 }
 
-// Пометка ԱԿՑԻԱ в колонке розницы, если скидочная цена меньше розничной
 let retailCellHtml = '—';
 if (p.retail > 0) {
   const priceFormatted = p.retail.toLocaleString('ru-RU') + ' ֏';
@@ -685,6 +686,16 @@ if (p.retail > 0) {
     retailCellHtml = `<div class="flex flex-col items-end"><span class="text-gray-900 font-medium">${priceFormatted}</span><span class="px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-[10px] font-bold mt-0.5 border border-red-200">ԱԿՑԻԱ</span></div>`;
   } else {
     retailCellHtml = `<span class="text-gray-600">${priceFormatted}</span>`;
+  }
+}
+
+let wholesaleCellHtml = '—';
+if (p.wholesale > 0) {
+  const wholesaleFormatted = p.wholesale.toLocaleString('ru-RU') + ' ֏';
+  if (p.isWholesalePromo) {
+    wholesaleCellHtml = `<div class="flex flex-col items-end"><span class="text-gray-900 font-semibold">${wholesaleFormatted}</span><span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold mt-0.5 border border-emerald-200">PROMO</span></div>`;
+  } else {
+    wholesaleCellHtml = `<span class="text-gray-900 font-semibold">${wholesaleFormatted}</span>`;
   }
 }
 
@@ -731,7 +742,7 @@ ${getProductImageHtml(p.articul, p.name)}
 <td class="py-3 px-4 text-right">${retailCellHtml}</td>
 <td class="py-3 px-4 text-center">${marginBadge}</td>
 ${resaleColHtml}
-<td class="py-3 px-4 text-right font-semibold text-gray-900">${p.wholesale ? p.wholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</td>
+<td class="py-3 px-4 text-right">${wholesaleCellHtml}</td>
 <td class="py-3 px-4 text-center">${actionCellHtml}</td>
 `;
 tbody.appendChild(tr);
