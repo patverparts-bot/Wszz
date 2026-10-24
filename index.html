@@ -39,12 +39,6 @@ body { font-family: 'Inter', sans-serif; }
   left: 0;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
 }
-
-/* Гарантируем корректную работу sticky для таблицы */
-.table-container {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
 </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col relative">
@@ -71,7 +65,7 @@ class="w-full px-4 py-3 border border-gray-300 rounded-xl text-center text-lg tr
 
 <!-- ОСНОВНОЙ КАТАЛОГ -->
 <div id="mainApp" class="hidden flex-col min-h-screen pb-24">
-<!-- Գլխավոր գլխամաս (обычный поток, прокручивается наверх) -->
+<!-- Գլխավոր գլխամաս -->
 <header class="bg-white border-b border-gray-200 shadow-sm">
 <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
 <div class="flex items-center gap-3">
@@ -144,11 +138,11 @@ class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 </div>
 </div>
 
-<!-- Ապրանքների աղյուսակ (Строго без overflow-hidden на внешнем блоке для корректного sticky) -->
+<!-- Ապրանքների աղյուսակ -->
 <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-<div class="table-container">
+<div class="overflow-x-auto">
 <table class="w-full text-left border-collapse min-w-[700px]" id="catalogTable">
-<thead class="sticky top-0 z-30 bg-gray-100 text-gray-700 text-xs uppercase tracking-wider shadow-sm">
+<thead>
 <tr id="tableHeaderRow" class="border-b border-gray-200">
 <!-- Динамически заполняется шапка -->
 </tr>
@@ -406,34 +400,29 @@ loadExcelFile();
 loadCartFromStorage();
 }
 
+// Задаем sticky напрямую для элементов TH
 function setupTableHeader() {
 const headerRow = document.getElementById('tableHeaderRow');
+const thClass = "sticky top-0 bg-gray-100 py-3 px-4 font-semibold text-gray-700 text-xs uppercase tracking-wider z-20 border-b border-gray-200 shadow-sm";
+
+let cols = [
+  { name: 'Արտիկուլ', align: 'text-left' },
+  { name: 'Բրենդ', align: 'text-left' },
+  { name: 'Կատեգորիա', align: 'text-left' },
+  { name: 'Անվանում', align: 'text-left' },
+  { name: 'Առկայություն', align: 'text-left' },
+  { name: 'Մանրածախ', align: 'text-right' },
+  { name: 'Եկամտաբերություն', align: 'text-center' }
+];
+
 if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
-  headerRow.innerHTML = `
-    <th class="py-3 px-4 font-semibold">Արտիկուլ</th>
-    <th class="py-3 px-4 font-semibold">Բրենդ</th>
-    <th class="py-3 px-4 font-semibold">Կատեգորիա</th>
-    <th class="py-3 px-4 font-semibold">Անվանում</th>
-    <th class="py-3 px-4 font-semibold">Առկայություն</th>
-    <th class="py-3 px-4 font-semibold text-right">Մանրածախ</th>
-    <th class="py-3 px-4 font-semibold text-center">Եկամտաբերություն</th>
-    <th class="py-3 px-4 font-semibold text-right">Վերավաճառքի մեծածախ գին</th>
-    <th class="py-3 px-4 font-semibold text-right">Մեծածախ (Wholesale)</th>
-    <th class="py-3 px-4 font-semibold text-center">Գործողություն</th>
-  `;
-} else {
-  headerRow.innerHTML = `
-    <th class="py-3 px-4 font-semibold">Արտիկուլ</th>
-    <th class="py-3 px-4 font-semibold">Բրենդ</th>
-    <th class="py-3 px-4 font-semibold">Կատեգորիա</th>
-    <th class="py-3 px-4 font-semibold">Անվանում</th>
-    <th class="py-3 px-4 font-semibold">Առկայություն</th>
-    <th class="py-3 px-4 font-semibold text-right">Մանրածախ</th>
-    <th class="py-3 px-4 font-semibold text-center">Եկամտաբերություն</th>
-    <th class="py-3 px-4 font-semibold text-right">Մեծածախ (Wholesale)</th>
-    <th class="py-3 px-4 font-semibold text-center">Գործողություն</th>
-  `;
+  cols.push({ name: 'Վերավաճառքի մեծածախ գին', align: 'text-right' });
 }
+
+cols.push({ name: 'Մեծածախ (Wholesale)', align: 'text-right' });
+cols.push({ name: 'Գործողություն', align: 'text-center' });
+
+headerRow.innerHTML = cols.map(c => `<th class="${thClass} ${c.align}">${c.name}</th>`).join('');
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
