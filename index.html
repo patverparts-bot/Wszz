@@ -160,7 +160,7 @@ class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 <table class="w-full text-left border-collapse min-w-[700px]" id="catalogTable">
 <thead>
 <tr id="tableHeaderRow">
-<!-- Динамически заполняется шапка со свойствами sticky -->
+<!-- Динамически заполняется шапка -->
 </tr>
 </thead>
 <tbody class="divide-y divide-gray-200 text-sm" id="tableBody">
@@ -1088,6 +1088,27 @@ excelData.push({ 'Արտիկուլ': 'Կոնտրագենտ:', 'Բրենդ': auth
 excelData.push({ 'Արտիկուլ': 'ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ ԲՈԼՈՐԻ', 'Բրենդ': '', 'Անվանում': '', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': (cashTotal + bankTotal), 'Վճարման եղանակ': '' });
 
 const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+// Расчет ширины колонок по длине самого длинного содержимого (автоподгонка)
+if (excelData.length > 0) {
+  const colKeys = Object.keys(excelData[0]);
+  const colWidths = colKeys.map(key => {
+    let maxLen = key ? String(key).length : 10;
+    excelData.forEach(row => {
+      const val = row[key];
+      if (val !== undefined && val !== null) {
+        const len = String(val).length;
+        if (len > maxLen) {
+          maxLen = len;
+        }
+      }
+    });
+    // Добавляем небольшой запас по ширине для читаемости
+    return { wch: maxLen + 4 };
+  });
+  worksheet['!cols'] = colWidths;
+}
+
 const workbook = XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(workbook, worksheet, "Պատվեր");
 
