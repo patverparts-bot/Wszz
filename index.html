@@ -601,11 +601,7 @@ retail: headers.findIndex(h => h && (h.includes('Զեղչված') || h.toLowerCa
 baseRetail: headers.findIndex(h => h && (h.toLowerCase().includes('roznich') || h.toLowerCase().includes('մանրածախ') || h.toLowerCase().includes('розница'))),
 wholesale: headers.findIndex(h => h && (h.includes('Wholesale') || h.toLowerCase().includes('wholesale') || h.toLowerCase().includes('опт') || h.toLowerCase().includes('մեծածախ'))),
 kpPromo: headers.findIndex(h => h && h.includes("Key Partner's promo AMD")),
-kpNormal: headers.findIndex(h => h && h.includes("Key Partner's AMD")),
-s003: headers.findIndex(h => h === '003'),
-s023: headers.findIndex(h => h === '023'),
-s026: headers.findIndex(h => h === '026'),
-s031: headers.findIndex(h => h === '031')
+kpNormal: headers.findIndex(h => h && h.includes("Key Partner's AMD"))
 };
 
 if (colMap.art === -1) colMap.art = 0;
@@ -614,6 +610,17 @@ if (colMap.category === -1) colMap.category = 2;
 if (colMap.name === -1) colMap.name = 4;
 if (colMap.retail === -1) colMap.retail = 5;
 if (colMap.wholesale === -1) colMap.wholesale = 6;
+
+// Определяем список колонок-складов для Администратора (все числовые колонки правее базовых)
+const warehouseCols = [];
+for (let j = 0; j < headers.length; j++) {
+  if (j !== colMap.art && j !== colMap.brand && j !== colMap.category && j !== colMap.name && j !== colMap.retail && j !== colMap.baseRetail && j !== colMap.wholesale && j !== colMap.kpPromo && j !== colMap.kpNormal) {
+    let hName = headers[j];
+    if (hName) {
+      warehouseCols.push({ index: j, name: hName });
+    }
+  }
+}
 
 for (let i = headerRowIdx + 1; i < rows.length; i++) {
 const r = rows[i];
@@ -701,44 +708,61 @@ if (authorizedClient !== "Администратор" && retail > 0 && wholesale
   }
 }
 
-const q003 = colMap.s003 !== -1 ? (Number(r[colMap.s003]) || 0) : 0;
-const q023 = colMap.s023 !== -1 ? (Number(r[colMap.s023]) || 0) : 0;
-const q026 = colMap.s026 !== -1 ? (Number(r[colMap.s026]) || 0) : 0;
-const q031 = colMap.s031 !== -1 ? (Number(r[colMap.s031]) || 0) : 0;
-
-const targetWarehousesStock = q003 + q023 + q026 + q031;
-
+// Сбор остатков по складам для Администратора
+let adminStockDetails = [];
+let targetWarehousesStock = 0;
 let otherWarehousesSum = 0;
-for (let j = 0; j < r.length; j++) {
-if (j === colMap.art || j === colMap.brand || j === colMap.category || j === colMap.name || j === colMap.retail || j === colMap.wholesale || j === colMap.kpPromo || j === colMap.kpNormal || j === colMap.s003 || j === colMap.s023 || j === colMap.s026 || j === colMap.s031) continue;
-const val = Number(r[j]);
-if (!isNaN(val) && val > 0) {
-otherWarehousesSum += val;
+
+let baseSum = 0;
+let otherStockList = [];
+
+warehouseCols.forEach(wh => {
+  const qty = Number(r[wh.index]) || 0;
+  if (qty > 0) {
+    const wName = wh.name.trim();
+    if (wName === '003' || wName === '023' || wName === '026' || wName === '031') {
+      baseSum += qty;
+      targetWarehousesStock += qty;
+    } else {
+      otherStockList.push({ name: wName, qty: qty });
+      otherWarehousesSum += qty;
+    }
+  }
+});
+
+if (baseSum > 0) {
+  adminStockDetails.push({ name: 'База', qty: baseSum });
 }
-}
+otherStockList.forEach(item => {
+  adminStockDetails.push(item);
+});
 
 let stockStatus = '';
 let isValidStock = false;
 
-if (targetWarehousesStock >= 2) {
-isValidStock = true;
-let availableIn = [];
-if (q003 > 0) availableIn.push('003');
-if (q023 > 0) availableIn.push('023');
-if (q026 > 0) availableIn.push('026');
-if (q031 > 0) availableIn.push('031');
-stockStatus = `Առկա է (${availableIn.join(', ')})`;
-} else if (targetWarehousesStock === 0 && otherWarehousesSum < 5) {
-isValidStock = false;
-} else if (targetWarehousesStock < 2 && otherWarehousesSum < 5) {
-isValidStock = true;
-stockStatus = 'Ճշտել առկայությունը';
-} else if (targetWarehousesStock === 0 && otherWarehousesSum >= 5) {
-isValidStock = true;
-stockStatus = 'Ճշտել առկայությունը';
+if (authorizedClient === "Администратор") {
+  if (adminStockDetails.length > 0) {
+    isValidStock = true;
+    stockStatus = adminStockDetails.map(s => `${s.name}: ${s.qty}`).join(', ');
+  } else {
+    isValidStock = false;
+  }
 } else {
-isValidStock = true;
-stockStatus = 'Ճշտել առկայությունը';
+  if (targetWarehousesStock >= 2) {
+    isValidStock = true;
+    stockStatus = 'Առկա է';
+  } else if (targetWarehousesStock === 0 && otherWarehousesSum < 5) {
+    isValidStock = false;
+  } else if (targetWarehousesStock < 2 && otherWarehousesSum < 5) {
+    isValidStock = true;
+    stockStatus = 'Ճշտել առկայությունը';
+  } else if (targetWarehousesStock === 0 && otherWarehousesSum >= 5) {
+    isValidStock = true;
+    stockStatus = 'Ճշտել առկայությունը';
+  } else {
+    isValidStock = true;
+    stockStatus = 'Ճշտել առկայությունը';
+  }
 }
 
 if (isValidStock) {
@@ -819,7 +843,7 @@ const matchSearch = !searchQuery ||
 (p.articul || '').toLowerCase().includes(searchQuery);
 
 const matchPromo = !promoOnly || (p.isPromo || p.isWholesalePromo);
-const matchStock = !stockOnly || !p.stockStatus.includes('Ճշտել');
+const matchStock = !stockOnly || (authorizedClient === "Администратор" ? true : !p.stockStatus.includes('Ճշտել'));
 
 return matchBrand && matchCategory && matchSearch && matchPromo && matchStock;
 });
@@ -879,9 +903,9 @@ const tr = document.createElement('tr');
 tr.className = 'hover:bg-blue-50/40 transition-colors border-b border-gray-100';
 
 const isUtochnit = p.stockStatus.includes('Ճշտել');
-const stockBadgeClass = isUtochnit
-? 'bg-amber-100 text-amber-800 border border-amber-300'
-: 'bg-emerald-100 text-emerald-800 border border-emerald-300';
+const stockBadgeClass = authorizedClient === "Администратор"
+? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-xs'
+: (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
 
 let marginBadge = '—';
 if (p.retail > 0 && p.wholesale > 0) {
@@ -940,7 +964,7 @@ ${getProductImageHtml(p.articul, p.name)}
 <span class="text-gray-900 font-medium">${p.name || '—'}</span>
 </div>
 </td>
-<td class="py-3 px-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${stockBadgeClass}">${p.stockStatus}</span></td>
+<td class="py-3 px-4"><span class="px-2.5 py-1 rounded-md text-xs font-semibold ${stockBadgeClass}">${p.stockStatus}</span></td>
 <td class="py-3 px-4 text-right">${retailCellHtml}</td>
 <td class="py-3 px-4 text-center">${marginBadge}</td>
 ${resaleColHtml}
@@ -955,9 +979,9 @@ const div = document.createElement('div');
 div.className = 'bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col gap-3';
 
 const isUtochnit = p.stockStatus.includes('Ճշտել');
-const stockBadgeClass = isUtochnit
-? 'bg-amber-100 text-amber-800 border border-amber-300'
-: 'bg-emerald-100 text-emerald-800 border border-emerald-300';
+const stockBadgeClass = authorizedClient === "Администратор"
+? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-[11px]'
+: (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
 
 const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
 const cartItem = cart[p.articul];
@@ -989,7 +1013,7 @@ div.innerHTML = `
 </div>
 
 <div class="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">
-  <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${stockBadgeClass}">${p.stockStatus}</span>
+  <span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${p.stockStatus}</span>
   <div class="flex items-center gap-2">
     <span class="text-gray-400">Եկամտաբերություն:</span>
     ${marginBadge}
@@ -1163,9 +1187,9 @@ totalSum += sum;
 
 const stockStatus = (item.product && item.product.stockStatus) ? item.product.stockStatus : 'Առկա է';
 const isUtochnit = stockStatus.includes('Ճշտել');
-const stockBadgeClass = isUtochnit
-? 'bg-amber-100 text-amber-800 border border-amber-300'
-: 'bg-emerald-100 text-emerald-800 border border-emerald-300';
+const stockBadgeClass = authorizedClient === "Администратор"
+? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-[10px]'
+: (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
 
 const div = document.createElement('div');
 div.className = 'py-3 sm:py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-gray-100';
@@ -1173,7 +1197,7 @@ div.innerHTML = `
 <div class="flex-grow">
 <div class="flex items-center gap-2 mb-1">
 <span class="font-mono text-xs text-blue-600 font-semibold">${articul}</span>
-<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${stockBadgeClass}">${stockStatus}</span>
+<span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${stockStatus}</span>
 </div>
 <div class="text-gray-900 font-medium text-xs sm:text-sm">${name}</div>
 <div class="text-[11px] text-gray-500">Մեծածախ գին՝ ${price.toLocaleString('ru-RU')} ֏</div>
@@ -1347,7 +1371,7 @@ if (bankItems.length > 0) {
 
 excelData.push({ 'Արտիկուլ': '', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 excelData.push({ 'Արտիկուլ': 'Կոնտրագենտ:', 'Անվանում': authorizedClient, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-excelData.push({ 'Արտիկուլ': 'ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ ԲՈ🇱ՈՐԻ', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': (cashTotal + bankTotal), 'Վճարման եղանակ': '' });
+excelData.push({ 'Արտիկուլ': 'ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ ԲՈԼՈՐԻ', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': (cashTotal + bankTotal), 'Վճարման եղանակ': '' });
 
 const worksheet = XLSX.utils.json_to_sheet(excelData);
 
