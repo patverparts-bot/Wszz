@@ -41,7 +41,7 @@ body { font-family: 'Inter', sans-serif; }
 }
 </style>
 </head>
-<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col relative">
 
 <!-- ЭКРАН АВТОРИЗАЦИИ -->
 <div id="authScreen" class="fixed inset-0 bg-gray-900/80 z-50 flex items-center justify-center p-4">
@@ -90,19 +90,46 @@ class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 <!-- Հիմնական բովանդակություն -->
 <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex-grow w-full">
 
-<!-- Ֆիլտրերի վահանակ -->
-<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Ֆիլտրերի և սորտավորման վահանակ (Улучшение 1) -->
+<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 space-y-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
 <div>
-<label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Ֆիլտր ըստ բրենդի</label>
+<label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Բրենդ</label>
 <select id="brandFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
 <option value="">Բոլոր բրենդները</option>
 </select>
 </div>
 <div>
-<label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Ֆիլտր ըստ կատեգորիայի</label>
+<label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Կատեգորիա</label>
 <select id="categoryFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
 <option value="">Բոլոր կատեգորիաները</option>
 </select>
+</div>
+<div>
+<label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Սորտավորում</label>
+<select id="sortBy" onchange="renderTable()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+<option value="default">Ստանդարտ</option>
+<option value="priceAsc">Գին՝ էժանից թանկ</option>
+<option value="priceDesc">Գին՝ թանկից էժան</option>
+<option value="marginDesc">Եկամտաբերություն՝ բարձրից ցածր</option>
+</select>
+</div>
+</div>
+
+<div class="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-gray-100">
+<div class="flex items-center gap-6 flex-wrap">
+<label class="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700">
+<input type="checkbox" id="promoOnlyFilter" onchange="renderTable()" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+<span>🔥 Միայն ակցիաներ / PROMO</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700">
+<input type="checkbox" id="stockOnlyFilter" onchange="renderTable()" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+<span>✅ Միայն առկա պահեստում</span>
+</label>
+</div>
+<div class="text-xs text-gray-500 font-semibold" id="productCountInfo">
+Գտնվել է 0 ապրանք
+</div>
 </div>
 </div>
 
@@ -153,7 +180,7 @@ class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 <button onclick="closeOrderModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
 </div>
 
-<!-- Общий выбор способа оплаты для всех товаров -->
+<!-- Общий выбор способа оплаты -->
 <div class="bg-blue-50 p-4 rounded-xl border border-blue-200 mb-4 flex flex-col sm:flex-row justify-between items-center gap-3">
 <div>
 <span class="text-xs font-bold text-blue-900 uppercase">Ընդհանուր վճարման եղանակ (կիրառել բոլորի համար)․</span>
@@ -174,13 +201,17 @@ class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 <span class="text-gray-600 text-sm">Ընդհանուր գումար՝ </span>
 <span id="modalTotalSum" class="text-xl font-bold text-green-600">0 ֏</span>
 </div>
+<!-- Кнопки действий заказа (Улучшение 4: Viber / Mail / Excel) -->
 <div class="flex gap-2 flex-wrap justify-end">
-<button onclick="closeOrderModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm">Փակել</button>
-<button onclick="copyOrderText()" class="px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded-lg text-sm font-medium transition">
-Պատճենել տեքստը
+<button onclick="closeOrderModal()" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-medium">Փակել</button>
+<button onclick="sendViaViber()" class="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold shadow transition flex items-center gap-1.5" title="Ուղարկել Viber-ով">
+<span>📱</span> Viber
 </button>
-<button onclick="downloadOrderExcel()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-sm shadow transition flex items-center gap-2">
-<span>📥</span> Ներբեռնել Excel-ով
+<button onclick="sendViaEmail()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition flex items-center gap-1.5" title="Ուղարկել Էլ․ փոստով">
+<span>✉️</span> Levon.Grigoryan@zigzag.am
+</button>
+<button onclick="downloadOrderExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs shadow transition flex items-center gap-1.5">
+<span>📥</span> Excel
 </button>
 </div>
 </div>
@@ -205,6 +236,11 @@ class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 </div>
 </div>
 
+<!-- КНОПКА «НАВЕРХ» (Улучшение 5) -->
+<button id="scrollTopBtn" onclick="scrollToTop()" class="fixed bottom-20 right-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-2xl z-30 hidden transition transform hover:scale-110">
+⬆️
+</button>
+
 </div>
 
 <!-- Скрипт -->
@@ -215,37 +251,17 @@ let authorizedClient = '';
 let userSheetType = '';
 let passMap = {};
 
+const TARGET_EMAIL = "Levon.Grigoryan@zigzag.am";
+
 const brandDomains = {
-'wanbo': 'wanbo.cn',
-'epson': 'epson.com',
-'blaupunkt': 'blaupunkt.com',
-'apple': 'apple.com',
-'samsung': 'samsung.com',
-'sony': 'sony.com',
-'lg': 'lg.com',
-'xiaomi': 'mi.com',
-'jbl': 'jbl.com',
-'marshall': 'marshallheadphones.com',
-'haier': 'haier.com',
-'philips': 'philips.com',
-'bosch': 'bosch.com',
-'dyson': 'dyson.com',
-'midea': 'midea.com',
-'tefal': 'tefal.com',
-'moulinex': 'moulinex.com',
-'delonghi': 'delonghi.com',
-'braun': 'braun.com',
-'canon': 'canon.com',
-'nikon': 'nikon.com',
-'asus': 'asus.com',
-'acer': 'acer.com',
-'lenovo': 'lenovo.com',
-'hp': 'hp.com',
-'dell': 'dell.com',
-'huawei': 'huawei.com',
-'babyliss': 'babyliss.com',
-'elica': 'elica.com',
-'indesit': 'indesit.com'
+'wanbo': 'wanbo.cn', 'epson': 'epson.com', 'blaupunkt': 'blaupunkt.com', 'apple': 'apple.com',
+'samsung': 'samsung.com', 'sony': 'sony.com', 'lg': 'lg.com', 'xiaomi': 'mi.com',
+'jbl': 'jbl.com', 'marshall': 'marshallheadphones.com', 'haier': 'haier.com', 'philips': 'philips.com',
+'bosch': 'bosch.com', 'dyson': 'dyson.com', 'midea': 'midea.com', 'tefal': 'tefal.com',
+'moulinex': 'moulinex.com', 'delonghi': 'delonghi.com', 'braun': 'braun.com', 'canon': 'canon.com',
+'nikon': 'nikon.com', 'asus': 'asus.com', 'acer': 'acer.com', 'lenovo': 'lenovo.com',
+'hp': 'hp.com', 'dell': 'dell.com', 'huawei': 'huawei.com', 'babyliss': 'babyliss.com',
+'elica': 'elica.com', 'indesit': 'indesit.com'
 };
 
 function getBrandLogoHtml(brandName) {
@@ -348,6 +364,7 @@ document.getElementById('welcomeMsg').innerText = `Բարև ձեզ, ${authorized
 
 setupTableHeader();
 loadExcelFile();
+loadCartFromStorage(); // Улучшение 3: Восстановление корзины из LocalStorage
 } else {
 errorMsg.classList.remove('hidden');
 }
@@ -391,7 +408,20 @@ pwdInput.addEventListener('keypress', (e) => {
 if (e.key === 'Enter') checkPassword();
 });
 }
+
+window.onscroll = function() {
+  const btn = document.getElementById('scrollTopBtn');
+  if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+    btn.classList.remove('hidden');
+  } else {
+    btn.classList.add('hidden');
+  }
+};
 });
+
+function scrollToTop() {
+window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
 async function loadExcelFile() {
 try {
@@ -639,15 +669,33 @@ tbody.innerHTML = '';
 const brandVal = document.getElementById('brandFilter').value;
 const categoryVal = document.getElementById('categoryFilter').value;
 const searchQuery = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+const sortBy = document.getElementById('sortBy').value;
+const promoOnly = document.getElementById('promoOnlyFilter').checked;
+const stockOnly = document.getElementById('stockOnlyFilter').checked;
 
-const filtered = allProducts.filter(p => {
+let filtered = allProducts.filter(p => {
 const matchBrand = !brandVal || p.brand === brandVal;
 const matchCategory = !categoryVal || p.category === categoryVal;
 const matchSearch = !searchQuery ||
 (p.name || '').toLowerCase().includes(searchQuery) ||
 (p.articul || '').toLowerCase().includes(searchQuery);
-return matchBrand && matchCategory && matchSearch;
+
+const matchPromo = !promoOnly || (p.isPromo || p.isWholesalePromo);
+const matchStock = !stockOnly || !p.stockStatus.includes('Ճշտել');
+
+return matchBrand && matchCategory && matchSearch && matchPromo && matchStock;
 });
+
+// Сортировка (Улучшение 1)
+if (sortBy === 'priceAsc') {
+filtered.sort((a, b) => a.wholesale - b.wholesale);
+} else if (sortBy === 'priceDesc') {
+filtered.sort((a, b) => b.wholesale - a.wholesale);
+} else if (sortBy === 'marginDesc') {
+filtered.sort((a, b) => b.marginVal - a.marginVal);
+}
+
+document.getElementById('productCountInfo').innerText = `Գտնվել է ${filtered.length} ապրանք`;
 
 if (filtered.length === 0) {
 noResults.classList.remove('hidden');
@@ -748,6 +796,22 @@ tbody.appendChild(tr);
 });
 }
 
+function saveCartToStorage() {
+try {
+  localStorage.setItem('zigzag_cart_' + authorizedClient, JSON.stringify(cart));
+} catch(e) {}
+}
+
+function loadCartFromStorage() {
+try {
+  const saved = localStorage.getItem('zigzag_cart_' + authorizedClient);
+  if (saved) {
+    cart = JSON.parse(saved);
+    updateOrderPanel();
+  }
+} catch(e) {}
+}
+
 function addToCart(articul) {
 const product = allProducts.find(p => p.articul === articul);
 if (!product) return;
@@ -759,6 +823,7 @@ cart[articul] = { product: product, qty: 1, paymentMethod: globalMethod };
 } else {
 cart[articul].qty += 1;
 }
+saveCartToStorage();
 updateOrderPanel();
 renderTable();
 }
@@ -784,6 +849,7 @@ orderPanel.classList.add('hidden');
 
 function clearOrder() {
 cart = {};
+saveCartToStorage();
 updateOrderPanel();
 renderTable();
 }
@@ -792,7 +858,8 @@ function applyGlobalPayment(method) {
 Object.values(cart).forEach(item => {
 item.paymentMethod = method;
 });
-openOrderModal(); // Перерисовываем модальное окно, чтобы обновить селекты у товаров
+saveCartToStorage();
+openOrderModal();
 }
 
 function openOrderModal() {
@@ -822,7 +889,6 @@ div.innerHTML = `
 </div>
 
 <div class="flex items-center gap-4 flex-wrap w-full md:w-auto justify-between md:justify-end">
-<!-- Индивидуальный выбор оплаты для конкретного товара -->
 <div>
 <select onchange="updateItemPayment('${item.product.articul}', this.value)" class="px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
 <option value="Կանխիկ" ${item.paymentMethod === 'Կանխիկ' ? 'selected' : ''}>💵 Կանխիկ</option>
@@ -848,6 +914,7 @@ document.getElementById('orderModal').classList.remove('hidden');
 function updateItemPayment(articul, method) {
 if (cart[articul]) {
   cart[articul].paymentMethod = method;
+  saveCartToStorage();
 }
 }
 
@@ -857,6 +924,7 @@ cart[articul].qty += delta;
 if (cart[articul].qty <= 0) {
 delete cart[articul];
 }
+saveCartToStorage();
 updateOrderPanel();
 renderTable();
 
@@ -871,7 +939,7 @@ function closeOrderModal() {
 document.getElementById('orderModal').classList.add('hidden');
 }
 
-function copyOrderText() {
+function buildOrderFormattedText() {
 let text = `ՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\n\n`;
 let total = 0;
 let i = 1;
@@ -879,15 +947,28 @@ let i = 1;
 Object.values(cart).forEach(item => {
 const sum = item.product.wholesale * item.qty;
 total += sum;
-text += `${i}. Արտիկուլ: ${item.product.articul}\n   Անվանում: ${item.product.name}\n   Առկայություն: ${item.product.stockStatus}\n   Քանակ: ${item.qty} հատ\n   Վճարում: ${item.paymentMethod}\n   Գին (Մեծածախ): ${item.product.wholesale.toLocaleString('ru-RU')} ֏\n   Գումար: ${sum.toLocaleString('ru-RU')} ֏\n\n`;
+text += `${i}. Արտիկուլ: ${item.product.articul}\n   Անվանում: ${item.product.name}\n   Քանակ: ${item.qty} հատ | Վճարում: ${item.paymentMethod}\n   Գումար: ${sum.toLocaleString('ru-RU')} ֏\n\n`;
 i++;
 });
 text += `ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
+return text;
+}
 
-navigator.clipboard.writeText(text).then(() => {
-alert('Պատվերի տեքստը հաջողությամբ պատճենվել է буфер обмена-ում!');
-closeOrderModal();
-});
+// Отправка в Viber (Улучшение 4)
+function sendViaViber() {
+const text = encodeURIComponent(buildOrderFormattedText());
+window.open(`viber://forward?text=${text}`, '_blank');
+}
+
+// Отправка на почту Levon.Grigoryan@zigzag.am (Улучшение 4: Скачивает Excel + открывает письма)
+function sendViaEmail() {
+downloadOrderExcel(); // Автоматически скачиваем Excel файл
+
+setTimeout(() => {
+  const subject = encodeURIComponent(`Պատվեր կատալոգից - ${authorizedClient}`);
+  const body = encodeURIComponent(`Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը (խնդրում ենք կցել ներբեռնված ֆայլը):\n\n${buildOrderFormattedText()}`);
+  window.location.href = `mailto:${TARGET_EMAIL}?subject=${subject}&body=${body}`;
+}, 800);
 }
 
 function downloadOrderExcel() {
@@ -906,7 +987,7 @@ if (item.paymentMethod === 'Բանկային փոխանցումով') {
 }
 });
 
-// СПИСОК 1: КАНХИК
+// СПИСОК 1: КԱՆԽԻԿ
 if (cashItems.length > 0) {
   excelData.push({ 'Արտիկուլ': '--- ԿԱՆԽԻԿ ՎՃԱՐՄԱՆ ԵՂԱՆԱԿՈՎ ՊԱՏՎԵՐ ---', 'Բրենդ': '', 'Անվանում': '', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
   cashItems.forEach(item => {
@@ -927,7 +1008,7 @@ if (cashItems.length > 0) {
   excelData.push({ 'Արտիկուլ': '', 'Բրենդ': '', 'Անվանում': '', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 }
 
-// СПИСОК 2: БАНКОВСКИЙ ПЕРЕВОД
+// СПИСОК 2: ԲԱՆԿԱՅԻՆ ՓՈԽԱՆՑՈՒՄՈՎ
 if (bankItems.length > 0) {
   excelData.push({ 'Արտիկուլ': '--- ԲԱՆԿԱՅԻՆ ՓՈԽԱՆՑՈՒՄՈՎ ՎՃԱՐՄԱՆ ԵՂԱՆԱԿՈՎ ՊԱՏՎԵՐ ---', 'Բրենդ': '', 'Անվանում': '', 'Առկայություն': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
   bankItems.forEach(item => {
@@ -1023,6 +1104,7 @@ reader.onload = function(e) {
     });
 
     if (loadedCount > 0) {
+      saveCartToStorage();
       updateOrderPanel();
       renderTable();
       alert(`Նախորդ պատվերը հաջողությամբ բեռնվեց: Վերականգնվել է ${loadedCount} ապրանք:`);
