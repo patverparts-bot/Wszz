@@ -276,15 +276,15 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 </div>
 
-<!-- OBNOVLENNYY SPISOK TOVAROV S GIBKOY VYSOTOY I SKROLLOM -->
-<div id="modalItemsList" class="overflow-y-auto flex-grow divide-y divide-gray-100 mb-2 sm:mb-3 min-h-[100px] max-h-[35vh] sm:max-h-[45vh] text-sm pr-1">
+<!-- SPISOK TOVAROV V KORZINE -->
+<div id="modalItemsList" class="overflow-y-auto flex-grow divide-y divide-gray-100 mb-2 sm:mb-3 min-h-[90px] max-h-[30vh] sm:max-h-[40vh] text-sm pr-1">
 </div>
 
-<!-- SVORACHIVAYEMIY RAZDEL S FLEX-SHRINK-0 -->
+<!-- SVORACHIVAYEMIY RAZDEL (ORGANIZATION, ADDRESS, CONTACT, COMMENT) -->
 <div class="bg-gray-50 rounded-xl border border-gray-200 mb-2 sm:mb-3 overflow-hidden transition-all flex-shrink-0">
   <button onclick="toggleDeliveryDetails()" class="w-full p-2.5 sm:p-3 bg-gray-100 hover:bg-gray-200/80 flex items-center justify-between text-xs sm:text-sm font-bold text-gray-700 transition">
     <span class="flex items-center gap-2">
-      📍 Առաքման տվյալներ և մեկնաբանություն
+      📍 Կազմակերպություն, հասցե և կոնտակտային տվյալներ
       <span id="deliveryBadge" class="hidden text-blue-600 font-bold text-xs">●</span>
     </span>
     <span id="deliveryToggleIcon" class="transform transition-transform text-xs">▼</span>
@@ -292,15 +292,32 @@ body { font-family: 'Inter', sans-serif; }
 
   <div id="deliveryDetailsContent" class="hidden p-2.5 sm:p-4 space-y-2.5 border-t border-gray-200 bg-gray-50">
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+      <!-- ԿԱԶՄԱԿԵՐՊՈՒԹՅՈՒՆ (Raskrivayuschiysya spisok) -->
+      <div>
+        <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 uppercase mb-1">🏢 Կազմակերպություն՝</label>
+        <select id="organizationSelect" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-gray-800">
+        </select>
+      </div>
+      <!-- ՑԱՆԿԱԼԻ ԱՌԱՔՄԱՆ ԱՄՍԱԹԻՎ -->
       <div>
         <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 uppercase mb-1">📅 Ցանկալի առաքման ամսաթիվ՝</label>
         <input type="date" id="deliveryDateInput" oninput="checkDeliveryBadge()" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+      <!-- ԱՌԱՔՄԱՆ ՀԱՍՑԵ (Avtozapolnyaemy i redaktiruemy) -->
       <div>
-        <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 uppercase mb-1">📍 Առաքման հասցե՝</label>
+        <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 uppercase mb-1">📍 Առաքման հասցե (կարող եք փոխել)՝</label>
         <input type="text" id="deliveryAddressInput" oninput="checkDeliveryBadge()" placeholder="Քաղաք, փողոց, շենք..." class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
+      <!-- ԿՈՆՏԱԿՏԱՅԻՆ ԱՆՁ (Avtozapolnyaemy i redaktiruemy) -->
+      <div>
+        <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 uppercase mb-1">👤 Կոնտակտային անձ (կարող եք փոխել)՝</label>
+        <input type="text" id="contactPersonInput" oninput="checkDeliveryBadge()" placeholder="Անուն Ազգանուն, հեռախոս..." class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
     </div>
+
     <div>
       <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 uppercase mb-1">💬 Լրացուցիչ մեկնաբանություն՝</label>
       <textarea id="orderCommentInput" oninput="checkDeliveryBadge()" placeholder="Այլ նշումներ կամ ցանկություններ..." class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none h-12"></textarea>
@@ -378,6 +395,7 @@ let cart = {};
 let authorizedClient = '';
 let userSheetType = '';
 let passMap = {};
+let clientRowsData = [];
 
 let availableBrands = [];
 let availableCategories = [];
@@ -430,9 +448,10 @@ function checkDeliveryBadge() {
   const dateVal = (document.getElementById('deliveryDateInput').value || '').trim();
   const addrVal = (document.getElementById('deliveryAddressInput').value || '').trim();
   const commVal = (document.getElementById('orderCommentInput').value || '').trim();
+  const contactVal = (document.getElementById('contactPersonInput').value || '').trim();
   const badge = document.getElementById('deliveryBadge');
 
-  if (dateVal || addrVal || commVal) {
+  if (dateVal || addrVal || commVal || contactVal) {
     badge.classList.remove('hidden');
   } else {
     badge.classList.add('hidden');
@@ -561,31 +580,93 @@ workbook.SheetNames.forEach(sheetName => {
 const sheet = workbook.Sheets[sheetName];
 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-let startIndex = 0;
-if (rows.length > 0 && rows[0] && rows[0][0]) {
-  const firstVal = String(rows[0][0]).trim().toLowerCase();
-  if (firstVal.includes('пароль') || firstVal.includes('pass') || firstVal.includes('գաղտնաբառ') || firstVal.includes('hash')) {
-    startIndex = 1;
+let headerIdx = 0;
+let headers = [];
+if (rows.length > 0) {
+  for (let i = 0; i < Math.min(rows.length, 5); i++) {
+    let rStr = (rows[i] || []).map(c => String(c || '').toLowerCase()).join(' ');
+    if (rStr.includes('pass') || rStr.includes('пароль') || rStr.includes('контрагент') || rStr.includes('գաղտնաբառ')) {
+      headerIdx = i;
+      headers = rows[i].map(h => String(h || '').trim());
+      break;
+    }
   }
 }
 
-for (let i = startIndex; i < rows.length; i++) {
+let passColIdx = 0;
+let clientColIdx = 1;
+
+headers.forEach((h, idx) => {
+  let hL = h.toLowerCase();
+  if (hL.includes('pass') || hL.includes('пароль') || hL.includes('գաղտնաբառ')) passColIdx = idx;
+  if (hL.includes('контрагент') || hL.includes('клиент') || hL.includes('կոնտրագենտ')) clientColIdx = idx;
+});
+
+for (let i = headerIdx + 1; i < rows.length; i++) {
   let r = rows[i];
-  if (r && r.length >= 2) {
-    let pHash = r[0] !== null && r[0] !== undefined ? String(r[0]).trim().toLowerCase() : '';
-    let client = r[1] !== null && r[1] !== undefined ? String(r[1]).trim() : '';
-    if (pHash) {
-      passMap[pHash] = { client: client, sheet: sheetName };
+  if (!r || r.length === 0) continue;
+  let pHash = r[passColIdx] !== null && r[passColIdx] !== undefined ? String(r[passColIdx]).trim().toLowerCase() : '';
+  let client = r[clientColIdx] !== null && r[clientColIdx] !== undefined ? String(r[clientColIdx]).trim() : '';
+  
+  if (pHash) {
+    let rowDataObj = {
+      client: client,
+      sheet: sheetName,
+      rowsList: []
+    };
+
+    let orgs = [];
+    let addrs = [];
+    let contacts = [];
+
+    headers.forEach((h, idx) => {
+      let hL = h.toLowerCase();
+      let val = r[idx] !== undefined && r[idx] !== null ? String(r[idx]).trim() : '';
+      if (!val) return;
+      if (hL.includes('организация') || hL.includes('կազմակերպություն')) orgs.push(val);
+      if (hL.includes('адрес') || hL.includes('հասցե')) addrs.push(val);
+      if (hL.includes('контакт') || hL.includes('կոնտակտ')) contacts.push(val);
+    });
+
+    if (orgs.length === 0 && r.length > 2) {
+      for (let j = 2; j < r.length; j += 3) {
+        if (r[j]) orgs.push(String(r[j]).trim());
+        if (r[j+1]) addrs.push(String(r[j+1]).trim());
+        if (r[j+2]) contacts.push(String(r[j+2]).trim());
+      }
     }
+
+    if (orgs.length === 0) orgs.push(client);
+    if (addrs.length === 0) addrs.push('');
+    if (contacts.length === 0) contacts.push('');
+
+    let maxLen = Math.max(orgs.length, addrs.length, contacts.length);
+    for (let k = 0; k < maxLen; k++) {
+      rowDataObj.rowsList.push({
+        organization: orgs[k] || orgs[0] || client,
+        address: addrs[k] || addrs[0] || '',
+        contact: contacts[k] || contacts[0] || ''
+      });
+    }
+
+    passMap[pHash] = rowDataObj;
   }
 }
 });
 
-passMap["d5c33d07c18e87a43d93fc607e4acc15caab0f59048a60bc034fe1737d428964"] = { client: "Администратор", sheet: "Dealers" };
+passMap["d5c33d07c18e87a43d93fc607e4acc15caab0f59048a60bc034fe1737d428964"] = { 
+  client: "Администратор", 
+  sheet: "Dealers",
+  rowsList: [{ organization: "Администрация", address: "Ереван", contact: "Админ" }]
+};
 
 } catch (e) {
 console.error("Ошибка загрузки pass.xlsx:", e);
-passMap["d5c33d07c18e87a43d93fc607e4acc15caab0f59048a60bc034fe1737d428964"] = { client: "Администратор", sheet: "Dealers" };
+passMap["d5c33d07c18e87a43d93fc607e4acc15caab0f59048a60bc034fe1737d428964"] = { 
+  client: "Администратор", 
+  sheet: "Dealers",
+  rowsList: [{ organization: "Администрация", address: "Ереван", contact: "Админ" }]
+};
 }
 }
 
@@ -604,10 +685,12 @@ const inputHash = await sha256(inputVal);
 if (passMap[inputHash]) {
 authorizedClient = passMap[inputHash].client;
 userSheetType = passMap[inputHash].sheet;
+clientRowsData = passMap[inputHash].rowsList || [];
 
 try {
   localStorage.setItem('zigzag_client', authorizedClient);
   localStorage.setItem('zigzag_sheet', userSheetType);
+  localStorage.setItem('zigzag_client_rows', JSON.stringify(clientRowsData));
 } catch(e) {}
 
 initAppAfterAuth();
@@ -622,12 +705,14 @@ if (authorizedClient) {
   try {
     localStorage.removeItem('zigzag_client');
     localStorage.removeItem('zigzag_sheet');
+    localStorage.removeItem('zigzag_client_rows');
     localStorage.removeItem('zigzag_filters_' + authorizedClient);
   } catch(e) {}
 }
 
 authorizedClient = '';
 userSheetType = '';
+clientRowsData = [];
 cart = {};
 
 document.getElementById('mainApp').classList.add('hidden');
@@ -678,9 +763,16 @@ await loadPasswordsFile();
 try {
   const savedClient = localStorage.getItem('zigzag_client');
   const savedSheet = localStorage.getItem('zigzag_sheet');
+  const savedRows = localStorage.getItem('zigzag_client_rows');
   if (savedClient && savedSheet) {
     authorizedClient = savedClient;
     userSheetType = savedSheet;
+    if (savedRows) {
+      try { clientRowsData = JSON.parse(savedRows); } catch(e) {}
+    }
+    if (!clientRowsData || clientRowsData.length === 0) {
+      clientRowsData = [{ organization: authorizedClient, address: '', contact: '' }];
+    }
     initAppAfterAuth();
   }
 } catch(e) {}
@@ -1423,10 +1515,12 @@ cart = {};
 const dateInput = document.getElementById('deliveryDateInput');
 const addrInput = document.getElementById('deliveryAddressInput');
 const commentInput = document.getElementById('orderCommentInput');
+const contactInput = document.getElementById('contactPersonInput');
 
 if (dateInput) dateInput.value = '';
 if (addrInput) addrInput.value = '';
 if (commentInput) commentInput.value = '';
+if (contactInput) contactInput.value = '';
 
 checkDeliveryBadge();
 saveCartToStorage();
@@ -1440,6 +1534,36 @@ item.paymentMethod = method;
 });
 saveCartToStorage();
 openOrderModal();
+}
+
+function populateOrderModalFields() {
+  const orgSelect = document.getElementById('organizationSelect');
+  orgSelect.innerHTML = '';
+
+  if (!clientRowsData || clientRowsData.length === 0) {
+    clientRowsData = [{ organization: authorizedClient, address: '', contact: '' }];
+  }
+
+  clientRowsData.forEach((row, index) => {
+    const opt = document.createElement('option');
+    opt.value = index;
+    opt.text = row.organization || authorizedClient;
+    orgSelect.appendChild(opt);
+  });
+
+  if (clientRowsData.length > 0) {
+    document.getElementById('deliveryAddressInput').value = clientRowsData[0].address || '';
+    document.getElementById('contactPersonInput').value = clientRowsData[0].contact || '';
+  }
+
+  orgSelect.onchange = function() {
+    const idx = parseInt(this.value);
+    if (!isNaN(idx) && clientRowsData[idx]) {
+      document.getElementById('deliveryAddressInput').value = clientRowsData[idx].address || '';
+      document.getElementById('contactPersonInput').value = clientRowsData[idx].contact || '';
+      checkDeliveryBadge();
+    }
+  };
 }
 
 function openOrderModal() {
@@ -1490,6 +1614,7 @@ div.innerHTML = `
 listContainer.appendChild(div);
 });
 
+populateOrderModalFields();
 checkDeliveryBadge();
 document.getElementById('modalTotalSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
 document.getElementById('orderModal').classList.remove('hidden');
@@ -1523,53 +1648,69 @@ function closeOrderModal() {
 document.getElementById('orderModal').classList.add('hidden');
 }
 
+function getSelectedOrganizationName() {
+  const sel = document.getElementById('organizationSelect');
+  if (sel && sel.options.length > 0 && sel.selectedIndex >= 0) {
+    return sel.options[sel.selectedIndex].text;
+  }
+  return authorizedClient;
+}
+
 function buildEmailFormattedText() {
-const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
-const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
-const comment = (document.getElementById('orderCommentInput').value || '').trim();
+  const orgName = getSelectedOrganizationName();
+  const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
+  const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
+  const contactPerson = (document.getElementById('contactPersonInput').value || '').trim();
+  const comment = (document.getElementById('orderCommentInput').value || '').trim();
 
-let text = `ՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\n`;
-if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
-if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
-if (comment) text += `Մեկնաբանություն: ${comment}\n`;
-text += `\n`;
+  let text = `ՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\n`;
+  text += `Կազմակերպություն: ${orgName}\n`;
+  if (contactPerson) text += `Կոնտակտային անձ: ${contactPerson}\n`;
+  if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
+  if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
+  if (comment) text += `Մեկնաբանություն: ${comment}\n`;
+  text += `\n`;
 
-let total = 0;
-let i = 1;
+  let total = 0;
+  let i = 1;
 
-Object.entries(cart).forEach(([artKey, item]) => {
-const price = getItemWholesalePrice(item);
-const articul = getItemArticul(artKey, item);
-const name = getItemName(item);
-const sum = price * item.qty;
-total += sum;
+  Object.entries(cart).forEach(([artKey, item]) => {
+  const price = getItemWholesalePrice(item);
+  const articul = getItemArticul(artKey, item);
+  const name = getItemName(item);
+  const sum = price * item.qty;
+  total += sum;
 
-text += `${i}. Արտիկուլ: ${articul}\n   Անվանում: ${name}\n   Քանակ: ${item.qty} հատ | Վճարում: ${item.paymentMethod || 'Կանխիկ'}\n   Գումար: ${sum.toLocaleString('ru-RU')} ֏\n\n`;
-i++;
-});
+  text += `${i}. Արտիկուլ: ${articul}\n   Անվանում: ${name}\n   Քանակ: ${item.qty} հատ | Վճարում: ${item.paymentMethod || 'Կանխիկ'}\n   Գումար: ${sum.toLocaleString('ru-RU')} ֏\n\n`;
+  i++;
+  });
 
-text += `ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
-return text;
+  text += `ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
+  return text;
 }
 
 function buildViberFormattedText() {
-const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
-const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
-const comment = (document.getElementById('orderCommentInput').value || '').trim();
+  const orgName = getSelectedOrganizationName();
+  const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
+  const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
+  const contactPerson = (document.getElementById('contactPersonInput').value || '').trim();
+  const comment = (document.getElementById('orderCommentInput').value || '').trim();
 
-let total = 0;
-Object.entries(cart).forEach(([artKey, item]) => {
-  const price = getItemWholesalePrice(item);
-  total += (price * item.qty);
-});
+  let total = 0;
+  Object.entries(cart).forEach(([artKey, item]) => {
+    const price = getItemWholesalePrice(item);
+    total += (price * item.qty);
+  });
 
-let text = `Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը (խնդրում ենք կցել նոր ներբեռնված ֆայլը):\n`;
-if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
-if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
-if (comment) text += `Մեկնաբանություն: ${comment}\n`;
+  let text = `Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը (խնդրում ենք կցել նոր ներբեռնված ֆայլը):\n`;
+  text += `Կազմակերպություն: ${orgName}\n`;
+  if (contactPerson) text += `Կոնտակտային անձ: ${contactPerson}\n`;
+  if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
+  if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
+  if (comment) text += `Մեկնաբանություն: ${comment}\n`;
 
-text += `\nՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\nԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
-return text;
+  text += `\nՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\nԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
+  return text;
 }
 
 function sendViaViber() {
@@ -1598,8 +1739,10 @@ function downloadOrderExcel() {
 }
 
 function generateAndDownloadExcel() {
+const orgName = getSelectedOrganizationName();
 const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
 const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
+const contactPerson = (document.getElementById('contactPersonInput').value || '').trim();
 const comment = (document.getElementById('orderCommentInput').value || '').trim();
 
 const excelData = [];
@@ -1658,7 +1801,11 @@ if (bankItems.length > 0) {
 
 excelData.push({ 'Արտիկուլ': '', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 excelData.push({ 'Արտիկուլ': 'Կոնտրագենտ:', 'Անվանում': authorizedClient, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+excelData.push({ 'Արտիկուլ': 'Կազմակերպություն:', 'Անվանում': orgName, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 
+if (contactPerson) {
+  excelData.push({ 'Արտիկուլ': 'Կոնտակտային անձ:', 'Անվանում': contactPerson, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+}
 if (delivDate) {
   excelData.push({ 'Արտիկուլ': 'Ցանկալի առաքման ամսաթիվ:', 'Անվանում': delivDate, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 }
@@ -1753,7 +1900,7 @@ reader.onload = function(e) {
       }
 
       const firstCell = String(r[0] || '').trim();
-      if (firstCell !== '' && !firstCell.includes('Կոնտրագենտ') && !firstCell.includes('Մեկնաբանություն') && !firstCell.includes('Առաքման') && !firstCell.includes('ամսաթիվ') && !firstCell.includes('Վճարման') && !firstCell.includes('ԸՆԴՀԱՆՈՒՐ')) {
+      if (firstCell !== '' && !firstCell.includes('Կոնտրագենտ') && !firstCell.includes('Մեկնաբանություն') && !firstCell.includes('Առաքման') && !firstCell.includes('ամսաթիվ') && !firstCell.includes('Վճարման') && !firstCell.includes('ԸՆԴՀԱՆՈՒՐ') && !firstCell.includes('Կազմակերպություն') && !firstCell.includes('Կոնտակտային')) {
         articul = firstCell;
         for (let j = 1; j < r.length; j++) {
           let num = Number(r[j]);
