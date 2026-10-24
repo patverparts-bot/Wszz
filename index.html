@@ -334,27 +334,38 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 </div>
 
-<!-- POLNOEKRANNOE POZDRAVLENIE -->
-<div id="successOverlay" class="fixed inset-0 bg-gradient-to-br from-blue-900/95 via-indigo-900/95 to-slate-900/95 z-50 hidden flex flex-col items-center justify-center p-6 text-center">
-<div class="bg-white/10 backdrop-blur-md p-8 sm:p-14 rounded-3xl border border-white/20 shadow-2xl max-w-2xl w-full flex flex-col items-center">
-<div class="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mb-4 sm:mb-6 text-3xl sm:text-4xl shadow-inner border border-emerald-500/30">
-✨
-</div>
-<h2 class="text-2xl sm:text-4xl font-extrabold text-white tracking-wide mb-3 sm:mb-4 leading-tight drop-shadow-lg">
-ՄԱՂԹՈՒՄ ԵՆՔ ԲԱԶՈՒՄ ՎԱՃԱՌՔՆԵՐ
-</h2>
-<p class="text-blue-200 text-xs sm:text-base mb-6 sm:mb-8 max-w-md">
-Ձեր պատվերի ֆայլը հաջողությամբ ներբեռնվել է: Շնորհակալություն համագործակցության համար:
-</p>
-<div class="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full justify-center">
-<button onclick="keepCartAndCloseSuccess()" class="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition text-xs sm:text-sm">
-🔄 Վերադառնալ (Պահպանել զամբյուղը)
-</button>
-<button onclick="clearCartAndCloseSuccess()" class="px-5 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition text-xs sm:text-sm">
-🗑️ Մաքրել զամբյուղը և վերադառնալ
-</button>
-</div>
-</div>
+<!-- POLNOEKRANNOE POZDRAVLENIE V STILISTIKE ZIGZAG.AM -->
+<div id="successOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex flex-col items-center justify-center p-4 text-center">
+  <div class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-10 shadow-2xl max-w-lg w-full flex flex-col items-center transition transform scale-100">
+    
+    <!-- Logo Zigzag.am -->
+    <div class="mb-6 flex justify-center">
+      <img src="logo.png" alt="ZIGZAG" class="h-10 sm:h-12 w-auto object-contain" loading="lazy" onerror="this.onerror=null; this.src='logo.PNG';">
+    </div>
+
+    <!-- Ikonka uspexa -->
+    <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-4 text-3xl shadow-inner border border-blue-100">
+      ✨
+    </div>
+
+    <!-- Zagolovok i tekst -->
+    <h2 class="text-xl sm:text-2xl font-black text-gray-900 tracking-tight mb-2 leading-tight">
+      ՄԱՂԹՈՒՄ ԵՆՔ ԲԱԶՈՒՄ ՎԱՃԱՌՔՆԵՐ
+    </h2>
+    <p class="text-gray-600 text-xs sm:text-sm mb-6 max-w-sm leading-relaxed">
+      Ձեր պատվերի ֆայլը հաջողությամբ ներբեռնվել է: Շնորհակալություն համագործակցության համար:
+    </p>
+
+    <!-- Knopki vozvrata -->
+    <div class="flex flex-col sm:flex-row gap-2.5 w-full justify-center">
+      <button onclick="keepCartAndCloseSuccess()" class="w-full sm:w-auto px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition text-xs sm:text-sm">
+        🔄 Վերադառնալ (Պահպանել)
+      </button>
+      <button onclick="clearCartAndCloseSuccess()" class="w-full sm:w-auto px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl border border-gray-200 transition text-xs sm:text-sm">
+        🗑️ Մաքրել զամբյուղը
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- VSPL YVAYUSHCHEYE UVEDOMLENIE (RESTORED CART TOAST) -->
@@ -706,7 +717,7 @@ throw new Error('Աղյուսակը դատարկ է։');
 parseExcelRows(rows);
 } catch (error) {
 console.error(error);
-} finally {
+} fontally {
 loader.classList.add('hidden');
 content.classList.remove('opacity-50');
 }
