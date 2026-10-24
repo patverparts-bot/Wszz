@@ -13,61 +13,61 @@
 body { font-family: 'Inter', sans-serif; }
 
 .product-img-container {
-  position: relative;
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
+position: relative;
+width: 44px;
+height: 44px;
+flex-shrink: 0;
 }
 
 .product-img {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  background-color: #ffffff;
-  padding: 2px;
-  transition: all 0.25s ease-in-out;
-  cursor: pointer;
+width: 44px;
+height: 44px;
+object-fit: contain;
+border-radius: 8px;
+border: 1px solid #e5e7eb;
+background-color: #ffffff;
+padding: 2px;
+transition: all 0.25s ease-in-out;
+cursor: pointer;
 }
 
 .product-img-container:hover .product-img {
-  transform: scale(3.5);
-  z-index: 50;
-  position: absolute;
-  top: -10px;
-  left: 0;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+transform: scale(3.5);
+z-index: 50;
+position: absolute;
+top: -10px;
+left: 0;
+box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
 }
 
 @media (max-width: 767px) {
-  .product-img-container {
-    width: 64px;
-    height: 64px;
-  }
-  .product-img {
-    width: 64px;
-    height: 64px;
-  }
-  .product-img-container:hover .product-img {
-    transform: scale(2);
-    top: -5px;
-  }
+.product-img-container {
+width: 64px;
+height: 64px;
+}
+.product-img {
+width: 64px;
+height: 64px;
+}
+.product-img-container:hover .product-img {
+transform: scale(2);
+top: -5px;
+}
 }
 
 /* Konteyner tablicy s fiksiruemoy shapkoy dlya PK */
 .table-scroll-wrapper {
-  max-height: calc(100vh - 220px);
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
+max-height: calc(100vh - 220px);
+overflow: auto;
+-webkit-overflow-scrolling: touch;
 }
 
 .table-scroll-wrapper th {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  background-color: #f3f4f6 !important;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+position: sticky;
+top: 0;
+z-index: 30;
+background-color: #f3f4f6 !important;
+box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 </style>
 </head>
@@ -75,25 +75,25 @@ body { font-family: 'Inter', sans-serif; }
 
 <!-- EKRAN AVTORIZACII S NOVYM FONOM (bg-warehouse.jpg) -->
 <div id="authScreen" class="fixed inset-0 bg-cover bg-center bg-no-repeat z-50 flex items-center justify-center p-4" style="background-image: url('bg-warehouse.jpg');">
-  <!-- Legkiy overley dlya uluchsheniya kontrasta -->
-  <div class="absolute inset-0 bg-slate-900/25"></div>
+<!-- Legkiy overley dlya uluchsheniya kontrasta -->
+<div class="absolute inset-0 bg-slate-900/25"></div>
 
-  <!-- Kartochka avtorizacii s usilennoy prozrachnost'yu i lyogkim blur-effektom -->
-  <div class="relative z-10 bg-white/40 backdrop-blur-sm rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 text-center">
-    <h2 class="text-2xl font-black text-gray-900 mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
-    <p class="text-xs font-bold text-gray-800 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
+<!-- Kartochka avtorizacii s usilennoy prozrachnost'yu i lyogkim blur-effektom -->
+<div class="relative z-10 bg-white/40 backdrop-blur-sm rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 text-center">
+<h2 class="text-2xl font-black text-gray-900 mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
+<p class="text-xs font-bold text-gray-800 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
 
-    <div class="space-y-4">
-      <input type="password" id="passwordInput" placeholder="Գաղտնաբառ..."
-      class="w-full px-4 py-3 border border-gray-300/80 rounded-xl text-center text-lg tracking-widest bg-white/80 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent shadow-inner font-bold">
-      
-      <button onclick="checkPassword()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition transform hover:scale-[1.01] active:scale-[0.99]">
-        Մուտք գործել
-      </button>
-      
-      <p id="errorMsg" class="text-red-700 text-xs hidden font-black bg-white/70 py-1 px-2 rounded-lg">Սխալ գաղտնաբառ։ Փորձեք կրկին։</p>
-    </div>
-  </div>
+<div class="space-y-4">
+<input type="password" id="passwordInput" placeholder="Գաղտնաբառ..."
+class="w-full px-4 py-3 border border-gray-300/80 rounded-xl text-center text-lg tracking-widest bg-white/80 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent shadow-inner font-bold">
+
+<button onclick="checkPassword()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition transform hover:scale-[1.01] active:scale-[0.99]">
+Մուտք գործել
+</button>
+
+<p id="errorMsg" class="text-red-700 text-xs hidden font-black bg-white/70 py-1 px-2 rounded-lg">Սխալ գաղտնաբառ։ Փորձեք կրկին։</p>
+</div>
+</div>
 </div>
 
 <!-- OSNOVNOY KATALOG -->
@@ -107,10 +107,10 @@ body { font-family: 'Inter', sans-serif; }
 <div>
 <h1 class="text-sm sm:text-lg font-bold text-gray-900 leading-tight">Մեծածախ ապրանքների կատալոգ</h1>
 <div class="flex items-center gap-2">
-  <p class="text-[11px] sm:text-xs text-blue-600 font-medium" id="welcomeMsg">Բարև ձեզ...</p>
-  <button onclick="logout()" class="text-[10px] sm:text-[11px] font-semibold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded transition">
-    🚪 Դուրս գալ
-  </button>
+<p class="text-[11px] sm:text-xs text-blue-600 font-medium" id="welcomeMsg">Բարև ձեզ...</p>
+<button onclick="logout()" class="text-[10px] sm:text-[11px] font-semibold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded transition">
+🚪 Դուրս գալ
+</button>
 </div>
 </div>
 </div>
@@ -118,13 +118,13 @@ body { font-family: 'Inter', sans-serif; }
 
 <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto flex-wrap justify-end">
 <label class="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold shadow transition cursor-pointer flex items-center gap-1.5" title="Բեռնել նախկինում պահպանված պատվերի Excel ֆայլը">
-  <span>📂 Բեռնել նախորդը</span>
-  <input type="file" id="loadOrderFile" accept=".xlsx, .xls" class="hidden" onchange="importPreviousOrder(event)">
+<span>📂 Բեռնել նախորդը</span>
+<input type="file" id="loadOrderFile" accept=".xlsx, .xls" class="hidden" onchange="importPreviousOrder(event)">
 </label>
 
 <button onclick="openOrderModal()" class="hidden sm:flex relative p-2 px-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg border border-blue-200 font-semibold text-xs items-center gap-1.5 transition">
-  <span>🛒 Զամբյուղ</span>
-  <span id="headerCartBadgeDesktop" class="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
+<span>🛒 Զամբյուղ</span>
+<span id="headerCartBadgeDesktop" class="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
 </button>
 </div>
 </div>
@@ -132,13 +132,13 @@ body { font-family: 'Inter', sans-serif; }
 
 <!-- FIKSIRROVANNAYA STROKA POISKA V SAMOM VVERHU DLYA MOBILNYKH -->
 <div class="sticky top-0 z-40 bg-white border-b border-gray-200 p-2.5 shadow-sm">
-  <div class="max-w-7xl mx-auto flex items-center gap-2">
-    <div class="relative w-full">
-      <input type="text" id="searchInput" placeholder="Որոնել ապրանք կամ արտիկուլ..."
-      class="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-      <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-sm">✕</button>
-    </div>
-  </div>
+<div class="max-w-7xl mx-auto flex items-center gap-2">
+<div class="relative w-full">
+<input type="text" id="searchInput" placeholder="Որոնել ապրանք կամ արտիկուլ..."
+class="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+<button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-sm">✕</button>
+</div>
+</div>
 </div>
 
 <!-- Հիմնական բովանդակություն -->
@@ -146,108 +146,108 @@ body { font-family: 'Inter', sans-serif; }
 
 <!-- Ֆիլտրերի և սորտավորման վահանակ -->
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-4 overflow-visible">
-  <button onclick="toggleMobileFilters()" class="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 flex items-center justify-between text-xs sm:text-sm font-semibold text-gray-700 md:hidden transition">
-    <span class="flex items-center gap-1.5">⚙️ Ֆիլտրեր և կարգավորումներ</span>
-    <span id="filterToggleIcon" class="transform transition-transform">▼</span>
-  </button>
-  
-  <div id="filtersContainer" class="p-4 space-y-3 hidden md:block">
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-      
-      <!-- Brend filter s poiskom i avtodopolneniyem -->
-      <div class="relative">
-        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Բրենդ</label>
-        <div class="relative">
-          <input type="text" id="brandInput" placeholder="Որոնել բրենդ..." 
-          oninput="filterBrandOptions()" onfocus="showBrandDropdown()" 
-          class="w-full px-3 py-1.5 pr-8 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <button id="clearBrandBtn" onclick="clearBrandSelection()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-xs">✕</button>
-        </div>
-        <div id="brandDropdown" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-2xl max-h-60 overflow-y-auto z-[100] text-sm">
-        </div>
-      </div>
+<button onclick="toggleMobileFilters()" class="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 flex items-center justify-between text-xs sm:text-sm font-semibold text-gray-700 md:hidden transition">
+<span class="flex items-center gap-1.5">⚙️ Ֆիլտրեր և կարգավորումներ</span>
+<span id="filterToggleIcon" class="transform transition-transform">▼</span>
+</button>
 
-      <!-- Kategoriya filter s poiskom i avtodopolneniyem -->
-      <div class="relative">
-        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Կատեգորիա</label>
-        <div class="relative">
-          <input type="text" id="categoryInput" placeholder="Որոնել կատեգորիա..." 
-          oninput="filterCategoryOptions()" onfocus="showCategoryDropdown()" 
-          class="w-full px-3 py-1.5 pr-8 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <button id="clearCategoryBtn" onclick="clearCategorySelection()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-xs">✕</button>
-        </div>
-        <div id="categoryDropdown" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-2xl max-h-60 overflow-y-auto z-[100] text-sm">
-        </div>
-      </div>
+<div id="filtersContainer" class="p-4 space-y-3 hidden md:block">
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
 
-      <div>
-        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Սորտավորում</label>
-        <select id="sortBy" onchange="resetAndRender()" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="default">Ստանդարտ</option>
-          <option value="priceAsc">Գին՝ էժանից թանկ</option>
-          <option value="priceDesc">Գին՝ թանկից էժան</option>
-          <option value="marginDesc">Եկամտաբերություն՝ բարձրից ցածր</option>
-        </select>
-      </div>
-    </div>
+<!-- Brend filter s poiskom i avtodopolneniyem -->
+<div class="relative">
+<label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Բրենդ</label>
+<div class="relative">
+<input type="text" id="brandInput" placeholder="Որոնել բրենդ..."
+oninput="filterBrandOptions()" onfocus="showBrandDropdown()"
+class="w-full px-3 py-1.5 pr-8 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+<button id="clearBrandBtn" onclick="clearBrandSelection()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-xs">✕</button>
+</div>
+<div id="brandDropdown" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-2xl max-h-60 overflow-y-auto z-[100] text-sm">
+</div>
+</div>
 
-    <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-gray-100">
-      <div class="flex items-center gap-6 flex-wrap">
-        <label class="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700">
-          <input type="checkbox" id="promoOnlyFilter" onchange="resetAndRender()" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
-          <span>🔥 Միայն ակցիաներ / PROMO</span>
-        </label>
-        <label class="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700">
-          <input type="checkbox" id="stockOnlyFilter" onchange="resetAndRender()" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
-          <span>✅ Միայն առկա պահեստում</span>
-        </label>
-      </div>
-      <div class="flex items-center gap-3">
-        <button onclick="clearAllFilters()" class="text-xs text-red-600 hover:underline font-semibold">🔄 Մաքրել ֆիլտրերը</button>
-        <div class="text-xs text-gray-500 font-semibold" id="productCountInfo">Գտնվել է 0 ապրանք</div>
-      </div>
-    </div>
-  </div>
+<!-- Kategoriya filter s poiskom i avtodopolneniyem -->
+<div class="relative">
+<label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Կատեգորիա</label>
+<div class="relative">
+<input type="text" id="categoryInput" placeholder="Որոնել կատեգորիա..."
+oninput="filterCategoryOptions()" onfocus="showCategoryDropdown()"
+class="w-full px-3 py-1.5 pr-8 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+<button id="clearCategoryBtn" onclick="clearCategorySelection()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-xs">✕</button>
+</div>
+<div id="categoryDropdown" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-2xl max-h-60 overflow-y-auto z-[100] text-sm">
+</div>
+</div>
+
+<div>
+<label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Սորտավորում</label>
+<select id="sortBy" onchange="resetAndRender()" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+<option value="default">Ստանդարտ</option>
+<option value="priceAsc">Գին՝ էժանից թանկ</option>
+<option value="priceDesc">Գին՝ թանկից էժան</option>
+<option value="marginDesc">Եկամտաբերություն՝ բարձրից ցածր</option>
+</select>
+</div>
+</div>
+
+<div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-gray-100">
+<div class="flex items-center gap-6 flex-wrap">
+<label class="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700">
+<input type="checkbox" id="promoOnlyFilter" onchange="resetAndRender()" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+<span>🔥 Միայն ակցիաներ / PROMO</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700">
+<input type="checkbox" id="stockOnlyFilter" onchange="resetAndRender()" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+<span>✅ Միայն առկա պահեստում</span>
+</label>
+</div>
+<div class="flex items-center gap-3">
+<button onclick="clearAllFilters()" class="text-xs text-red-600 hover:underline font-semibold">🔄 Մաքրել ֆիլտրերը</button>
+<div class="text-xs text-gray-500 font-semibold" id="productCountInfo">Գտնվել է 0 ապրանք</div>
+</div>
+</div>
+</div>
 </div>
 
 <!-- INDIKATOR ZAGRUZKI (SPINNER) -->
 <div id="dataLoader" class="hidden py-12 flex flex-col items-center justify-center gap-3">
-  <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-  <p class="text-xs font-medium text-gray-500">Տվյալները բեռնվում են, խնդրում ենք սպասել...</p>
+<div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+<p class="text-xs font-medium text-gray-500">Տվյալները բեռնվում են, խնդրում ենք սպասել...</p>
 </div>
 
 <!-- ԱՊՐԱՆՔՆԵՐԻ ՑՈՒՑԱԿ -->
 <div id="catalogContent">
-  <!-- TABLICA (dlya PK/Planshetov) -->
-  <div class="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-  <div class="table-scroll-wrapper">
-  <table class="w-full text-left border-collapse min-w-[700px]" id="catalogTable">
-  <thead>
-  <tr id="tableHeaderRow">
-  </tr>
-  </thead>
-  <tbody class="divide-y divide-gray-200 text-sm" id="tableBody">
-  </tbody>
-  </table>
-  </div>
-  </div>
+<!-- TABLICA (dlya PK/Planshetov) -->
+<div class="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+<div class="table-scroll-wrapper">
+<table class="w-full text-left border-collapse min-w-[700px]" id="catalogTable">
+<thead>
+<tr id="tableHeaderRow">
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-200 text-sm" id="tableBody">
+</tbody>
+</table>
+</div>
+</div>
 
-  <!-- KARTOCHKI (dlya Mobilnykh) -->
-  <div class="block md:hidden space-y-3" id="mobileCardsContainer">
-  </div>
+<!-- KARTOCHKI (dlya Mobilnykh) -->
+<div class="block md:hidden space-y-3" id="mobileCardsContainer">
+</div>
 
-  <!-- Net rezul'tatov -->
-  <div id="noResults" class="hidden p-8 bg-white rounded-xl border text-center text-gray-500">
-  Ապրանքներ չեն գտնվել Ձեր որոնման կամ պահեստի պայմաններին համապատասխան:
-  </div>
+<!-- Net rezul'tatov -->
+<div id="noResults" class="hidden p-8 bg-white rounded-xl border text-center text-gray-500">
+Ապրանքներ չեն գտնվել Ձեր որոնման կամ պահեստի պայմաններին համապատասխան:
+</div>
 
-  <!-- KNOPKA PODGRUZKI «ZAGRUZIT' YESHCHYO» -->
-  <div id="loadMoreContainer" class="hidden text-center mt-6">
-    <button onclick="loadMoreProducts()" class="px-6 py-3 bg-white hover:bg-gray-50 border border-gray-300 text-blue-600 font-semibold text-sm rounded-xl shadow-sm transition transform hover:scale-105 inline-flex items-center gap-2">
-      <span>🔽 Բեռնել ավելին</span>
-      <span id="loadMoreCounter" class="text-xs text-gray-400 font-normal"></span>
-    </button>
-  </div>
+<!-- KNOPKA PODGRUZKI «ZAGRUZIT' YESHCHYO» -->
+<div id="loadMoreContainer" class="hidden text-center mt-6">
+<button onclick="loadMoreProducts()" class="px-6 py-3 bg-white hover:bg-gray-50 border border-gray-300 text-blue-600 font-semibold text-sm rounded-xl shadow-sm transition transform hover:scale-105 inline-flex items-center gap-2">
+<span>🔽 Բեռնել ավելին</span>
+<span id="loadMoreCounter" class="text-xs text-gray-400 font-normal"></span>
+</button>
+</div>
 </div>
 
 </main>
@@ -277,7 +277,7 @@ body { font-family: 'Inter', sans-serif; }
 <div class="bg-white rounded-2xl max-w-4xl w-full p-4 sm:p-6 shadow-2xl max-h-[92vh] flex flex-col">
 <div class="flex justify-between items-center mb-3 sm:mb-4 border-b pb-3">
 <h3 class="text-base sm:text-lg font-bold text-gray-900">Պատվերի պարունակությունը</h3>
-<button onclick="closeOrderModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
+<button onclick="closeOrderModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">×</button>
 </div>
 
 <div class="bg-blue-50 p-3 sm:p-4 rounded-xl border border-blue-200 mb-3 sm:mb-4 flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-3">
@@ -297,20 +297,20 @@ body { font-family: 'Inter', sans-serif; }
 
 <!-- Blok dostavki i kommentariyev -->
 <div class="bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-200 mb-3 sm:mb-4 space-y-3">
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-    <div>
-      <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">📅 Ցանկալի առաքման ամսաթիվ՝</label>
-      <input type="date" id="deliveryDateInput" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-    </div>
-    <div>
-      <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">📍 Առաքման հասցե՝</label>
-      <input type="text" id="deliveryAddressInput" placeholder="Քաղաք, փողոց, շենք..." class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-    </div>
-  </div>
-  <div>
-    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">💬 Լրացուցիչ մեկնաբանություն՝</label>
-    <textarea id="orderCommentInput" placeholder="Այլ նշումներ կամ ցանկություններ..." class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none h-14"></textarea>
-  </div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<div>
+<label class="block text-xs font-semibold text-gray-600 uppercase mb-1">📅 Ցանկալի առաքման ամսաթիվ՝</label>
+<input type="date" id="deliveryDateInput" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+</div>
+<div>
+<label class="block text-xs font-semibold text-gray-600 uppercase mb-1">📍 Առաքման հասցե՝</label>
+<input type="text" id="deliveryAddressInput" placeholder="Քաղաք, փողոց, շենք..." class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+</div>
+</div>
+<div>
+<label class="block text-xs font-semibold text-gray-600 uppercase mb-1">💬 Լրացուցիչ մեկնաբանություն՝</label>
+<textarea id="orderCommentInput" placeholder="Այլ նշումներ կամ ցանկություններ..." class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none h-14"></textarea>
+</div>
 </div>
 
 <div class="border-t pt-3 sm:pt-4 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
@@ -336,40 +336,40 @@ body { font-family: 'Inter', sans-serif; }
 
 <!-- POLNOEKRANNOE POZDRAVLENIE V STILISTIKE ZIGZAG.AM (UVELICHENNYY LOGOTIP BEZ IKONKI) -->
 <div id="successOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex flex-col items-center justify-center p-4 text-center">
-  <div class="bg-white rounded-2xl border border-gray-200 p-8 sm:p-12 shadow-2xl max-w-lg w-full flex flex-col items-center transition transform scale-100">
-    
-    <!-- Uvelichennyy Logo Zigzag.am -->
-    <div class="mb-6 flex justify-center">
-      <img src="logo.png" alt="ZIGZAG" class="h-14 sm:h-16 w-auto object-contain max-w-[200px]" loading="lazy" onerror="this.onerror=null; this.src='logo.PNG';">
-    </div>
+<div class="bg-white rounded-2xl border border-gray-200 p-8 sm:p-12 shadow-2xl max-w-lg w-full flex flex-col items-center transition transform scale-100">
 
-    <!-- Zagolovok i tekst -->
-    <h2 class="text-xl sm:text-2xl font-black text-gray-900 tracking-tight mb-2 leading-tight">
-      ՄԱՂԹՈՒՄ ԵՆՔ ԲԱԶՈՒՄ ՎԱՃԱՌՔՆԵՐ
-    </h2>
-    <p class="text-gray-600 text-xs sm:text-sm mb-8 max-w-sm leading-relaxed">
-      Ձեր պատվերի ֆայլը հաջողությամբ ներբեռնվել է: Շնորհակալություն համագործակցության համար:
-    </p>
+<!-- Uvelichennyy Logo Zigzag.am -->
+<div class="mb-6 flex justify-center">
+<img src="logo.png" alt="ZIGZAG" class="h-14 sm:h-16 w-auto object-contain max-w-[200px]" loading="lazy" onerror="this.onerror=null; this.src='logo.PNG';">
+</div>
 
-    <!-- Knopki vozvrata -->
-    <div class="flex flex-col sm:flex-row gap-2.5 w-full justify-center">
-      <button onclick="keepCartAndCloseSuccess()" class="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition text-xs sm:text-sm">
-        🔄 Վերադառնալ (Պահպանել)
-      </button>
-      <button onclick="clearCartAndCloseSuccess()" class="w-full sm:w-auto px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl border border-gray-200 transition text-xs sm:text-sm">
-        🗑️ Մաքրել զամբյուղը
-      </button>
-    </div>
-  </div>
+<!-- Zagolovok i tekst -->
+<h2 class="text-xl sm:text-2xl font-black text-gray-900 tracking-tight mb-2 leading-tight">
+ՄԱՂԹՈՒՄ ԵՆՔ ԲԱԶՈՒՄ ՎԱՃԱՌՔՆԵՐ
+</h2>
+<p class="text-gray-600 text-xs sm:text-sm mb-8 max-w-sm leading-relaxed">
+Ձեր պատվերի ֆայլը հաջողությամբ ներբեռնվել է: Շնորհակալություն համագործակցության համար:
+</p>
+
+<!-- Knopki vozvrata -->
+<div class="flex flex-col sm:flex-row gap-2.5 w-full justify-center">
+<button onclick="keepCartAndCloseSuccess()" class="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition text-xs sm:text-sm">
+🔄 Վերադառնալ (Պահպանել)
+</button>
+<button onclick="clearCartAndCloseSuccess()" class="w-full sm:w-auto px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl border border-gray-200 transition text-xs sm:text-sm">
+🗑️ Մաքրել զամբյուղը
+</button>
+</div>
+</div>
 </div>
 
 <!-- VSPL YVAYUSHCHEYE UVEDOMLENIE (RESTORED CART TOAST) -->
 <div id="restoredCartToast" class="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-sm bg-blue-900 text-white p-4 rounded-xl shadow-2xl z-50 hidden border border-blue-700 flex items-center justify-between gap-3 transition">
-  <div class="text-xs">
-    <p class="font-bold text-blue-200 mb-0.5">🛒 Զամբյուղը վերականգնվել է</p>
-    <p class="text-gray-300" id="toastRestoredText">Վերականգնվել է նախորդ պատվերի պարունակությունը:</p>
-  </div>
-  <button onclick="closeCartToast()" class="text-gray-400 hover:text-white font-bold text-lg">&times;</button>
+<div class="text-xs">
+<p class="font-bold text-blue-200 mb-0.5">🛒 Զամբյուղը վերականգնվել է</p>
+<p class="text-gray-300" id="toastRestoredText">Վերականգնվել է նախորդ պատվերի պարունակությունը:</p>
+</div>
+<button onclick="closeCartToast()" class="text-gray-400 hover:text-white font-bold text-lg">×</button>
 </div>
 
 <!-- KNOPKA «NAVERKH» -->
@@ -410,126 +410,113 @@ const brandDomains = {
 };
 
 function toggleMobileFilters() {
-  const container = document.getElementById('filtersContainer');
-  const icon = document.getElementById('filterToggleIcon');
-  container.classList.toggle('hidden');
-  if (container.classList.contains('hidden')) {
-    icon.style.transform = 'rotate(0deg)';
-  } else {
-    icon.style.transform = 'rotate(180deg)';
-  }
+const container = document.getElementById('filtersContainer');
+const icon = document.getElementById('filterToggleIcon');
+container.classList.toggle('hidden');
+if (container.classList.contains('hidden')) {
+icon.style.transform = 'rotate(0deg)';
+} else {
+icon.style.transform = 'rotate(180deg)';
+}
 }
 
 /* CHUVANIE I UCHITAVANJE FILTARA U LOCALSTORAGE */
 function saveFiltersToStorage() {
-  if (!authorizedClient) return;
-  try {
-    const filtersState = {
-      brand: selectedBrand,
-      category: selectedCategory,
-      search: document.getElementById('searchInput').value || '',
-      sortBy: document.getElementById('sortBy').value || 'default',
-      promoOnly: document.getElementById('promoOnlyFilter').checked || false,
-      stockOnly: document.getElementById('stockOnlyFilter').checked || false
-    };
-    localStorage.setItem('zigzag_filters_' + authorizedClient, JSON.stringify(filtersState));
-  } catch(e) {}
+if (!authorizedClient) return;
+try {
+const filtersState = {
+brand: selectedBrand,
+category: selectedCategory,
+search: document.getElementById('searchInput').value || '',
+sortBy: document.getElementById('sortBy').value || 'default',
+promoOnly: document.getElementById('promoOnlyFilter').checked || false,
+stockOnly: document.getElementById('stockOnlyFilter').checked || false
+};
+localStorage.setItem('zigzag_filters_' + authorizedClient, JSON.stringify(filtersState));
+} catch(e) {}
 }
 
 function loadSavedFilters() {
-  if (!authorizedClient) return;
-  try {
-    const saved = localStorage.getItem('zigzag_filters_' + authorizedClient);
-    if (saved) {
-      const f = JSON.parse(saved);
-      if (f.brand) {
-        selectedBrand = f.brand;
-        document.getElementById('brandInput').value = f.brand;
-        document.getElementById('clearBrandBtn').classList.remove('hidden');
-      }
-      if (f.category) {
-        selectedCategory = f.category;
-        document.getElementById('categoryInput').value = f.category;
-        document.getElementById('clearCategoryBtn').classList.remove('hidden');
-      }
-      if (f.search) {
-        document.getElementById('searchInput').value = f.search;
-        document.getElementById('clearSearchBtn').classList.remove('hidden');
-      }
-      if (f.sortBy) {
-        document.getElementById('sortBy').value = f.sortBy;
-      }
-      if (f.promoOnly !== undefined) {
-        document.getElementById('promoOnlyFilter').checked = f.promoOnly;
-      }
-      if (f.stockOnly !== undefined) {
-        document.getElementById('stockOnlyFilter').checked = f.stockOnly;
-      }
-    }
-  } catch(e) {}
+if (!authorizedClient) return;
+try {
+const saved = localStorage.getItem('zigzag_filters_' + authorizedClient);
+if (saved) {
+const f = JSON.parse(saved);
+if (f.brand) {
+selectedBrand = f.brand;
+document.getElementById('brandInput').value = f.brand;
+document.getElementById('clearBrandBtn').classList.remove('hidden');
+}
+if (f.category) {
+selectedCategory = f.category;
+document.getElementById('categoryInput').value = f.category;
+document.getElementById('clearCategoryBtn').classList.remove('hidden');
+}
+if (f.search) {
+document.getElementById('searchInput').value = f.search;
+document.getElementById('clearSearchBtn').classList.remove('hidden');
+}
+if (f.sortBy) {
+document.getElementById('sortBy').value = f.sortBy;
+}
+if (f.promoOnly !== undefined) {
+document.getElementById('promoOnlyFilter').checked = f.promoOnly;
+}
+if (f.stockOnly !== undefined) {
+document.getElementById('stockOnlyFilter').checked = f.stockOnly;
+}
+}
+} catch(e) {}
 }
 
 function clearAllFilters() {
-  clearBrandSelection();
-  clearCategorySelection();
-  document.getElementById('sortBy').value = 'default';
-  document.getElementById('promoOnlyFilter').checked = false;
-  document.getElementById('stockOnlyFilter').checked = false;
-  document.getElementById('searchInput').value = '';
-  document.getElementById('clearSearchBtn').classList.add('hidden');
-  
-  if (authorizedClient) {
-    try {
-      localStorage.removeItem('zigzag_filters_' + authorizedClient);
-    } catch(e) {}
-  }
+clearBrandSelection();
+clearCategorySelection();
+document.getElementById('sortBy').value = 'default';
+document.getElementById('promoOnlyFilter').checked = false;
+document.getElementById('stockOnlyFilter').checked = false;
+document.getElementById('searchInput').value = '';
+document.getElementById('clearSearchBtn').classList.add('hidden');
 
-  resetAndRender();
+if (authorizedClient) {
+try {
+localStorage.removeItem('zigzag_filters_' + authorizedClient);
+} catch(e) {}
+}
+
+resetAndRender();
 }
 
 function getBrandLogoHtml(brandName) {
-if (!brandName || brandName === 'Այլ' || brandName === '—') {
-return `<span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-semibold">${brandName || '—'}</span>`;
-}
-
-const cleanBrand = brandName.trim().toLowerCase();
-const domain = brandDomains[cleanBrand] || `${cleanBrand.replace(/\s+/g, '')}.com`;
-const logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
-
-return `
-<div class="flex items-center gap-1.5">
-<img src="${logoUrl}" alt="${brandName}" class="h-4 w-4 sm:h-5 sm:w-5 object-contain rounded" loading="lazy" 
-onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
-<span class="font-semibold text-gray-800 text-xs">${brandName}</span>
-</div>
-`;
+  if (!brandName || brandName === 'Այլ' || brandName === '—') {
+    return `<span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-semibold">${brandName || '—'}</span>`;
+  }
+  const cleanBrand = String(brandName).trim().toLowerCase();
+  const domain = brandDomains[cleanBrand] || `${cleanBrand.replace(/\s+/g, '')}.com`;
+  const logoUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
+  return `<div class="flex items-center gap-1.5"><img src="${logoUrl}" alt="" class="w-5 h-5 object-contain" loading="lazy" onerror="this.style.display='none'"><span>${brandName}</span></div>`;
 }
 
 function handleImgError(imgElement, searchUrl) {
   const container = imgElement.parentElement;
   if (!imgElement.dataset.triedPub) {
     imgElement.dataset.triedPub = "true";
-    imgElement.src = imgElement.dataset.pubUrl;
+    if (imgElement.dataset.pubUrl) imgElement.src = imgElement.dataset.pubUrl;
+    else imgElement.src = '';
   } else {
-    container.outerHTML = `<a href="${searchUrl}" target="_blank" class="text-xs text-blue-600 hover:underline font-medium inline-block leading-tight">Դիտել նկարագրությունը</a>`;
+    container.outerHTML = `<a href="${searchUrl}" target="_blank" rel="noopener noreferrer" class="text-xs text-blue-600 hover:underline font-medium inline-block leading-tight">Դիտել նկարագրությունը</a>`;
   }
 }
 
 function getProductImageHtml(articul, productName) {
-const cleanArt = String(articul).trim();
-const a1 = cleanArt.charAt(0) || '0';
-const a2 = cleanArt.charAt(1) || '0';
-
-const url1 = `https://www.zigzag.am/media/catalog/product/${a1}/${a2}/${cleanArt}.jpg`;
-const url2 = `https://www.zigzag.am/pub/media/catalog/product/${a1}/${a2}/${cleanArt}.jpg`;
-const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(cleanArt)}`;
-
-return `
-<div class="product-img-container">
-<img src="${url1}" data-pub-url="${url2}" alt="${productName}" class="product-img" loading="lazy"
-onerror="handleImgError(this, '${searchUrl}')">
-</div>
-`;
+  const cleanArt = String(articul ?? '').trim();
+  const a1 = cleanArt.charAt(0) || '0';
+  const a2 = cleanArt.charAt(1) || '0';
+  const url1 = `https://www.zigzag.am/media/catalog/product/${a1}/${cleanArt}.jpg`;
+  const url2 = `https://www.zigzag.am/pub/media/catalog/product/${a2}/${encodeURIComponent(cleanArt)}.jpg`;
+  const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(cleanArt)}`;
+  const safeName = String(productName || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  return `<div class="product-img-container"><img src="${url1}" data-pub-url="${url2}" alt="${safeName}" class="product-img" loading="lazy" onerror="handleImgError(this, '${searchUrl}')"></div>`;
 }
 
 async function loadPasswordsFile() {
@@ -545,21 +532,21 @@ const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
 let startIndex = 0;
 if (rows.length > 0 && rows[0] && rows[0][0]) {
-  const firstVal = String(rows[0][0]).trim().toLowerCase();
-  if (firstVal.includes('пароль') || firstVal.includes('pass') || firstVal.includes('գաղտնաբառ')) {
-    startIndex = 1;
-  }
+const firstVal = String(rows[0][0]).trim().toLowerCase();
+if (firstVal.includes('пароль') || firstVal.includes('pass') || firstVal.includes('գաղտնաբառ')) {
+startIndex = 1;
+}
 }
 
 for (let i = startIndex; i < rows.length; i++) {
-  let r = rows[i];
-  if (r && r.length >= 2) {
-    let p = r[0] !== null && r[0] !== undefined ? String(r[0]).trim() : '';
-    let client = r[1] !== null && r[1] !== undefined ? String(r[1]).trim() : '';
-    if (p) {
-      passMap[p] = { client: client, sheet: sheetName };
-    }
-  }
+let r = rows[i];
+if (r && r.length >= 2) {
+let p = r[0] !== null && r[0] !== undefined ? String(r[0]).trim() : '';
+let client = r[1] !== null && r[1] !== undefined ? String(r[1]).trim() : '';
+if (p) {
+passMap[p] = { client: client, sheet: sheetName };
+}
+}
 }
 });
 
@@ -580,8 +567,8 @@ authorizedClient = passMap[inputVal].client;
 userSheetType = passMap[inputVal].sheet;
 
 try {
-  localStorage.setItem('zigzag_client', authorizedClient);
-  localStorage.setItem('zigzag_sheet', userSheetType);
+localStorage.setItem('zigzag_client', authorizedClient);
+localStorage.setItem('zigzag_sheet', userSheetType);
 } catch(e) {}
 
 initAppAfterAuth();
@@ -593,11 +580,11 @@ errorMsg.classList.remove('hidden');
 
 function logout() {
 if (authorizedClient) {
-  try {
-    localStorage.removeItem('zigzag_client');
-    localStorage.removeItem('zigzag_sheet');
-    localStorage.removeItem('zigzag_filters_' + authorizedClient);
-  } catch(e) {}
+try {
+localStorage.removeItem('zigzag_client');
+localStorage.removeItem('zigzag_sheet');
+localStorage.removeItem('zigzag_filters_' + authorizedClient);
+} catch(e) {}
 }
 
 authorizedClient = '';
@@ -627,17 +614,17 @@ const headerRow = document.getElementById('tableHeaderRow');
 const thClass = "py-3 px-4 font-semibold text-gray-700 text-xs uppercase tracking-wider border-b border-gray-200";
 
 let cols = [
-  { name: 'Արտիկուլ', align: 'text-left' },
-  { name: 'Բրենդ', align: 'text-left' },
-  { name: 'Կատեգորիա', align: 'text-left' },
-  { name: 'Անվանում', align: 'text-left' },
-  { name: 'Առկայություն', align: 'text-left' },
-  { name: 'Մանրածախ', align: 'text-right' },
-  { name: 'Եկամտաբերություն', align: 'text-center' }
+{ name: 'Արտիկուլ', align: 'text-left' },
+{ name: 'Բրենդ', align: 'text-left' },
+{ name: 'Կատեգորիա', align: 'text-left' },
+{ name: 'Անվանում', align: 'text-left' },
+{ name: 'Առկայություն', align: 'text-left' },
+{ name: 'Մանրածախ', align: 'text-right' },
+{ name: 'Եկամտաբերություն', align: 'text-center' }
 ];
 
 if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
-  cols.push({ name: 'Վերավաճառքի մեծածախ գին', align: 'text-right' });
+cols.push({ name: 'Վերավաճառքի մեծածախ գին', align: 'text-right' });
 }
 
 cols.push({ name: 'Մեծածախ (Wholesale)', align: 'text-right' });
@@ -650,13 +637,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 await loadPasswordsFile();
 
 try {
-  const savedClient = localStorage.getItem('zigzag_client');
-  const savedSheet = localStorage.getItem('zigzag_sheet');
-  if (savedClient && savedSheet) {
-    authorizedClient = savedClient;
-    userSheetType = savedSheet;
-    initAppAfterAuth();
-  }
+const savedClient = localStorage.getItem('zigzag_client');
+const savedSheet = localStorage.getItem('zigzag_sheet');
+if (savedClient && savedSheet) {
+authorizedClient = savedClient;
+userSheetType = savedSheet;
+initAppAfterAuth();
+}
 } catch(e) {}
 
 const pwdInput = document.getElementById('passwordInput');
@@ -667,32 +654,32 @@ if (e.key === 'Enter') checkPassword();
 }
 
 window.onscroll = function() {
-  const btn = document.getElementById('scrollTopBtn');
-  if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
-    btn.classList.remove('hidden');
-  } else {
-    btn.classList.add('hidden');
-  }
+const btn = document.getElementById('scrollTopBtn');
+if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+btn.classList.remove('hidden');
+} else {
+btn.classList.add('hidden');
+}
 };
 
 // Zakrytiye vypadayushchikh spiskov pri klike vne ikh
 document.addEventListener('click', (e) => {
-  const brandDropdown = document.getElementById('brandDropdown');
-  const brandInput = document.getElementById('brandInput');
-  if (brandDropdown && !brandDropdown.contains(e.target) && e.target !== brandInput) {
-    brandDropdown.classList.add('hidden');
-  }
+const brandDropdown = document.getElementById('brandDropdown');
+const brandInput = document.getElementById('brandInput');
+if (brandDropdown && !brandDropdown.contains(e.target) && e.target !== brandInput) {
+brandDropdown.classList.add('hidden');
+}
 
-  const categoryDropdown = document.getElementById('categoryDropdown');
-  const categoryInput = document.getElementById('categoryInput');
-  if (categoryDropdown && !categoryDropdown.contains(e.target) && e.target !== categoryInput) {
-    categoryDropdown.classList.add('hidden');
-  }
+const categoryDropdown = document.getElementById('categoryDropdown');
+const categoryInput = document.getElementById('categoryInput');
+if (categoryDropdown && !categoryDropdown.contains(e.target) && e.target !== categoryInput) {
+categoryDropdown.classList.add('hidden');
+}
 });
 });
 
 function scrollToTop() {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 async function loadExcelFile() {
@@ -763,12 +750,12 @@ if (colMap.wholesale === -1) colMap.wholesale = 6;
 
 const warehouseCols = [];
 for (let j = 0; j < headers.length; j++) {
-  if (j !== colMap.art && j !== colMap.brand && j !== colMap.category && j !== colMap.name && j !== colMap.retail && j !== colMap.baseRetail && j !== colMap.wholesale && j !== colMap.kpPromo && j !== colMap.kpNormal) {
-    let hName = headers[j];
-    if (hName) {
-      warehouseCols.push({ index: j, name: hName });
-    }
-  }
+if (j !== colMap.art && j !== colMap.brand && j !== colMap.category && j !== colMap.name && j !== colMap.retail && j !== colMap.baseRetail && j !== colMap.wholesale && j !== colMap.kpPromo && j !== colMap.kpNormal) {
+let hName = headers[j];
+if (hName) {
+warehouseCols.push({ index: j, name: hName });
+}
+}
 }
 
 for (let i = headerRowIdx + 1; i < rows.length; i++) {
@@ -785,19 +772,19 @@ let isWholesalePromo = false;
 let resaleWholesale = defaultWholesale;
 
 if (userSheetType === 'KP' && authorizedClient !== "Администратор") {
-  const promoVal = colMap.kpPromo !== -1 ? Number(r[colMap.kpPromo]) : 0;
-  const normalVal = colMap.kpNormal !== -1 ? Number(r[colMap.kpNormal]) : 0;
-  
-  if (promoVal && promoVal > 0) {
-    wholesale = promoVal;
-    isWholesalePromo = true;
-  } else if (normalVal && normalVal > 0) {
-    wholesale = normalVal;
-  } else {
-    wholesale = defaultWholesale;
-  }
+const promoVal = colMap.kpPromo !== -1 ? Number(r[colMap.kpPromo]) : 0;
+const normalVal = colMap.kpNormal !== -1 ? Number(r[colMap.kpNormal]) : 0;
+
+if (promoVal && promoVal > 0) {
+wholesale = promoVal;
+isWholesalePromo = true;
+} else if (normalVal && normalVal > 0) {
+wholesale = normalVal;
 } else {
-  wholesale = defaultWholesale;
+wholesale = defaultWholesale;
+}
+} else {
+wholesale = defaultWholesale;
 }
 
 if (!wholesale || wholesale <= 0) {
@@ -809,15 +796,15 @@ const brand = (brandVal !== null && brandVal !== undefined) ? String(brandVal).t
 
 const cleanBrandLower = brand.toLowerCase();
 if (authorizedClient === "ՎԵԳԱ ՈՒՈՐԼԴ" || authorizedClient === "ԷԼՄԱՐԿԵՏ ՍՊԸ" || authorizedClient === "ՎԻԷԼՎԻ ՍԵՆԹՐ ՍՊԸ") {
-  const allowedBrands = ["babyliss", "bosch", "delonghi", "elica", "indesit"];
-  if (!allowedBrands.includes(cleanBrandLower)) {
-    continue;
-  }
+const allowedBrands = ["babyliss", "bosch", "delonghi", "elica", "indesit"];
+if (!allowedBrands.includes(cleanBrandLower)) {
+continue;
+}
 } else if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
-  const allowedBrands = ["indesit", "bosch"];
-  if (!allowedBrands.includes(cleanBrandLower)) {
-    continue;
-  }
+const allowedBrands = ["indesit", "bosch"];
+if (!allowedBrands.includes(cleanBrandLower)) {
+continue;
+}
 }
 
 const catVal = r[colMap.category];
@@ -842,19 +829,19 @@ const isPromo = retail > 0 && baseRetail > 0 && retail < baseRetail;
 
 let marginVal = 0;
 if (retail > 0 && wholesale > 0) {
-  if (authorizedClient === "«ԴՈ繆ՈՒՍ» ՓԲԸ") {
-    marginVal = retail / wholesale;
-  } else {
-    marginVal = (1 - (wholesale / retail)) * 100;
-  }
+if (authorizedClient === "«ԴՈ繆ՈՒՍ» ՓԲԸ") {
+marginVal = retail / wholesale;
+} else {
+marginVal = (1 - (wholesale / retail)) * 100;
+}
 }
 
 if (authorizedClient !== "Администратор" && retail > 0 && wholesale > 0) {
-  if (authorizedClient === "«ԴՈ繆ՈՒՍ» ՓԲԸ") {
-    if (marginVal < 1.0) continue;
-  } else {
-    if (marginVal < 0) continue;
-  }
+if (authorizedClient === "«ԴՈ繆ՈՒՍ» ՓԲԸ") {
+if (marginVal < 1.0) continue;
+} else {
+if (marginVal < 0) continue;
+}
 }
 
 let adminStockDetails = [];
@@ -865,52 +852,52 @@ let baseSum = 0;
 let otherStockList = [];
 
 warehouseCols.forEach(wh => {
-  const qty = Number(r[wh.index]) || 0;
-  if (qty > 0) {
-    const wName = wh.name.trim();
-    if (wName === '003' || wName === '023' || wName === '026' || wName === '031') {
-      baseSum += qty;
-      targetWarehousesStock += qty;
-    } else {
-      otherStockList.push({ name: wName, qty: qty });
-      otherWarehousesSum += qty;
-    }
-  }
+const qty = Number(r[wh.index]) || 0;
+if (qty > 0) {
+const wName = wh.name.trim();
+if (wName === '003' || wName === '023' || wName === '026' || wName === '031') {
+baseSum += qty;
+targetWarehousesStock += qty;
+} else {
+otherStockList.push({ name: wName, qty: qty });
+otherWarehousesSum += qty;
+}
+}
 });
 
 if (baseSum > 0) {
-  adminStockDetails.push({ name: 'База', qty: baseSum });
+adminStockDetails.push({ name: 'База', qty: baseSum });
 }
 otherStockList.forEach(item => {
-  adminStockDetails.push(item);
+adminStockDetails.push(item);
 });
 
 let stockStatus = '';
 let isValidStock = false;
 
 if (authorizedClient === "Администратор") {
-  if (adminStockDetails.length > 0) {
-    isValidStock = true;
-    stockStatus = adminStockDetails.map(s => `${s.name}: ${s.qty}`).join(', ');
-  } else {
-    isValidStock = false;
-  }
+if (adminStockDetails.length > 0) {
+isValidStock = true;
+stockStatus = adminStockDetails.map(s => `${s.name}: ${s.qty}`).join(', ');
 } else {
-  if (targetWarehousesStock >= 2) {
-    isValidStock = true;
-    stockStatus = 'Առկա է';
-  } else if (targetWarehousesStock === 0 && otherWarehousesSum < 5) {
-    isValidStock = false;
-  } else if (targetWarehousesStock < 2 && otherWarehousesSum < 5) {
-    isValidStock = true;
-    stockStatus = 'Ճշտել առկայությունը';
-  } else if (targetWarehousesStock === 0 && otherWarehousesSum >= 5) {
-    isValidStock = true;
-    stockStatus = 'Ճշտել առկայությունը';
-  } else {
-    isValidStock = true;
-    stockStatus = 'Ճշտել առկայությունը';
-  }
+isValidStock = false;
+}
+} else {
+if (targetWarehousesStock >= 2) {
+isValidStock = true;
+stockStatus = 'Առկա է';
+} else if (targetWarehousesStock === 0 && otherWarehousesSum < 5) {
+isValidStock = false;
+} else if (targetWarehousesStock < 2 && otherWarehousesSum < 5) {
+isValidStock = true;
+stockStatus = 'Ճշտել առկայությունը';
+} else if (targetWarehousesStock === 0 && otherWarehousesSum >= 5) {
+isValidStock = true;
+stockStatus = 'Ճշտել առկայությունը';
+} else {
+isValidStock = true;
+stockStatus = 'Ճշտել առկայությունը';
+}
 }
 
 if (isValidStock) {
@@ -949,110 +936,104 @@ renderCategoryDropdown(availableCategories);
 
 function renderBrandDropdown(brands) {
   const dropdown = document.getElementById('brandDropdown');
+  if (!dropdown) return;
   if (!brands || brands.length === 0) {
     dropdown.innerHTML = '<div class="p-2.5 text-gray-400 text-xs text-center">Ոչինչ չի գտնվել</div>';
     return;
   }
-  dropdown.innerHTML = brands.map(b => `
-    <div onclick="selectBrand('${b}')" class="px-3 py-2 hover:bg-blue-50 cursor-pointer font-medium text-gray-800 transition border-b border-gray-50 last:border-none">
-      ${b}
-    </div>
-  `).join('');
+  dropdown.innerHTML = brands.map(b => `<div onclick="selectBrand('${String(b).replace(/'/g, "\\'")}')" class="px-3 py-2 hover:bg-blue-50 cursor-pointer font-medium text-gray-800 transition border-b border-gray-50 last:border-none">${String(b).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div>`).join('');
 }
 
 function showBrandDropdown() {
-  document.getElementById('brandDropdown').classList.remove('hidden');
+document.getElementById('brandDropdown').classList.remove('hidden');
 }
 
 function filterBrandOptions() {
-  const query = document.getElementById('brandInput').value.trim().toLowerCase();
-  const clearBtn = document.getElementById('clearBrandBtn');
-  
-  if (query.length > 0) {
-    clearBtn.classList.remove('hidden');
-  } else {
-    clearBtn.classList.add('hidden');
-  }
+const query = document.getElementById('brandInput').value.trim().toLowerCase();
+const clearBtn = document.getElementById('clearBrandBtn');
 
-  const filtered = availableBrands.filter(b => b.toLowerCase().includes(query));
-  renderBrandDropdown(filtered);
-  showBrandDropdown();
+if (query.length > 0) {
+clearBtn.classList.remove('hidden');
+} else {
+clearBtn.classList.add('hidden');
+}
 
-  selectedBrand = query;
-  resetAndRender();
+const filtered = availableBrands.filter(b => b.toLowerCase().includes(query));
+renderBrandDropdown(filtered);
+showBrandDropdown();
+
+selectedBrand = query;
+resetAndRender();
 }
 
 function selectBrand(brand) {
-  selectedBrand = brand;
-  document.getElementById('brandInput').value = brand;
-  document.getElementById('clearBrandBtn').classList.remove('hidden');
-  document.getElementById('brandDropdown').classList.add('hidden');
-  resetAndRender();
+selectedBrand = brand;
+document.getElementById('brandInput').value = brand;
+document.getElementById('clearBrandBtn').classList.remove('hidden');
+document.getElementById('brandDropdown').classList.add('hidden');
+resetAndRender();
 }
 
 function clearBrandSelection() {
-  selectedBrand = '';
-  document.getElementById('brandInput').value = '';
-  document.getElementById('clearBrandBtn').classList.add('hidden');
-  renderBrandDropdown(availableBrands);
-  resetAndRender();
+selectedBrand = '';
+document.getElementById('brandInput').value = '';
+document.getElementById('clearBrandBtn').classList.add('hidden');
+renderBrandDropdown(availableBrands);
+resetAndRender();
 }
 
 function renderCategoryDropdown(categories) {
   const dropdown = document.getElementById('categoryDropdown');
+  if (!dropdown) return;
   if (!categories || categories.length === 0) {
     dropdown.innerHTML = '<div class="p-2.5 text-gray-400 text-xs text-center">Ոչինչ չի գտնվել</div>';
     return;
   }
-  dropdown.innerHTML = categories.map(c => `
-    <div onclick="selectCategory('${c}')" class="px-3 py-2 hover:bg-blue-50 cursor-pointer font-medium text-gray-800 transition border-b border-gray-50 last:border-none">
-      ${c}
-    </div>
-  `).join('');
+  dropdown.innerHTML = categories.map(c => `<div onclick="selectCategory('${String(c).replace(/'/g, "\'")}')" class="px-3 py-2 hover:bg-blue-50 cursor-pointer font-medium text-gray-800 transition border-b border-gray-50 last:border-none">${String(c).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div>`).join('');
 }
 
 function showCategoryDropdown() {
-  document.getElementById('categoryDropdown').classList.remove('hidden');
+document.getElementById('categoryDropdown').classList.remove('hidden');
 }
 
 function filterCategoryOptions() {
-  const query = document.getElementById('categoryInput').value.trim().toLowerCase();
-  const clearBtn = document.getElementById('clearCategoryBtn');
-  
-  if (query.length > 0) {
-    clearBtn.classList.remove('hidden');
-  } else {
-    clearBtn.classList.add('hidden');
-  }
+const query = document.getElementById('categoryInput').value.trim().toLowerCase();
+const clearBtn = document.getElementById('clearCategoryBtn');
 
-  const filtered = availableCategories.filter(c => c.toLowerCase().includes(query));
-  renderCategoryDropdown(filtered);
-  showCategoryDropdown();
+if (query.length > 0) {
+clearBtn.classList.remove('hidden');
+} else {
+clearBtn.classList.add('hidden');
+}
 
-  selectedCategory = query;
-  resetAndRender();
+const filtered = availableCategories.filter(c => c.toLowerCase().includes(query));
+renderCategoryDropdown(filtered);
+showCategoryDropdown();
+
+selectedCategory = query;
+resetAndRender();
 }
 
 function selectCategory(category) {
-  selectedCategory = category;
-  document.getElementById('categoryInput').value = category;
-  document.getElementById('clearCategoryBtn').classList.remove('hidden');
-  document.getElementById('categoryDropdown').classList.add('hidden');
-  resetAndRender();
+selectedCategory = category;
+document.getElementById('categoryInput').value = category;
+document.getElementById('clearCategoryBtn').classList.remove('hidden');
+document.getElementById('categoryDropdown').classList.add('hidden');
+resetAndRender();
 }
 
 function clearCategorySelection() {
-  selectedCategory = '';
-  document.getElementById('categoryInput').value = '';
-  document.getElementById('clearCategoryBtn').classList.add('hidden');
-  renderCategoryDropdown(availableCategories);
-  resetAndRender();
+selectedCategory = '';
+document.getElementById('categoryInput').value = '';
+document.getElementById('clearCategoryBtn').classList.add('hidden');
+renderCategoryDropdown(availableCategories);
+resetAndRender();
 }
 
 function clearSearch() {
-  document.getElementById('searchInput').value = '';
-  document.getElementById('clearSearchBtn').classList.add('hidden');
-  resetAndRender();
+document.getElementById('searchInput').value = '';
+document.getElementById('clearSearchBtn').classList.add('hidden');
+resetAndRender();
 }
 
 function filterProducts() {
@@ -1063,9 +1044,9 @@ const stockOnly = document.getElementById('stockOnlyFilter').checked;
 
 const clearBtn = document.getElementById('clearSearchBtn');
 if (searchQuery.length > 0) {
-  clearBtn.classList.remove('hidden');
+clearBtn.classList.remove('hidden');
 } else {
-  clearBtn.classList.add('hidden');
+clearBtn.classList.add('hidden');
 }
 
 filteredProducts = allProducts.filter(p => {
@@ -1094,233 +1075,160 @@ document.getElementById('productCountInfo').innerText = `Գտնվել է ${filte
 }
 
 function resetAndRender() {
-  filterProducts();
-  displayedCount = 0;
-  document.getElementById('tableBody').innerHTML = '';
-  document.getElementById('mobileCardsContainer').innerHTML = '';
-  loadMoreProducts();
+filterProducts();
+displayedCount = 0;
+document.getElementById('tableBody').innerHTML = '';
+document.getElementById('mobileCardsContainer').innerHTML = '';
+loadMoreProducts();
 }
 
 function loadMoreProducts() {
-  const tbody = document.getElementById('tableBody');
-  const cardsContainer = document.getElementById('mobileCardsContainer');
-  const noResults = document.getElementById('noResults');
-  const loadMoreContainer = document.getElementById('loadMoreContainer');
+const tbody = document.getElementById('tableBody');
+const cardsContainer = document.getElementById('mobileCardsContainer');
+const noResults = document.getElementById('noResults');
+const loadMoreContainer = document.getElementById('loadMoreContainer');
 
-  if (filteredProducts.length === 0) {
-    noResults.classList.remove('hidden');
-    loadMoreContainer.classList.add('hidden');
-    return;
-  } else {
-    noResults.classList.add('hidden');
-  }
+if (filteredProducts.length === 0) {
+noResults.classList.remove('hidden');
+loadMoreContainer.classList.add('hidden');
+return;
+} else {
+noResults.classList.add('hidden');
+}
 
-  const nextBatch = filteredProducts.slice(displayedCount, displayedCount + PAGE_SIZE);
+const nextBatch = filteredProducts.slice(displayedCount, displayedCount + PAGE_SIZE);
 
-  nextBatch.forEach(p => {
-    tbody.appendChild(createRowElement(p));
-    cardsContainer.appendChild(createCardElement(p));
-  });
+nextBatch.forEach(p => {
+tbody.appendChild(createRowElement(p));
+cardsContainer.appendChild(createCardElement(p));
+});
 
-  displayedCount += nextBatch.length;
+displayedCount += nextBatch.length;
 
-  if (displayedCount < filteredProducts.length) {
-    loadMoreContainer.classList.remove('hidden');
-    document.getElementById('loadMoreCounter').innerText = `(${displayedCount} / ${filteredProducts.length})`;
-  } else {
-    loadMoreContainer.classList.add('hidden');
-  }
+if (displayedCount < filteredProducts.length) {
+loadMoreContainer.classList.remove('hidden');
+document.getElementById('loadMoreCounter').innerText = `(${displayedCount} / ${filteredProducts.length})`;
+} else {
+loadMoreContainer.classList.add('hidden');
+}
 }
 
 function createRowElement(p) {
-const tr = document.createElement('tr');
-tr.className = 'hover:bg-blue-50/40 transition-colors border-b border-gray-100';
-
-const isUtochnit = p.stockStatus.includes('Ճշտել');
-const stockBadgeClass = authorizedClient === "Администратор"
-? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-xs'
-: (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
-
-let marginBadge = '—';
-if (p.retail > 0 && p.wholesale > 0) {
-  if (authorizedClient === "«ԴՈ繆ՈՒՍ» ՓԲԸ") {
-    marginBadge = `<span class="px-2 py-1 rounded-lg text-xs font-bold border bg-gray-100 text-gray-800 border-gray-300">${p.marginVal.toFixed(2)}</span>`;
-  } else {
-    let colorClass = 'bg-blue-100 text-blue-800 border-blue-200';
-    if (p.marginVal >= 20) colorClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
-    else if (p.marginVal < 5) colorClass = 'bg-amber-100 text-amber-800 border-amber-200';
-    
-    marginBadge = `<span class="px-2 py-1 rounded-lg text-xs font-bold border ${colorClass}">${p.marginVal.toFixed(1)}%</span>`;
+  const tr = document.createElement('tr');
+  tr.className = 'hover:bg-blue-50/40 transition-colors border-b border-gray-100';
+  const isUtochnit = String(p.stockStatus || '').includes('Ճշտել');
+  const stockBadgeClass = authorizedClient === "Администратор"
+    ? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-xs'
+    : (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
+  let marginBadge = '—';
+  if (p.retail > 0 && p.wholesale > 0) {
+    if (authorizedClient === "«ԴՈ繆ՈՒՍ» ՓԲԸ") {
+      marginBadge = `<span class="px-2 py-1 rounded-lg text-xs font-bold border bg-gray-100 text-gray-800 border-gray-300">${Number(p.marginVal).toFixed(2)}</span>`;
+    } else {
+      let colorClass = 'bg-blue-100 text-blue-800 border-blue-200';
+      if (p.marginVal >= 20) colorClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+      else if (p.marginVal < 5) colorClass = 'bg-amber-100 text-amber-800 border-amber-200';
+      marginBadge = `<span class="px-2 py-1 rounded-lg text-xs font-bold border ${colorClass}">${Number(p.marginVal).toFixed(1)}%</span>`;
+    }
   }
-}
-
-let retailCellHtml = '—';
-if (p.retail > 0) {
-  const priceFormatted = p.retail.toLocaleString('ru-RU') + ' ֏';
-  if (p.isPromo) {
-    retailCellHtml = `<div class="flex flex-col items-end"><span class="text-gray-900 font-medium">${priceFormatted}</span><span class="px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-[10px] font-bold mt-0.5 border border-red-200">ԱԿՑԻԱ</span></div>`;
-  } else {
-    retailCellHtml = `<span class="text-gray-600">${priceFormatted}</span>`;
+  let retailCellHtml = '—';
+  if (p.retail > 0) {
+    const priceFormatted = p.retail.toLocaleString('ru-RU') + ' ֏';
+    retailCellHtml = p.isPromo
+      ? `<div class="flex flex-col items-end"><span class="text-gray-900 font-medium">${priceFormatted}</span><span class="px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-[10px] font-bold mt-0.5 border border-red-200">ԱԿՑԻԱ</span></div>`
+      : `<span class="text-gray-600">${priceFormatted}</span>`;
   }
-}
-
-let wholesaleCellHtml = '—';
-if (p.wholesale > 0) {
-  const wholesaleFormatted = p.wholesale.toLocaleString('ru-RU') + ' ֏';
-  if (p.isWholesalePromo) {
-    wholesaleCellHtml = `<div class="flex flex-col items-end"><span class="text-gray-900 font-semibold">${wholesaleFormatted}</span><span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold mt-0.5 border border-emerald-200">PROMO</span></div>`;
-  } else {
-    wholesaleCellHtml = `<span class="text-gray-900 font-semibold">${wholesaleFormatted}</span>`;
+  let wholesaleCellHtml = '—';
+  if (p.wholesale > 0) {
+    const wholesaleFormatted = p.wholesale.toLocaleString('ru-RU') + ' ֏';
+    wholesaleCellHtml = p.isWholesalePromo
+      ? `<div class="flex flex-col items-end"><span class="text-gray-900 font-semibold">${wholesaleFormatted}</span><span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold mt-0.5 border border-emerald-200">PROMO</span></div>`
+      : `<span class="text-gray-900 font-semibold">${wholesaleFormatted}</span>`;
   }
-}
-
-const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
-const cartItem = cart[p.articul];
-
-let actionCellHtml = getActionControlHtml(p.articul, cartItem);
-
-let resaleColHtml = '';
-if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
-  resaleColHtml = `<td class="py-3 px-4 text-right text-gray-700 font-medium">${p.resaleWholesale ? p.resaleWholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</td>`;
-}
-
-tr.innerHTML = `
-<td class="py-3 px-4 font-mono font-medium text-blue-600">
-<a href="${searchUrl}" target="_blank" class="hover:underline flex items-center gap-1 text-xs" title="Գտնել Zigzag.am կայքում">
-${p.articul} <span class="text-[10px] text-gray-400 font-normal">Դիտել նկարագրությունը</span>
-</a>
-</td>
-<td class="py-3 px-4">${getBrandLogoHtml(p.brand)}</td>
-<td class="py-3 px-4 text-gray-600">${p.category}</td>
-<td class="py-3 px-4">
-<div class="flex items-center gap-3">
-${getProductImageHtml(p.articul, p.name)}
-<span class="text-gray-900 font-medium">${p.name || '—'}</span>
-</div>
-</td>
-<td class="py-3 px-4"><span class="px-2.5 py-1 rounded-md text-xs font-semibold ${stockBadgeClass}">${p.stockStatus}</span></td>
-<td class="py-3 px-4 text-right">${retailCellHtml}</td>
-<td class="py-3 px-4 text-center">${marginBadge}</td>
-${resaleColHtml}
-<td class="py-3 px-4 text-right">${wholesaleCellHtml}</td>
-<td class="py-3 px-4 text-center">${actionCellHtml}</td>
-`;
-return tr;
+  const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
+  const cartItem = cart[p.articul];
+  const actionCellHtml = getActionControlHtml(p.articul, cartItem);
+  let resaleColHtml = '';
+  if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
+    resaleColHtml = `<td class="py-3 px-4 text-right text-gray-700 font-medium">${p.resaleWholesale ? p.resaleWholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</td>`;
+  }
+  tr.innerHTML = `<td class="py-3 px-4 font-mono font-medium text-blue-600"><a href="${searchUrl}" target="_blank" rel="noopener noreferrer" class="hover:underline flex items-center gap-1 text-xs" title="Գտնել Zigzag.am կայքում">${p.articul} <span class="text-[10px] text-gray-400 font-normal">Դիտել նկարագրությունը</span></a></td>
+    <td class="py-3 px-4">${getBrandLogoHtml(p.brand)}</td>
+    <td class="py-3 px-4 text-gray-600">${p.category || '—'}</td>
+    <td class="py-3 px-4"><div class="flex items-center gap-3">${getProductImageHtml(p.articul, p.name)}<span class="text-gray-900 font-medium">${p.name || '—'}</span></div></td>
+    <td class="py-3 px-4"><span class="px-2.5 py-1 rounded-md text-xs font-semibold ${stockBadgeClass}">${p.stockStatus || '—'}</span></td>
+    <td class="py-3 px-4 text-right">${retailCellHtml}</td><td class="py-3 px-4 text-center">${marginBadge}</td>${resaleColHtml}
+    <td class="py-3 px-4 text-right">${wholesaleCellHtml}</td><td class="py-3 px-4 text-center">${actionCellHtml}</td>`;
+  return tr;
 }
 
 function createCardElement(p) {
-const div = document.createElement('div');
-div.className = 'bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col gap-3';
-
-const isUtochnit = p.stockStatus.includes('Ճշտել');
-const stockBadgeClass = authorizedClient === "Администратор"
-? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-[11px]'
-: (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
-
-const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
-const cartItem = cart[p.articul];
-
-let marginBadge = '';
-if (p.retail > 0 && p.wholesale > 0) {
-  if (authorizedClient === "«ԴՈ繆ՈՒՍ» ՓԲԸ") {
-    marginBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold border bg-gray-100 text-gray-800 border-gray-300">${p.marginVal.toFixed(2)}</span>`;
-  } else {
+  const div = document.createElement('div');
+  div.className = 'bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col gap-3';
+  const isUtochnit = String(p.stockStatus || '').includes('Ճշտել');
+  const stockBadgeClass = authorizedClient === "Администратор"
+    ? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-[11px]'
+    : (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
+  const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
+  const cartItem = cart[p.articul];
+  let marginBadge = '—';
+  if (p.retail > 0 && p.wholesale > 0) {
     let colorClass = 'bg-blue-100 text-blue-800 border-blue-200';
     if (p.marginVal >= 20) colorClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
     else if (p.marginVal < 5) colorClass = 'bg-amber-100 text-amber-800 border-amber-200';
-    marginBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold border ${colorClass}">${p.marginVal.toFixed(1)}%</span>`;
+    marginBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold border ${colorClass}">${Number(p.marginVal).toFixed(1)}%</span>`;
   }
-}
-
-div.innerHTML = `
-<div class="flex items-start gap-3">
-  ${getProductImageHtml(p.articul, p.name)}
-  <div class="flex-grow min-w-0">
-    <div class="flex items-center justify-between gap-2 mb-1">
-      ${getBrandLogoHtml(p.brand)}
-      <a href="${searchUrl}" target="_blank" class="font-mono text-xs font-semibold text-blue-600 hover:underline">
-        ${p.articul} <span class="text-[10px] text-gray-400 font-normal">Դիտել նկարագրությունը</span>
-      </a>
-    </div>
-    <h4 class="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">${p.name || '—'}</h4>
-  </div>
-</div>
-
-<div class="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">
-  <span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${p.stockStatus}</span>
-  <div class="flex items-center gap-2">
-    <span class="text-gray-400">Եկամտաբերություն:</span>
-    ${marginBadge}
-  </div>
-</div>
-
-<div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-lg border border-gray-100">
-  <div>
-    <div class="text-[11px] text-gray-500">Մանրածախ: <span class="font-medium text-gray-700">${p.retail ? p.retail.toLocaleString('ru-RU') + ' ֏' : '—'}</span></div>
-    <div class="text-xs font-bold text-gray-900">Մեծածախ: <span class="text-green-600">${p.wholesale ? p.wholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</span></div>
-  </div>
-  <div id="card-action-${p.articul}">
-    ${getActionControlHtml(p.articul, cartItem)}
-  </div>
-</div>
-`;
-return div;
+  div.innerHTML = `<div class="flex items-start gap-3">${getProductImageHtml(p.articul, p.name)}
+    <div class="flex-grow min-w-0"><div class="flex items-center justify-between gap-2 mb-1"><a href="${searchUrl}" target="_blank" rel="noopener noreferrer" class="font-mono text-xs font-semibold text-blue-600 hover:underline">${p.articul}</a></div>
+    <h4 class="text-sm font-semibold text-gray-900 leading-snug">${p.name || '—'}</h4><div class="text-xs text-gray-500 mt-1">${p.brand || '—'} · ${p.category || '—'}</div></div></div>
+    <div class="flex items-center justify-between pt-2 border-t border-gray-100 text-xs"><span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${p.stockStatus || '—'}</span><div class="flex items-center gap-2"><span class="text-gray-400">Եկամտաբերություն:</span>${marginBadge}</div></div>
+    <div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-lg border border-gray-100"><div><div class="text-[11px] text-gray-500">Մանրածախ: <span class="font-medium text-gray-700">${p.retail ? p.retail.toLocaleString('ru-RU') + ' ֏' : '—'}</span></div><div class="text-xs font-bold text-gray-900">Մեծածախ: <span class="text-green-600">${p.wholesale ? p.wholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</span></div></div><div id="card-action-${p.articul}">${getActionControlHtml(p.articul, cartItem)}</div></div>`;
+  return div;
 }
 
 function getActionControlHtml(articul, cartItem) {
-if (!cartItem) {
-return `
-<button onclick="addToCart('${articul}')" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition">
-Պատվիրել
-</button>
-`;
-} else {
-return `
-<div class="inline-flex items-center border border-blue-500 rounded-lg overflow-hidden bg-blue-50">
-<button onclick="changeQty('${articul}', -1)" class="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">-</button>
-<span class="px-3 py-1 text-xs font-bold text-blue-900">${cartItem.qty}</span>
-<button onclick="changeQty('${articul}', 1)" class="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">+</button>
-</div>
-`;
-}
+  if (!cartItem) {
+    return `<button onclick="addToCart('${articul}')" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition">Պատվիրել</button>`;
+  }
+  return `<div class="inline-flex items-center border border-blue-500 rounded-lg overflow-hidden bg-blue-50"><button onclick="changeQty('${articul}', -1)" class="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">−</button><span class="px-3 py-1 text-xs font-bold text-blue-900">${cartItem.qty}</span><button onclick="changeQty('${articul}', 1)" class="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">+</button></div>`;
 }
 
 function saveCartToStorage() {
 if (!authorizedClient) return;
 try {
-  localStorage.setItem('zigzag_cart_' + authorizedClient, JSON.stringify(cart));
+localStorage.setItem('zigzag_cart_' + authorizedClient, JSON.stringify(cart));
 } catch(e) {}
 }
 
 function loadCartFromStorage(showToast = false) {
 if (!authorizedClient) return;
 try {
-  const saved = localStorage.getItem('zigzag_cart_' + authorizedClient);
-  if (saved) {
-    cart = JSON.parse(saved);
-    const count = Object.keys(cart).length;
-    if (count > 0) {
-      updateOrderPanel();
-      if (showToast) {
-        showRestoredCartToast(count);
-      }
-    }
-  }
+const saved = localStorage.getItem('zigzag_cart_' + authorizedClient);
+if (saved) {
+cart = JSON.parse(saved);
+const count = Object.keys(cart).length;
+if (count > 0) {
+updateOrderPanel();
+if (showToast) {
+showRestoredCartToast(count);
+}
+}
+}
 } catch(e) {}
 }
 
 function showRestoredCartToast(itemCount) {
-  const toast = document.getElementById('restoredCartToast');
-  const txt = document.getElementById('toastRestoredText');
-  txt.innerText = `Վերականգնվել է նախորդ պատվերի ${itemCount} ապրանք:`;
-  toast.classList.remove('hidden');
-  setTimeout(() => {
-    closeCartToast();
-  }, 5000);
+const toast = document.getElementById('restoredCartToast');
+const txt = document.getElementById('toastRestoredText');
+txt.innerText = `Վերականգնվել է նախորդ պատվերից ${itemCount} ապրանք`;
+toast.classList.remove('hidden');
+setTimeout(() => {
+closeCartToast();
+}, 5000);
 }
 
 function closeCartToast() {
-  document.getElementById('restoredCartToast').classList.add('hidden');
+document.getElementById('restoredCartToast').classList.add('hidden');
 }
 
 function addToCart(articul) {
@@ -1340,33 +1248,33 @@ resetAndRender();
 }
 
 function getItemWholesalePrice(item) {
-  if (item.product && typeof item.product.wholesale === 'number' && item.product.wholesale > 0) {
-    return item.product.wholesale;
-  }
-  if (typeof item.wholesale === 'number' && item.wholesale > 0) {
-    return item.wholesale;
-  }
-  if (item.articul) {
-    const found = allProducts.find(p => p.articul === item.articul);
-    if (found && found.wholesale) return found.wholesale;
-  }
-  if (item.product && item.product.articul) {
-    const found = allProducts.find(p => p.articul === item.product.articul);
-    if (found && found.wholesale) return found.wholesale;
-  }
-  return 0;
+if (item.product && typeof item.product.wholesale === 'number' && item.product.wholesale > 0) {
+return item.product.wholesale;
+}
+if (typeof item.wholesale === 'number' && item.wholesale > 0) {
+return item.wholesale;
+}
+if (item.articul) {
+const found = allProducts.find(p => p.articul === item.articul);
+if (found && found.wholesale) return found.wholesale;
+}
+if (item.product && item.product.articul) {
+const found = allProducts.find(p => p.articul === item.product.articul);
+if (found && found.wholesale) return found.wholesale;
+}
+return 0;
 }
 
 function getItemName(item) {
-  if (item.product && item.product.name) return item.product.name;
-  if (item.name) return item.name;
-  return '—';
+if (item.product && item.product.name) return item.product.name;
+if (item.name) return item.name;
+return '—';
 }
 
 function getItemArticul(artKey, item) {
-  if (item.product && item.product.articul) return item.product.articul;
-  if (item.articul) return item.articul;
-  return artKey;
+if (item.product && item.product.articul) return item.product.articul;
+if (item.articul) return item.articul;
+return artKey;
 }
 
 function updateOrderPanel() {
@@ -1418,61 +1326,31 @@ openOrderModal();
 }
 
 function openOrderModal() {
-const listContainer = document.getElementById('modalItemsList');
-listContainer.innerHTML = '';
-let totalSum = 0;
-
-Object.entries(cart).forEach(([artKey, item]) => {
-const price = getItemWholesalePrice(item);
-const articul = getItemArticul(artKey, item);
-const name = getItemName(item);
-const sum = price * item.qty;
-totalSum += sum;
-
-const stockStatus = (item.product && item.product.stockStatus) ? item.product.stockStatus : 'Առկա է';
-const isUtochnit = stockStatus.includes('Ճշտել');
-const stockBadgeClass = authorizedClient === "Администратор"
-? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-[10px]'
-: (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
-
-const div = document.createElement('div');
-div.className = 'py-3 sm:py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-gray-100';
-div.innerHTML = `
-<div class="flex-grow">
-<div class="flex items-center gap-2 mb-1">
-<span class="font-mono text-xs text-blue-600 font-semibold">${articul}</span>
-<span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${stockStatus}</span>
-</div>
-<div class="text-gray-900 font-medium text-xs sm:text-sm">${name}</div>
-</div>
-
-<div class="flex items-center gap-3 flex-wrap w-full md:w-auto justify-between md:justify-end">
-<div>
-<select onchange="updateItemPayment('${articul}', this.value)" class="px-2 py-1 bg-gray-50 border border-gray-300 rounded-lg text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
-<option value="Կանխիկ" ${item.paymentMethod === 'Կանխիկ' ? 'selected' : ''}>💵 Կանխիկ</option>
-<option value="Բանկային փոխանցումով" ${item.paymentMethod === 'Բանկային փոխանցումով' ? 'selected' : ''}>🏦 Բանկային փոխանցումով</option>
-</select>
-</div>
-
-<div class="flex items-center border rounded-lg overflow-hidden bg-gray-50">
-<button onclick="changeQty('${articul}', -1)" class="px-2.5 py-0.5 bg-gray-200 hover:bg-gray-300 font-bold text-xs">-</button>
-<span class="px-3 py-0.5 font-semibold text-xs">${item.qty}</span>
-<button onclick="changeQty('${articul}', 1)" class="px-2.5 py-0.5 bg-gray-200 hover:bg-gray-300 font-bold text-xs">+</button>
-</div>
-<div class="font-bold text-gray-900 text-xs sm:text-sm w-24 text-right">${sum.toLocaleString('ru-RU')} ֏</div>
-</div>
-`;
-listContainer.appendChild(div);
-});
-
-document.getElementById('modalTotalSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
-document.getElementById('orderModal').classList.remove('hidden');
+  const listContainer = document.getElementById('modalItemsList');
+  listContainer.innerHTML = '';
+  let totalSum = 0;
+  Object.entries(cart).forEach(([artKey, item]) => {
+    const price = getItemWholesalePrice(item);
+    const articul = getItemArticul(artKey, item);
+    const name = getItemName(item);
+    const sum = price * item.qty;
+    totalSum += sum;
+    const stockStatus = (item.product && item.product.stockStatus) ? item.product.stockStatus : 'Առկա է';
+    const isUtochnit = String(stockStatus).includes('Ճշտել');
+    const stockBadgeClass = authorizedClient === 'Администратор' ? 'bg-gray-100 text-gray-800' : (isUtochnit ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800');
+    const div = document.createElement('div');
+    div.className = 'py-3 sm:py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-gray-100';
+    div.innerHTML = `<div class="flex-grow"><div class="flex items-center gap-2 mb-1"><span class="font-mono text-xs text-blue-600 font-semibold">${articul}</span><span class="px-2 py-0.5 rounded-md font-semibold text-[10px] ${stockBadgeClass}">${stockStatus}</span></div><div class="text-gray-900 font-medium text-xs sm:text-sm">${name}</div></div><div class="flex items-center gap-3 flex-wrap w-full md:w-auto justify-between md:justify-end"><select onchange="updateItemPayment('${articul}', this.value)" class="px-2 py-1 bg-gray-50 border border-gray-300 rounded-lg text-xs font-semibold text-gray-800"><option value="Կանխիկ" ${item.paymentMethod === 'Կանխիկ' ? 'selected' : ''}>💵 Կանխիկ</option><option value="Բանկային փոխանցումով" ${item.paymentMethod === 'Բանկային փոխանցումով' ? 'selected' : ''}>🏦 Բանկային փոխանցումով</option></select><div class="flex items-center border rounded-lg overflow-hidden bg-gray-50"><button onclick="changeQty('${articul}', -1)" class="px-2 py-1">−</button><span class="px-3 text-xs font-bold">${item.qty}</span><button onclick="changeQty('${articul}', 1)" class="px-2 py-1">+</button></div><div class="font-bold text-sm">${sum.toLocaleString('ru-RU')} ֏</div><button onclick="changeQty('${articul}', -${item.qty})" class="text-red-600 text-xs">Հեռացնել</button></div>`;
+    listContainer.appendChild(div);
+  });
+  document.getElementById('modalTotalSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
+  document.getElementById('orderModal').classList.remove('hidden');
 }
 
 function updateItemPayment(articul, method) {
 if (cart[articul]) {
-  cart[articul].paymentMethod = method;
-  saveCartToStorage();
+cart[articul].paymentMethod = method;
+saveCartToStorage();
 }
 }
 
@@ -1498,77 +1376,58 @@ document.getElementById('orderModal').classList.add('hidden');
 }
 
 function buildEmailFormattedText() {
-const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
-const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
-const comment = (document.getElementById('orderCommentInput').value || '').trim();
-
-let text = `ՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\n`;
-if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
-if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
-if (comment) text += `Մեկնաբանություն: ${comment}\n`;
-text += `\n`;
-
-let total = 0;
-let i = 1;
-
-Object.entries(cart).forEach(([artKey, item]) => {
-const price = getItemWholesalePrice(item);
-const articul = getItemArticul(artKey, item);
-const name = getItemName(item);
-const sum = price * item.qty;
-total += sum;
-
-text += `${i}. Արտիկուլ: ${articul}\n   Անվանում: ${name}\n   Քանակ: ${item.qty} հատ | Վճարում: ${item.paymentMethod || 'Կանխիկ'}\n   Գումար: ${sum.toLocaleString('ru-RU')} ֏\n\n`;
-i++;
-});
-
-text += `ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
-return text;
+  const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
+  const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
+  const comment = (document.getElementById('orderCommentInput').value || '').trim();
+  let text = `ՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\n`;
+  if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
+  if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
+  if (comment) text += `Մեկնաբանություն: ${comment}\n`;
+  text += '\n';
+  let total = 0; let i = 1;
+  Object.entries(cart).forEach(([artKey, item]) => {
+    const price = getItemWholesalePrice(item); const articul = getItemArticul(artKey, item); const name = getItemName(item); const sum = price * item.qty; total += sum;
+    text += `${i}. Արտիկուլ: ${articul}\nԱնվանում: ${name}\nՔանակ: ${item.qty} հատ | Վճարում: ${item.paymentMethod || 'Կանխիկ'}\nԳումար: ${sum.toLocaleString('ru-RU')} ֏\n\n`; i++;
+  });
+  text += `ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
+  return text;
 }
 
 function buildViberFormattedText() {
-const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
-const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
-const comment = (document.getElementById('orderCommentInput').value || '').trim();
-
-let total = 0;
-Object.entries(cart).forEach(([artKey, item]) => {
-  const price = getItemWholesalePrice(item);
-  total += (price * item.qty);
-});
-
-let text = `Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը (խնդրում ենք կցել նոր ներբեռնված ֆայլը):\n`;
-if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
-if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
-if (comment) text += `Մեկնաբանություն: ${comment}\n`;
-
-text += `\nՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\nԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
-return text;
+  const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
+  const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
+  const comment = (document.getElementById('orderCommentInput').value || '').trim();
+  let total = 0;
+  Object.values(cart).forEach(item => { total += getItemWholesalePrice(item) * item.qty; });
+  let text = `Բարև ձեզ,\n\nՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient})\n`;
+  if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
+  if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
+  if (comment) text += `Մեկնաբանություն: ${comment}\n`;
+  text += `ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
+  return text;
 }
 
 function sendViaViber() {
-  const viberText = buildViberFormattedText();
-  generateAndDownloadExcel();
+const viberText = buildViberFormattedText();
+generateAndDownloadExcel();
 
-  setTimeout(() => {
-    const encodedText = encodeURIComponent(viberText);
-    window.open(`viber://forward?text=${encodedText}`, '_blank');
-  }, 800);
+setTimeout(() => {
+const encodedText = encodeURIComponent(viberText);
+window.open(`viber://forward?text=${encodedText}`, '_blank');
+}, 800);
 }
 
 function sendViaEmail() {
-  const formattedText = buildEmailFormattedText();
-  generateAndDownloadExcel();
+const formattedText = buildEmailFormattedText();
+generateAndDownloadExcel();
 
-  setTimeout(() => {
-    const subject = encodeURIComponent(`Պատվեր կատալոգից - ${authorizedClient}`);
-    const body = encodeURIComponent(`Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը (խնդրում ենք կցել նոր ներբեռնված ֆայլը):\n\n` + formattedText);
-    window.location.href = `mailto:${TARGET_EMAILS}?subject=${subject}&body=${body}`;
-  }, 800);
+setTimeout(() => {
+const subject = encodeURIComponent(`Պատվեր կատալոգից - ${authorizedClient}`); const body = encodeURIComponent(`Բարև ձեզ,\n\n${formattedText}\n\nԽնդրում ենք կցել ներբեռնված Excel ֆայլը։`); window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}, 800);
 }
 
 function downloadOrderExcel() {
-  generateAndDownloadExcel();
+generateAndDownloadExcel();
 }
 
 function generateAndDownloadExcel() {
@@ -1585,62 +1444,62 @@ const bankItems = [];
 
 Object.entries(cart).forEach(([artKey, item]) => {
 if (item.paymentMethod === 'Բանկային փոխանցումով') {
-  bankItems.push({ key: artKey, ...item });
+bankItems.push({ key: artKey, ...item });
 } else {
-  cashItems.push({ key: artKey, ...item });
+cashItems.push({ key: artKey, ...item });
 }
 });
 
 if (cashItems.length > 0) {
-  cashItems.forEach(item => {
-    const price = getItemWholesalePrice(item);
-    const articul = getItemArticul(item.key, item);
-    const name = getItemName(item);
-    const sum = price * item.qty;
-    cashTotal += sum;
-    excelData.push({
-      'Արտիկուլ': articul,
-      'Անվանում': name,
-      'Քանակ (հատ)': item.qty,
-      'Մեծածախ գին (AMD)': price,
-      'Գումար (AMD)': sum,
-      'Վճարման եղանակ': 'Կանխիկ'
-    });
-  });
-  excelData.push({ 'Արտիկուլ': '', 'Անվանում': 'ԸՆԴՀԱՆՈՒՐ (ԿԱՆԽԻԿ)', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': cashTotal, 'Վճարման եղանակ': 'Կանխիկ' });
-  excelData.push({ 'Արտիկուլ': '', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+cashItems.forEach(item => {
+const price = getItemWholesalePrice(item);
+const articul = getItemArticul(item.key, item);
+const name = getItemName(item);
+const sum = price * item.qty;
+cashTotal += sum;
+excelData.push({
+'Արտիկուլ': articul,
+'Անվանում': name,
+'Քանակ (հատ)': item.qty,
+'Մեծածախ գին (AMD)': price,
+'Գումար (AMD)': sum,
+'Վճարման եղանակ': 'Կանխիկ'
+});
+});
+excelData.push({ 'Արտիկուլ': '', 'Անվանում': 'ԸՆԴՀԱՆՈՒՐ (ԿԱՆԽԻԿ)', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': cashTotal, 'Վճարման եղանակ': 'Կանխիկ' });
+excelData.push({ 'Արտիկուլ': '', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 }
 
 if (bankItems.length > 0) {
-  bankItems.forEach(item => {
-    const price = getItemWholesalePrice(item);
-    const articul = getItemArticul(item.key, item);
-    const name = getItemName(item);
-    const sum = price * item.qty;
-    bankTotal += sum;
-    excelData.push({
-      'Արտիկուլ': articul,
-      'Անվանում': name,
-      'Քանակ (հատ)': item.qty,
-      'Մեծածախ գին (AMD)': price,
-      'Գումար (AMD)': sum,
-      'Վճարման եղանակ': 'Բանկային փոխանցումով'
-    });
-  });
-  excelData.push({ 'Արտիկուլ': '', 'Անվանում': 'ԸՆԴՀԱՆՈՒՐ (ԲԱՆԿԱՅԻՆ)', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': bankTotal, 'Վճարման եղանակ': 'Բանկային փոխանցումով' });
+bankItems.forEach(item => {
+const price = getItemWholesalePrice(item);
+const articul = getItemArticul(item.key, item);
+const name = getItemName(item);
+const sum = price * item.qty;
+bankTotal += sum;
+excelData.push({
+'Արտիկուլ': articul,
+'Անվանում': name,
+'Քանակ (հատ)': item.qty,
+'Մեծածախ գին (AMD)': price,
+'Գումար (AMD)': sum,
+'Վճարման եղանակ': 'Բանկային փոխանցումով'
+});
+});
+excelData.push({ 'Արտիկուլ': '', 'Անվանում': 'ԸՆԴՀԱՆՈՒՐ (ԲԱՆԿԱՅԻՆ)', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': bankTotal, 'Վճարման եղանակ': 'Բանկային փոխանցումով' });
 }
 
 excelData.push({ 'Արտիկուլ': '', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 excelData.push({ 'Արտիկուլ': 'Կոնտրագենտ:', 'Անվանում': authorizedClient, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 
 if (delivDate) {
-  excelData.push({ 'Արտիկուլ': 'Ցանկալի առաքման ամսաթիվ:', 'Անվանում': delivDate, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+excelData.push({ 'Արտիկուլ': 'Ցանկալի առաքման ամսաթիվ:', 'Անվանում': delivDate, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 }
 if (delivAddr) {
-  excelData.push({ 'Արտիկուլ': 'Առաքման հասցե:', 'Անվանում': delivAddr, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+excelData.push({ 'Արտիկուլ': 'Առաքման հասցե:', 'Անվանում': delivAddr, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 }
 if (comment) {
-  excelData.push({ 'Արտիկուլ': 'Մեկնաբանություն:', 'Անվանում': comment, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+excelData.push({ 'Արտիկուլ': 'Մեկնաբանություն:', 'Անվանում': comment, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 }
 
 excelData.push({ 'Արտիկուլ': 'ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ ԲՈԼՈՐԻ', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': (cashTotal + bankTotal), 'Վճարման եղանակ': '' });
@@ -1648,21 +1507,21 @@ excelData.push({ 'Արտիկուլ': 'ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ ԲՈԼՈՐ
 const worksheet = XLSX.utils.json_to_sheet(excelData);
 
 if (excelData.length > 0) {
-  const colKeys = Object.keys(excelData[0]);
-  const colWidths = colKeys.map(key => {
-    let maxLen = key ? String(key).length : 10;
-    excelData.forEach(row => {
-      const val = row[key];
-      if (val !== undefined && val !== null) {
-        const len = String(val).length;
-        if (len > maxLen) {
-          maxLen = len;
-        }
-      }
-    });
-    return { wch: maxLen + 4 };
-  });
-  worksheet['!cols'] = colWidths;
+const colKeys = Object.keys(excelData[0]);
+const colWidths = colKeys.map(key => {
+let maxLen = key ? String(key).length : 10;
+excelData.forEach(row => {
+const val = row[key];
+if (val !== undefined && val !== null) {
+const len = String(val).length;
+if (len > maxLen) {
+maxLen = len;
+}
+}
+});
+return { wch: maxLen + 4 };
+});
+worksheet['!cols'] = colWidths;
 }
 
 const workbook = XLSX.utils.book_new();
@@ -1687,14 +1546,14 @@ document.getElementById('successOverlay').classList.add('flex');
 }
 
 function keepCartAndCloseSuccess() {
-  document.getElementById('successOverlay').classList.add('hidden');
-  document.getElementById('successOverlay').classList.remove('flex');
+document.getElementById('successOverlay').classList.add('hidden');
+document.getElementById('successOverlay').classList.remove('flex');
 }
 
 function clearCartAndCloseSuccess() {
-  clearOrder();
-  document.getElementById('successOverlay').classList.add('hidden');
-  document.getElementById('successOverlay').classList.remove('flex');
+clearOrder();
+document.getElementById('successOverlay').classList.add('hidden');
+document.getElementById('successOverlay').classList.remove('flex');
 }
 
 function importPreviousOrder(event) {
@@ -1703,73 +1562,73 @@ if (!file) return;
 
 const reader = new FileReader();
 reader.onload = function(e) {
-  try {
-    const data = new Uint8Array(e.target.result);
-    const workbook = XLSX.read(data, { type: 'array' });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+try {
+const data = new Uint8Array(e.target.result);
+const workbook = XLSX.read(data, { type: 'array' });
+const sheetName = workbook.SheetNames[0];
+const sheet = workbook.Sheets[sheetName];
+const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-    cart = {};
-    let loadedCount = 0;
+cart = {};
+let loadedCount = 0;
 
-    rows.forEach(r => {
-      if (!r || r.length === 0) return;
-      let articul = '';
-      let qty = 0;
-      let payMethod = 'Կանխիկ';
+rows.forEach(r => {
+if (!r || r.length === 0) return;
+let articul = '';
+let qty = 0;
+let payMethod = 'Կանխիկ';
 
-      for (let j = 0; j < r.length; j++) {
-        let val = String(r[j] || '').trim();
-        if (val === 'Արտիկուլ' || val === 'Articul' || val.includes('---')) {
-          return;
-        }
-      }
+for (let j = 0; j < r.length; j++) {
+let val = String(r[j] || '').trim();
+if (val === 'Արտիկուլ' || val === 'Articul' || val.includes('---')) {
+return;
+}
+}
 
-      const firstCell = String(r[0] || '').trim();
-      if (firstCell !== '' && !firstCell.includes('Կոնտրագենտ') && !firstCell.includes('Մեկնաբանություն') && !firstCell.includes('Առաքման') && !firstCell.includes('ամսաթիվ') && !firstCell.includes('Վճարման') && !firstCell.includes('ԸՆԴՀԱՆՈՒՐ')) {
-        articul = firstCell;
-        for (let j = 1; j < r.length; j++) {
-          let num = Number(r[j]);
-          if (!isNaN(num) && num > 0 && num < 10000 && (j === 2 || j === 3 || j === 4)) {
-            qty = num;
-            break;
-          }
-        }
-        if (!qty && r.length >= 3) {
-          qty = Number(r[2]) || 1;
-        }
+const firstCell = String(r[0] || '').trim();
+if (firstCell !== '' && !firstCell.includes('Կոնտրագենտ') && !firstCell.includes('Մեկնաբանություն') && !firstCell.includes('Առաքման') && !firstCell.includes('ամսաթիվ') && !firstCell.includes('Վճարման') && !firstCell.includes('ԸՆԴՀԱՆՈՒՐ')) {
+articul = firstCell;
+for (let j = 1; j < r.length; j++) {
+let num = Number(r[j]);
+if (!isNaN(num) && num > 0 && num < 10000 && (j === 2 || j === 3 || j === 4)) {
+qty = num;
+break;
+}
+}
+if (!qty && r.length >= 3) {
+qty = Number(r[2]) || 1;
+}
 
-        for (let cell of r) {
-          let sCell = String(cell || '');
-          if (sCell.includes('Բանկային')) {
-            payMethod = 'Բանկային փոխանցումով';
-          }
-        }
-      }
+for (let cell of r) {
+let sCell = String(cell || '');
+if (sCell.includes('Բանկային')) {
+payMethod = 'Բանկային փոխանցումով';
+}
+}
+}
 
-      if (articul && qty > 0) {
-        const product = allProducts.find(p => p.articul === articul);
-        if (product) {
-          cart[articul] = { product: product, qty: qty, paymentMethod: payMethod };
-          loadedCount++;
-        }
-      }
-    });
+if (articul && qty > 0) {
+const product = allProducts.find(p => p.articul === articul);
+if (product) {
+cart[articul] = { product: product, qty: qty, paymentMethod: payMethod };
+loadedCount++;
+}
+}
+});
 
-    if (loadedCount > 0) {
-      saveCartToStorage();
-      updateOrderPanel();
-      resetAndRender();
-      alert(`Նախորդ պատվերը հաջողությամբ բեռնվեց: Վերականգնվել է ${loadedCount} ապրանք:`);
-    } else {
-      alert('Ֆայլում հնարավոր չեղավ գտնել ապրանքների ճիշտ տվյալներ։');
-    }
-  } catch (err) {
-    console.error(err);
-    alert('Ֆայլի կարդալու սխալ։');
-  }
-  event.target.value = '';
+if (loadedCount > 0) {
+saveCartToStorage();
+updateOrderPanel();
+resetAndRender();
+alert(`Նախորդ պատվերը հաջողությամբ բեռնվեց: Վերականգնվել է ${loadedCount} ապրանք։`);
+} else {
+alert('Ֆայլում հնարավոր չեղավ գտնել ապրանքների ճիշտ տվյալներ։');
+}
+} catch (err) {
+console.error(err);
+alert('Ֆայլի կարդալու սխալ։');
+}
+event.target.value = '';
 };
 reader.readAsArrayBuffer(file);
 }
