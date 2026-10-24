@@ -274,13 +274,25 @@ class="w-full px-4 py-3 border border-gray-300 rounded-xl text-center text-lg tr
 </div>
 </div>
 
-<div id="modalItemsList" class="overflow-y-auto flex-grow divide-y divide-gray-100 mb-3 sm:mb-4 max-h-[35vh] text-sm pr-1">
+<div id="modalItemsList" class="overflow-y-auto flex-grow divide-y divide-gray-100 mb-3 sm:mb-4 max-h-[30vh] text-sm pr-1">
 </div>
 
-<!-- Поле для комментария к заказу -->
-<div class="mb-3 sm:mb-4">
-  <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">💬 Մեկնաբանություն պատվերին (հասցե, ժամ և այլն)՝</label>
-  <textarea id="orderCommentInput" placeholder="Գրեք ձեր նշումները այստեղ..." class="w-full px-3 py-2 border border-gray-300 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none h-16"></textarea>
+<!-- Модернизированный блок информации о доставке и комментариях -->
+<div class="bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-200 mb-3 sm:mb-4 space-y-3">
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div>
+      <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">📅 Ցանկալի առաքման ամսաթիվ՝</label>
+      <input type="date" id="deliveryDateInput" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+    </div>
+    <div>
+      <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">📍 Առաքման հասցե՝</label>
+      <input type="text" id="deliveryAddressInput" placeholder="Քաղաք, փողոց, շենք..." class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+    </div>
+  </div>
+  <div>
+    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">💬 Լրացուցիչ մեկնաբանություն՝</label>
+    <textarea id="orderCommentInput" placeholder="Այլ նշումներ կամ ցանկություններ..." class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none h-14"></textarea>
+  </div>
 </div>
 
 <div class="border-t pt-3 sm:pt-4 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
@@ -1193,8 +1205,14 @@ if (badgeDesk) badgeDesk.classList.add('hidden');
 
 function clearOrder() {
 cart = {};
+const dateInput = document.getElementById('deliveryDateInput');
+const addrInput = document.getElementById('deliveryAddressInput');
 const commentInput = document.getElementById('orderCommentInput');
+
+if (dateInput) dateInput.value = '';
+if (addrInput) addrInput.value = '';
 if (commentInput) commentInput.value = '';
+
 saveCartToStorage();
 updateOrderPanel();
 resetAndRender();
@@ -1290,11 +1308,14 @@ document.getElementById('orderModal').classList.add('hidden');
 }
 
 function buildEmailFormattedText() {
+const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
+const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
 const comment = (document.getElementById('orderCommentInput').value || '').trim();
+
 let text = `ՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\n`;
-if (comment) {
-  text += `Մեկնաբանություն: ${comment}\n`;
-}
+if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
+if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
+if (comment) text += `Մեկնաբանություն: ${comment}\n`;
 text += `\n`;
 
 let total = 0;
@@ -1316,7 +1337,10 @@ return text;
 }
 
 function buildViberFormattedText() {
+const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
+const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
 const comment = (document.getElementById('orderCommentInput').value || '').trim();
+
 let total = 0;
 Object.entries(cart).forEach(([artKey, item]) => {
   const price = getItemWholesalePrice(item);
@@ -1324,9 +1348,10 @@ Object.entries(cart).forEach(([artKey, item]) => {
 });
 
 let text = `Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը (խնդրում ենք կցել նոր ներբեռնված ֆայլը):\n`;
-if (comment) {
-  text += `Մեկնաբանություն: ${comment}\n`;
-}
+if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
+if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
+if (comment) text += `Մեկնաբանություն: ${comment}\n`;
+
 text += `\nՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\nԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
 return text;
 }
@@ -1357,7 +1382,10 @@ function downloadOrderExcel() {
 }
 
 function generateAndDownloadExcel() {
+const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
+const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
 const comment = (document.getElementById('orderCommentInput').value || '').trim();
+
 const excelData = [];
 let cashTotal = 0;
 let bankTotal = 0;
@@ -1414,9 +1442,17 @@ if (bankItems.length > 0) {
 
 excelData.push({ 'Արտիկուլ': '', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 excelData.push({ 'Արտիկուլ': 'Կոնտրագենտ:', 'Անվանում': authorizedClient, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+
+if (delivDate) {
+  excelData.push({ 'Արտիկուլ': 'Ցանկալի առաքման ամսաթիվ:', 'Անվանում': delivDate, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+}
+if (delivAddr) {
+  excelData.push({ 'Արտիկուլ': 'Առաքման հասցե:', 'Անվանում': delivAddr, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+}
 if (comment) {
   excelData.push({ 'Արտիկուլ': 'Մեկնաբանություն:', 'Անվանում': comment, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 }
+
 excelData.push({ 'Արտիկուլ': 'ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ ԲՈԼՈՐԻ', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': (cashTotal + bankTotal), 'Վճարման եղանակ': '' });
 
 const worksheet = XLSX.utils.json_to_sheet(excelData);
@@ -1500,8 +1536,9 @@ reader.onload = function(e) {
         }
       }
 
-      if (r[0] && String(r[0]).trim() !== '' && !String(r[0]).includes('Կոնտրագենտ') && !String(r[0]).includes('Մեկնաբանություն') && !String(r[0]).includes('Վճարման') && !String(r[0]).includes('ԸՆԴՀԱՆՈՒՐ')) {
-        articul = String(r[0]).trim();
+      const firstCell = String(r[0] || '').trim();
+      if (firstCell !== '' && !firstCell.includes('Կոնտրագենտ') && !firstCell.includes('Մեկնաբանություն') && !firstCell.includes('Առաքման') && !firstCell.includes('ամսաթիվ') && !firstCell.includes('Վճարման') && !firstCell.includes('ԸՆԴՀԱՆՈՒՐ')) {
+        articul = firstCell;
         for (let j = 1; j < r.length; j++) {
           let num = Number(r[j]);
           if (!isNaN(num) && num > 0 && num < 10000 && (j === 2 || j === 3 || j === 4)) {
