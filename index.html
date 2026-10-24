@@ -439,6 +439,7 @@ brand: headers.findIndex(h => h && (h.toLowerCase().includes('brand') || h.toLow
 category: headers.findIndex(h => h && (h.toLowerCase().includes('group') || h.toLowerCase().includes('kategoriya') || h.toLowerCase().includes('группа') || h.toLowerCase().includes('категория') || h.toLowerCase().includes('խումբ') || h.toLowerCase().includes('կատեգորիա'))),
 name: headers.findIndex(h => h && (h.toLowerCase().includes('name') || h.toLowerCase().includes('naimenovanie') || h.toLowerCase().includes('наименование') || h.toLowerCase().includes('товар') || h.toLowerCase().includes('անվանում'))),
 retail: headers.findIndex(h => h && (h.includes('Զեղչված') || h.toLowerCase().includes('roznich') || h.toLowerCase().includes('discount') || h.toLowerCase().includes('մանրածախ'))),
+baseRetail: headers.findIndex(h => h && (h.toLowerCase().includes('roznich') || h.toLowerCase().includes('մանրածախ') || h.toLowerCase().includes('розница'))),
 wholesale: headers.findIndex(h => h && (h.includes('Wholesale') || h.toLowerCase().includes('wholesale') || h.toLowerCase().includes('опт') || h.toLowerCase().includes('մեծածախ'))),
 kpPromo: headers.findIndex(h => h && h.includes("Key Partner's promo AMD")),
 kpNormal: headers.findIndex(h => h && h.includes("Key Partner's AMD")),
@@ -518,6 +519,10 @@ break;
 }
 
 const retail = Number(r[colMap.retail]) || 0;
+const baseRetail = colMap.baseRetail !== -1 ? (Number(r[colMap.baseRetail]) || retail) : retail;
+
+// Проверяем акцию: если скидочная цена (retail) меньше базовой розничной (baseRetail)
+const isPromo = retail > 0 && baseRetail > 0 && retail < baseRetail;
 
 let marginVal = 0;
 if (retail > 0 && wholesale > 0) {
@@ -583,6 +588,7 @@ brand: brand,
 category: category,
 name: name,
 retail: retail,
+isPromo: isPromo,
 wholesale: wholesale,
 resaleWholesale: resaleWholesale,
 marginVal: marginVal,
@@ -671,6 +677,17 @@ if (p.retail > 0 && p.wholesale > 0) {
   }
 }
 
+// Пометка ԱԿՑԻԱ в колонке розницы, если скидочная цена меньше розничной
+let retailCellHtml = '—';
+if (p.retail > 0) {
+  const priceFormatted = p.retail.toLocaleString('ru-RU') + ' ֏';
+  if (p.isPromo) {
+    retailCellHtml = `<div class="flex flex-col items-end"><span class="text-gray-900 font-medium">${priceFormatted}</span><span class="px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-[10px] font-bold mt-0.5 border border-red-200">ԱԿՑԻԱ</span></div>`;
+  } else {
+    retailCellHtml = `<span class="text-gray-600">${priceFormatted}</span>`;
+  }
+}
+
 const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
 const cartItem = cart[p.articul];
 
@@ -711,7 +728,7 @@ ${getProductImageHtml(p.articul, p.name)}
 </div>
 </td>
 <td class="py-3 px-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${stockBadgeClass}">${p.stockStatus}</span></td>
-<td class="py-3 px-4 text-right text-gray-600">${p.retail ? p.retail.toLocaleString('ru-RU') + ' ֏' : '—'}</td>
+<td class="py-3 px-4 text-right">${retailCellHtml}</td>
 <td class="py-3 px-4 text-center">${marginBadge}</td>
 ${resaleColHtml}
 <td class="py-3 px-4 text-right font-semibold text-gray-900">${p.wholesale ? p.wholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</td>
@@ -909,7 +926,6 @@ document.getElementById('successOverlay').classList.remove('hidden');
 document.getElementById('successOverlay').classList.add('flex');
 }
 
-// ФУНКЦИЯ ИМПОРТА ПРЕДЫДУЩЕГО ЗАКАЗА ИЗ EXCEL
 function importPreviousOrder(event) {
 const file = event.target.files[0];
 if (!file) return;
@@ -931,22 +947,17 @@ reader.onload = function(e) {
       let articul = '';
       let qty = 0;
 
-      // Ищем ячейки по тексту заголовков или позициям
       for (let j = 0; j < r.length; j++) {
         let val = String(r[j] || '').trim();
         if (val === 'Արտիկուլ' || val === 'Articul') {
-          // Это строка шапки
           return;
         }
       }
 
-      // Первая колонка обычно Артикул, колонка "Քանակ (հատ)" или похожая — количество
       if (r[0] && String(r[0]).trim() !== '' && !String(r[0]).includes('Կոնտրագենտ') && !String(r[0]).includes('Վճարման') && !String(r[0]).includes('ԸՆԴՀԱՆՈՒՐ')) {
         articul = String(r[0]).trim();
-        // Ищем число в строке, которое может быть количеством (обычно небольшое целое число в столбце индекса 4)
         for (let j = 1; j < r.length; j++) {
           let num = Number(r[j]);
-          // Если число похоже на количество (например, целое и меньше 10000) и следующее или предыдущее поле связано с ценой
           if (!isNaN(num) && num > 0 && num < 10000 && (j === 4 || j === 5)) {
             qty = num;
             break;
@@ -971,7 +982,7 @@ reader.onload = function(e) {
       renderTable();
       alert(`Նախորդ պատվերը հաջողությամբ բեռնվեց: Վերականգնվել է ${loadedCount} ապրանք:`);
     } else {
-      alert('Ֆայլում հնարավոր չեղավ գտնել ապրանքների ճيشտ տվյալներ։');
+      alert('Ֆայլում հնարավոր չեղավ գտնել ապրանքների ճիշտ տվյալներ։');
     }
   } catch (err) {
     console.error(err);
