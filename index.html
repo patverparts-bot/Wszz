@@ -66,13 +66,19 @@ class="w-full px-4 py-3 border border-gray-300 rounded-xl text-center text-lg tr
 <!-- ОСНОВНОЙ КАТАЛОГ -->
 <div id="mainApp" class="hidden flex-col min-h-screen pb-24">
 <!-- Գլխավոր գլխամաս -->
-<header class="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+<header class="bg-white border-b border-gray-200 z-10 shadow-sm">
 <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
 <div class="flex items-center gap-3">
 <img src="logo.png" alt="ZIGZAG" class="h-10 w-auto object-contain max-w-[150px]" onerror="this.onerror=null; this.src='logo.PNG';">
 <div>
 <h1 class="text-lg font-bold text-gray-900">Մեծածախ ապրանքների կատալոգ</h1>
-<p class="text-xs text-blue-600 font-medium" id="welcomeMsg">Բարև ձեզ...</p>
+<div class="flex items-center gap-2">
+  <p class="text-xs text-blue-600 font-medium" id="welcomeMsg">Բարև ձեզ...</p>
+  <!-- Кнопка Выйти из профиля -->
+  <button onclick="logout()" class="text-[11px] font-semibold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded transition">
+    🚪 Դուրս գալ
+  </button>
+</div>
 </div>
 </div>
 <!-- Որոնում և նախորդ պատվերի ներբեռնում -->
@@ -133,12 +139,12 @@ class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 </div>
 </div>
 
-<!-- Ապրանքների աղյուսակ (С адаптивной прокруткой для мобильных) -->
+<!-- Ապրանքների աղյուսակ (С фиксацией шапки при прокрутке в самом верху) -->
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
 <div class="overflow-x-auto -webkit-overflow-scrolling-touch">
 <table class="w-full text-left border-collapse min-w-[700px]" id="catalogTable">
-<thead>
-<tr id="tableHeaderRow" class="bg-gray-100 text-gray-700 text-xs uppercase tracking-wider border-b border-gray-200">
+<thead class="sticky top-0 z-30 bg-gray-100 text-gray-700 text-xs uppercase tracking-wider shadow-sm">
+<tr id="tableHeaderRow" class="border-b border-gray-200">
 <!-- Динамически заполняется шапка -->
 </tr>
 </thead>
@@ -356,7 +362,6 @@ if (passMap[inputVal]) {
 authorizedClient = passMap[inputVal].client;
 userSheetType = passMap[inputVal].sheet;
 
-// Сохраняем сессию в localStorage, чтобы не слетал вход при перезагрузке
 try {
   localStorage.setItem('zigzag_client', authorizedClient);
   localStorage.setItem('zigzag_sheet', userSheetType);
@@ -366,6 +371,22 @@ initAppAfterAuth();
 } else {
 errorMsg.classList.remove('hidden');
 }
+}
+
+function logout() {
+try {
+  localStorage.removeItem('zigzag_client');
+  localStorage.removeItem('zigzag_sheet');
+} catch(e) {}
+
+authorizedClient = '';
+userSheetType = '';
+cart = {};
+
+document.getElementById('mainApp').classList.add('hidden');
+document.getElementById('mainApp').classList.remove('flex');
+document.getElementById('authScreen').classList.remove('hidden');
+document.getElementById('passwordInput').value = '';
 }
 
 function initAppAfterAuth() {
@@ -413,7 +434,6 @@ if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
 document.addEventListener('DOMContentLoaded', async () => {
 await loadPasswordsFile();
 
-// Проверяем, был ли пользователь уже авторизован ранее (сохранение сессии)
 try {
   const savedClient = localStorage.getItem('zigzag_client');
   const savedSheet = localStorage.getItem('zigzag_sheet');
@@ -974,7 +994,6 @@ text += `ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
 return text;
 }
 
-// Отправка в Viber (сначала скачивает Excel, затем открывает Viber)
 function sendViaViber() {
 downloadOrderExcel();
 
@@ -984,7 +1003,6 @@ setTimeout(() => {
 }, 800);
 }
 
-// Отправка на почту (сначала скачивает Excel, затем открывает почту)
 function sendViaEmail() {
 downloadOrderExcel();
 
