@@ -40,19 +40,32 @@ body { font-family: 'Inter', sans-serif; }
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
 }
 
-/* Контейнер таблицы с фиксируемой шапкой */
+@media (max-width: 767px) {
+  .product-img-container {
+    width: 64px;
+    height: 64px;
+  }
+  .product-img {
+    width: 64px;
+    height: 64px;
+  }
+  .product-img-container:hover .product-img {
+    transform: scale(2);
+    top: -5px;
+  }
+}
+
 .table-scroll-wrapper {
-  max-height: calc(100vh - 160px);
+  max-height: calc(100vh - 200px);
   overflow: auto;
   -webkit-overflow-scrolling: touch;
 }
 
-/* Гарантированная фиксация шапки при прокрутке */
 .table-scroll-wrapper th {
   position: sticky;
   top: 0;
   z-index: 30;
-  background-color: #f3f4f6 !important; /* bg-gray-100 */
+  background-color: #f3f4f6 !important;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 </style>
@@ -82,12 +95,13 @@ class="w-full px-4 py-3 border border-gray-300 rounded-xl text-center text-lg tr
 <!-- ОСНОВНОЙ КАТАЛОГ -->
 <div id="mainApp" class="hidden flex-col min-h-screen pb-24">
 <!-- Գլխավոր գլխամաս -->
-<header class="bg-white border-b border-gray-200 shadow-sm">
+<header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
 <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+<div class="flex items-center justify-between w-full sm:w-auto">
 <div class="flex items-center gap-3">
-<img src="logo.png" alt="ZIGZAG" class="h-10 w-auto object-contain max-w-[150px]" onerror="this.onerror=null; this.src='logo.PNG';">
+<img src="logo.png" alt="ZIGZAG" class="h-10 w-auto object-contain max-w-[130px]" onerror="this.onerror=null; this.src='logo.PNG';">
 <div>
-<h1 class="text-lg font-bold text-gray-900">Մեծածախ ապրանքների կատալոգ</h1>
+<h1 class="text-base sm:text-lg font-bold text-gray-900 leading-tight">Մեծածախ ապրանքների կատալոգ</h1>
 <div class="flex items-center gap-2">
   <p class="text-xs text-blue-600 font-medium" id="welcomeMsg">Բարև ձեզ...</p>
   <button onclick="logout()" class="text-[11px] font-semibold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded transition">
@@ -96,14 +110,27 @@ class="w-full px-4 py-3 border border-gray-300 rounded-xl text-center text-lg tr
 </div>
 </div>
 </div>
-<!-- Որոնում և նախորդ պատվերի ներբեռնում -->
+<button onclick="openOrderModal()" class="sm:hidden relative p-2 bg-blue-50 text-blue-600 rounded-xl border border-blue-200">
+  🛒 <span id="headerCartBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
+</button>
+</div>
+
 <div class="flex items-center gap-3 w-full sm:w-auto flex-wrap justify-end">
 <label class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold shadow transition cursor-pointer flex items-center gap-1.5" title="Բեռնել նախկինում պահպանված պատվերի Excel ֆայլը">
   <span>📂 Բեռնել նախորդ պատվերը</span>
   <input type="file" id="loadOrderFile" accept=".xlsx, .xls" class="hidden" onchange="importPreviousOrder(event)">
 </label>
-<input type="text" id="searchInput" placeholder="Որոնել ապրանք կամ արտիկուլ..."
-class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+<div class="relative w-full sm:w-64">
+  <input type="text" id="searchInput" placeholder="Որոնել ապրանք կամ արտիկուլ..."
+  class="w-full pl-4 pr-8 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+  <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-sm">✕</button>
+</div>
+
+<button onclick="openOrderModal()" class="hidden sm:flex relative p-2 px-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg border border-blue-200 font-semibold text-xs items-center gap-1.5 transition">
+  <span>🛒 Զամբյուղ</span>
+  <span id="headerCartBadgeDesktop" class="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
+</button>
 </div>
 </div>
 </header>
@@ -128,7 +155,7 @@ class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 </div>
 <div>
 <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Սորտավորում</label>
-<select id="sortBy" onchange="renderTable()" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+<select id="sortBy" onchange="resetAndRender()" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
 <option value="default">Ստանդարտ</option>
 <option value="priceAsc">Գին՝ էժանից թանկ</option>
 <option value="priceDesc">Գին՝ թանկից էժան</option>
@@ -140,11 +167,11 @@ class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-gray-100">
 <div class="flex items-center gap-6 flex-wrap">
 <label class="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700">
-<input type="checkbox" id="promoOnlyFilter" onchange="renderTable()" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+<input type="checkbox" id="promoOnlyFilter" onchange="resetAndRender()" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
 <span>🔥 Միայն ակցիաներ / PROMO</span>
 </label>
 <label class="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700">
-<input type="checkbox" id="stockOnlyFilter" onchange="renderTable()" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+<input type="checkbox" id="stockOnlyFilter" onchange="resetAndRender()" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
 <span>✅ Միայն առկա պահեստում</span>
 </label>
 </div>
@@ -154,76 +181,97 @@ class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 </div>
 </div>
 
-<!-- Ապրանքների աղյուսակ -->
-<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-<div class="table-scroll-wrapper">
-<table class="w-full text-left border-collapse min-w-[700px]" id="catalogTable">
-<thead>
-<tr id="tableHeaderRow">
-<!-- Динамически заполняется шапка -->
-</tr>
-</thead>
-<tbody class="divide-y divide-gray-200 text-sm" id="tableBody">
-</tbody>
-</table>
+<!-- ИНДИКАТОР ЗАГРУЗКИ (SPINNER) -->
+<div id="dataLoader" class="hidden py-12 flex flex-col items-center justify-center gap-3">
+  <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+  <p class="text-xs font-medium text-gray-500">Տվյալները բեռնվում են, խնդրում ենք սպասել...</p>
 </div>
-<div id="noResults" class="hidden p-8 text-center text-gray-500">
-Ապրանքներ չեն գտնվել Ձեր որոնման կամ պահեստի պայմաններին համապատասխան:
+
+<!-- ԱՊՐԱՆՔՆԵՐԻ ՑՈՒՑԱԿ -->
+<div id="catalogContent">
+  <!-- ТАБЛИЦА (для ПК/Планшетов) -->
+  <div class="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+  <div class="table-scroll-wrapper">
+  <table class="w-full text-left border-collapse min-w-[700px]" id="catalogTable">
+  <thead>
+  <tr id="tableHeaderRow">
+  </tr>
+  </thead>
+  <tbody class="divide-y divide-gray-200 text-sm" id="tableBody">
+  </tbody>
+  </table>
+  </div>
+  </div>
+
+  <!-- КАРТОЧКИ (для Мобильных) -->
+  <div class="block md:hidden space-y-3" id="mobileCardsContainer">
+  </div>
+
+  <!-- Нет результатов -->
+  <div id="noResults" class="hidden p-8 bg-white rounded-xl border text-center text-gray-500">
+  Ապրանքներ չեն գտնվել Ձեր որոնման կամ պահեստի պայմաններին համապատասխան:
+  </div>
+
+  <!-- КНОПКА ПОДГРУЗКИ «ЗАГРУЗИТЬ ЕЩЕ» -->
+  <div id="loadMoreContainer" class="hidden text-center mt-6">
+    <button onclick="loadMoreProducts()" class="px-6 py-3 bg-white hover:bg-gray-50 border border-gray-300 text-blue-600 font-semibold text-sm rounded-xl shadow-sm transition transform hover:scale-105 inline-flex items-center gap-2">
+      <span>🔽 Բեռնել ավելին</span>
+      <span id="loadMoreCounter" class="text-xs text-gray-400 font-normal"></span>
+    </button>
+  </div>
 </div>
-</div>
+
 </main>
 
 <!-- ՊԱՏՎԵՐԻ ՎԱՀԱՆԱԿ -->
-<div id="orderPanel" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 shadow-lg p-4 z-40 hidden">
-<div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-<div>
-<span class="font-bold text-gray-900 text-base">Ձեր պատվերը՝ </span>
-<span id="orderCount" class="text-blue-600 font-semibold">0 ապրանք</span> |
-<span class="font-bold text-gray-900"> Ընդհանուր գումար (Մեծածախ): </span>
-<span id="orderSum" class="text-green-600 font-bold text-lg">0 ֏</span>
+<div id="orderPanel" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 shadow-lg p-3 sm:p-4 z-40 hidden">
+<div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
+<div class="text-center sm:text-left">
+<span class="font-bold text-gray-900 text-sm sm:text-base">Ձեր պատվերը՝ </span>
+<span id="orderCount" class="text-blue-600 font-semibold text-sm sm:text-base">0 ապրանք</span> |
+<span class="font-bold text-gray-900 text-sm sm:text-base"> Ընդհանուր՝ </span>
+<span id="orderSum" class="text-green-600 font-bold text-base sm:text-lg">0 ֏</span>
 </div>
-<div class="flex gap-3">
-<button onclick="clearOrder()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium transition">
+<div class="flex gap-2 w-full sm:w-auto justify-end">
+<button onclick="clearOrder()" class="w-1/3 sm:w-auto px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-xs sm:text-sm font-medium transition">
 Մաքրել
 </button>
-<button onclick="openOrderModal()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow transition">
+<button onclick="openOrderModal()" class="w-2/3 sm:w-auto px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs sm:text-sm font-semibold shadow transition">
 Ձևակերպել պատվերը
 </button>
 </div>
 </div>
 </div>
 
-<!-- ՊԱՏՎԵՐԻ ՊԱՏՈՒՀԱՆ -->
-<div id="orderModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
-<div class="bg-white rounded-2xl max-w-4xl w-full p-6 shadow-2xl max-h-[90vh] flex flex-col">
-<div class="flex justify-between items-center mb-4 border-b pb-3">
-<h3 class="text-lg font-bold text-gray-900">Պատվերի պարունակությունը</h3>
-<button onclick="closeOrderModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+<!-- ՊԱՏՎԵՐԻ ՊԱՏՈՒՀԱՆ (MODAL) -->
+<div id="orderModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-3 sm:p-4">
+<div class="bg-white rounded-2xl max-w-4xl w-full p-4 sm:p-6 shadow-2xl max-h-[92vh] flex flex-col">
+<div class="flex justify-between items-center mb-3 sm:mb-4 border-b pb-3">
+<h3 class="text-base sm:text-lg font-bold text-gray-900">Պատվերի պարունակությունը</h3>
+<button onclick="closeOrderModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
 </div>
 
-<!-- Общий выбор способа оплаты -->
-<div class="bg-blue-50 p-4 rounded-xl border border-blue-200 mb-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+<div class="bg-blue-50 p-3 sm:p-4 rounded-xl border border-blue-200 mb-3 sm:mb-4 flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-3">
 <div>
-<span class="text-xs font-bold text-blue-900 uppercase">Ընդհանուր վճարման եղանակ (կիրառել բոլորի համար)․</span>
+<span class="text-xs font-bold text-blue-900 uppercase">Ընդհանուր վճարման եղանակ․</span>
 </div>
 <div>
-<select id="globalPaymentSelect" onchange="applyGlobalPayment(this.value)" class="px-4 py-2 bg-white border border-blue-300 rounded-lg text-sm font-semibold text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm">
+<select id="globalPaymentSelect" onchange="applyGlobalPayment(this.value)" class="px-3 py-1.5 bg-white border border-blue-300 rounded-lg text-xs sm:text-sm font-semibold text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm">
 <option value="Կանխիկ">💵 Կանխիկ</option>
 <option value="Բանկային փոխանցումով">🏦 Բանկային փոխանցումով</option>
 </select>
 </div>
 </div>
 
-<div id="modalItemsList" class="overflow-y-auto flex-grow divide-y divide-gray-100 mb-4 max-h-[45vh] text-sm pr-2">
+<div id="modalItemsList" class="overflow-y-auto flex-grow divide-y divide-gray-100 mb-3 sm:mb-4 max-h-[45vh] text-sm pr-1">
 </div>
 
-<div class="border-t pt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+<div class="border-t pt-3 sm:pt-4 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
 <div>
-<span class="text-gray-600 text-sm">Ընդհանուր գումար՝ </span>
-<span id="modalTotalSum" class="text-xl font-bold text-green-600">0 ֏</span>
+<span class="text-gray-600 text-xs sm:text-sm">Ընդհանուր գումար՝ </span>
+<span id="modalTotalSum" class="text-lg sm:text-xl font-bold text-green-600">0 ֏</span>
 </div>
-<!-- Кнопки действий заказа -->
-<div class="flex gap-2 flex-wrap justify-end">
+<div class="flex gap-2 flex-wrap justify-end w-full sm:w-auto">
 <button onclick="closeOrderModal()" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-medium">Փակել</button>
 <button onclick="sendViaViber()" class="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold shadow transition flex items-center gap-1.5" title="Ուղարկել Viber-ով (Տեքստը փոխանցվում է ավտոմատ)">
 <span>📱</span> Viber
@@ -241,29 +289,38 @@ class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 
 <!-- ПОЛНОЭКРАННОЕ ПОЗДРАВЛЕНИЕ ПОСЛЕ ЗАКАЗА -->
 <div id="successOverlay" class="fixed inset-0 bg-gradient-to-br from-blue-900/95 via-indigo-900/95 to-slate-900/95 z-50 hidden flex flex-col items-center justify-center p-6 text-center">
-<div class="bg-white/10 backdrop-blur-md p-10 sm:p-14 rounded-3xl border border-white/20 shadow-2xl max-w-2xl w-full flex flex-col items-center">
-<div class="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mb-6 text-4xl shadow-inner border border-emerald-500/30">
+<div class="bg-white/10 backdrop-blur-md p-8 sm:p-14 rounded-3xl border border-white/20 shadow-2xl max-w-2xl w-full flex flex-col items-center">
+<div class="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mb-4 sm:mb-6 text-3xl sm:text-4xl shadow-inner border border-emerald-500/30">
 ✨
 </div>
-<h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-wide mb-4 leading-tight drop-shadow-lg">
+<h2 class="text-2xl sm:text-4xl font-extrabold text-white tracking-wide mb-3 sm:mb-4 leading-tight drop-shadow-lg">
 ՄԱՂԹՈՒՄ ԵՆՔ ԲԱԶՈՒՄ ՎԱՃԱՌՔՆԵՐ
 </h2>
-<p class="text-blue-200 text-sm sm:text-base mb-8 max-w-md">
+<p class="text-blue-200 text-xs sm:text-base mb-6 sm:mb-8 max-w-md">
 Ձեր պատվերի ֆայլը հաջողությամբ ներբեռնվել է: Շնորհակալություն համագործակցության համար:
 </p>
-<div class="flex flex-col sm:flex-row gap-4 w-full justify-center">
-<button onclick="keepCartAndCloseSuccess()" class="px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition text-sm">
+<div class="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full justify-center">
+<button onclick="keepCartAndCloseSuccess()" class="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition text-xs sm:text-sm">
 🔄 Վերադառնալ (Պահպանել զամբյուղը)
 </button>
-<button onclick="clearCartAndCloseSuccess()" class="px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition text-sm">
+<button onclick="clearCartAndCloseSuccess()" class="px-5 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition text-xs sm:text-sm">
 🗑️ Մաքրել զամբյուղը և վերադառնալ
 </button>
 </div>
 </div>
 </div>
 
+<!-- ВСПЛЫВАЮЩЕЕ УВЕДОМЛЕНИЕ (RESTORED CART TOAST) -->
+<div id="restoredCartToast" class="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-sm bg-blue-900 text-white p-4 rounded-xl shadow-2xl z-50 hidden border border-blue-700 flex items-center justify-between gap-3 transition">
+  <div class="text-xs">
+    <p class="font-bold text-blue-200 mb-0.5">🛒 Զամբյուղը վերականգնվել է</p>
+    <p class="text-gray-300" id="toastRestoredText">Վերականգնվել է նախորդ պատվերի պարունակությունը:</p>
+  </div>
+  <button onclick="closeCartToast()" class="text-gray-400 hover:text-white font-bold text-lg">&times;</button>
+</div>
+
 <!-- КНОПКА «НАВЕРХ» -->
-<button id="scrollTopBtn" onclick="scrollToTop()" class="fixed bottom-20 right-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-2xl z-30 hidden transition transform hover:scale-110">
+<button id="scrollTopBtn" onclick="scrollToTop()" class="fixed bottom-20 right-4 sm:right-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-2xl z-30 hidden transition transform hover:scale-110">
 ⬆️
 </button>
 
@@ -272,12 +329,15 @@ class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:
 <!-- Скрипт -->
 <script>
 let allProducts = [];
+let filteredProducts = [];
+let displayedCount = 0;
+const PAGE_SIZE = 40;
+
 let cart = {};
 let authorizedClient = '';
 let userSheetType = '';
 let passMap = {};
 
-// Два адреса почты
 const TARGET_EMAILS = "Levon.Grigoryan@zigzag.am,Ashot.Manukyan@zigzag.am";
 
 const brandDomains = {
@@ -301,8 +361,8 @@ const domain = brandDomains[cleanBrand] || `${cleanBrand.replace(/\s+/g, '')}.co
 const logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
 
 return `
-<div class="flex items-center gap-2">
-<img src="${logoUrl}" alt="${brandName}" class="h-5 w-5 object-contain rounded" 
+<div class="flex items-center gap-1.5">
+<img src="${logoUrl}" alt="${brandName}" class="h-4 w-4 sm:h-5 sm:w-5 object-contain rounded" 
 onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
 <span class="font-semibold text-gray-800 text-xs">${brandName}</span>
 </div>
@@ -339,7 +399,7 @@ onerror="handleImgError(this, '${searchUrl}')">
 async function loadPasswordsFile() {
 try {
 const response = await fetch('pass.xlsx');
-if (!response.ok) throw new Error('pass.xlsx файл не найден');
+if (!response.ok) throw new Error('pass.xlsx ֆայլը չի գտնվել');
 const arrayBuffer = await response.arrayBuffer();
 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
 
@@ -390,6 +450,7 @@ try {
 
 initAppAfterAuth();
 } else {
+errorMsg.innerText = 'Սխալ գաղտնաբառ։ Փորձեք կրկին։';
 errorMsg.classList.remove('hidden');
 }
 }
@@ -419,7 +480,7 @@ document.getElementById('welcomeMsg').innerText = `Բարև ձեզ, ${authorized
 
 setupTableHeader();
 loadExcelFile();
-loadCartFromStorage();
+loadCartFromStorage(true);
 }
 
 function setupTableHeader() {
@@ -466,27 +527,26 @@ if (e.key === 'Enter') checkPassword();
 });
 }
 
-const wrapper = document.querySelector('.table-scroll-wrapper');
-if (wrapper) {
-  wrapper.onscroll = function() {
-    const btn = document.getElementById('scrollTopBtn');
-    if (wrapper.scrollTop > 300) {
-      btn.classList.remove('hidden');
-    } else {
-      btn.classList.add('hidden');
-    }
-  };
-}
+window.onscroll = function() {
+  const btn = document.getElementById('scrollTopBtn');
+  if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+    btn.classList.remove('hidden');
+  } else {
+    btn.classList.add('hidden');
+  }
+};
 });
 
 function scrollToTop() {
-const wrapper = document.querySelector('.table-scroll-wrapper');
-if (wrapper) {
-  wrapper.scrollTo({ top: 0, behavior: 'smooth' });
-}
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 async function loadExcelFile() {
+const loader = document.getElementById('dataLoader');
+const content = document.getElementById('catalogContent');
+loader.classList.remove('hidden');
+content.classList.add('opacity-50');
+
 try {
 const response = await fetch('PriceList_3.xlsx');
 if (!response.ok) throw new Error('PriceList_3.xlsx ֆայլը չի գտնվել սերվերում (404).');
@@ -504,6 +564,9 @@ throw new Error('Աղյուսակը դատարկ է։');
 parseExcelRows(rows);
 } catch (error) {
 console.error(error);
+} finally {
+loader.classList.add('hidden');
+content.classList.remove('opacity-50');
 }
 }
 
@@ -692,7 +755,7 @@ stockStatus: stockStatus
 }
 
 initFilters();
-renderTable();
+resetAndRender();
 } catch (err) {
 console.error(err);
 }
@@ -719,15 +782,17 @@ opt.textContent = c;
 categorySelect.appendChild(opt);
 });
 
-brandSelect.onchange = renderTable;
-categorySelect.onchange = renderTable;
+brandSelect.onchange = resetAndRender;
+categorySelect.onchange = resetAndRender;
 }
 
-function renderTable() {
-const tbody = document.getElementById('tableBody');
-const noResults = document.getElementById('noResults');
-tbody.innerHTML = '';
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('clearSearchBtn').classList.add('hidden');
+  resetAndRender();
+}
 
+function filterProducts() {
 const brandVal = document.getElementById('brandFilter').value;
 const categoryVal = document.getElementById('categoryFilter').value;
 const searchQuery = (document.getElementById('searchInput').value || '').trim().toLowerCase();
@@ -735,7 +800,14 @@ const sortBy = document.getElementById('sortBy').value;
 const promoOnly = document.getElementById('promoOnlyFilter').checked;
 const stockOnly = document.getElementById('stockOnlyFilter').checked;
 
-let filtered = allProducts.filter(p => {
+const clearBtn = document.getElementById('clearSearchBtn');
+if (searchQuery.length > 0) {
+  clearBtn.classList.remove('hidden');
+} else {
+  clearBtn.classList.add('hidden');
+}
+
+filteredProducts = allProducts.filter(p => {
 const matchBrand = !brandVal || p.brand === brandVal;
 const matchCategory = !categoryVal || p.category === categoryVal;
 const matchSearch = !searchQuery ||
@@ -749,23 +821,56 @@ return matchBrand && matchCategory && matchSearch && matchPromo && matchStock;
 });
 
 if (sortBy === 'priceAsc') {
-filtered.sort((a, b) => a.wholesale - b.wholesale);
+filteredProducts.sort((a, b) => a.wholesale - b.wholesale);
 } else if (sortBy === 'priceDesc') {
-filtered.sort((a, b) => b.wholesale - a.wholesale);
+filteredProducts.sort((a, b) => b.wholesale - a.wholesale);
 } else if (sortBy === 'marginDesc') {
-filtered.sort((a, b) => b.marginVal - a.marginVal);
+filteredProducts.sort((a, b) => b.marginVal - a.marginVal);
 }
 
-document.getElementById('productCountInfo').innerText = `Գտնվել է ${filtered.length} ապրանք`;
-
-if (filtered.length === 0) {
-noResults.classList.remove('hidden');
-return;
-} else {
-noResults.classList.add('hidden');
+document.getElementById('productCountInfo').innerText = `Գտնվել է ${filteredProducts.length} ապրանք`;
 }
 
-filtered.forEach(p => {
+function resetAndRender() {
+  filterProducts();
+  displayedCount = 0;
+  document.getElementById('tableBody').innerHTML = '';
+  document.getElementById('mobileCardsContainer').innerHTML = '';
+  loadMoreProducts();
+}
+
+function loadMoreProducts() {
+  const tbody = document.getElementById('tableBody');
+  const cardsContainer = document.getElementById('mobileCardsContainer');
+  const noResults = document.getElementById('noResults');
+  const loadMoreContainer = document.getElementById('loadMoreContainer');
+
+  if (filteredProducts.length === 0) {
+    noResults.classList.remove('hidden');
+    loadMoreContainer.classList.add('hidden');
+    return;
+  } else {
+    noResults.classList.add('hidden');
+  }
+
+  const nextBatch = filteredProducts.slice(displayedCount, displayedCount + PAGE_SIZE);
+
+  nextBatch.forEach(p => {
+    tbody.appendChild(createRowElement(p));
+    cardsContainer.appendChild(createCardElement(p));
+  });
+
+  displayedCount += nextBatch.length;
+
+  if (displayedCount < filteredProducts.length) {
+    loadMoreContainer.classList.remove('hidden');
+    document.getElementById('loadMoreCounter').innerText = `(${displayedCount} / ${filteredProducts.length})`;
+  } else {
+    loadMoreContainer.classList.add('hidden');
+  }
+}
+
+function createRowElement(p) {
 const tr = document.createElement('tr');
 tr.className = 'hover:bg-blue-50/40 transition-colors border-b border-gray-100';
 
@@ -810,22 +915,7 @@ if (p.wholesale > 0) {
 const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
 const cartItem = cart[p.articul];
 
-let actionCellHtml = '';
-if (!cartItem) {
-actionCellHtml = `
-<button onclick="addToCart('${p.articul}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition">
-Պատվիրել
-</button>
-`;
-} else {
-actionCellHtml = `
-<div class="inline-flex items-center border border-blue-500 rounded-lg overflow-hidden bg-blue-50">
-<button onclick="changeQty('${p.articul}', -1)" class="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">-</button>
-<span class="px-3 py-1 text-xs font-bold text-blue-900">${cartItem.qty}</span>
-<button onclick="changeQty('${p.articul}', 1)" class="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">+</button>
-</div>
-`;
-}
+let actionCellHtml = getActionControlHtml(p.articul, cartItem);
 
 let resaleColHtml = '';
 if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
@@ -853,8 +943,84 @@ ${resaleColHtml}
 <td class="py-3 px-4 text-right">${wholesaleCellHtml}</td>
 <td class="py-3 px-4 text-center">${actionCellHtml}</td>
 `;
-tbody.appendChild(tr);
-});
+return tr;
+}
+
+function createCardElement(p) {
+const div = document.createElement('div');
+div.className = 'bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col gap-3';
+
+const isUtochnit = p.stockStatus.includes('Ճշտել');
+const stockBadgeClass = isUtochnit
+? 'bg-amber-100 text-amber-800 border border-amber-300'
+: 'bg-emerald-100 text-emerald-800 border border-emerald-300';
+
+const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
+const cartItem = cart[p.articul];
+
+let marginBadge = '';
+if (p.retail > 0 && p.wholesale > 0) {
+  if (authorizedClient === "«ԴՈՄՈՒՍ» ՓԲԸ") {
+    marginBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold border bg-gray-100 text-gray-800 border-gray-300">${p.marginVal.toFixed(2)}</span>`;
+  } else {
+    let colorClass = 'bg-blue-100 text-blue-800 border-blue-200';
+    if (p.marginVal >= 20) colorClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+    else if (p.marginVal < 5) colorClass = 'bg-amber-100 text-amber-800 border-amber-200';
+    marginBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold border ${colorClass}">${p.marginVal.toFixed(1)}%</span>`;
+  }
+}
+
+div.innerHTML = `
+<div class="flex items-start gap-3">
+  ${getProductImageHtml(p.articul, p.name)}
+  <div class="flex-grow min-w-0">
+    <div class="flex items-center justify-between gap-2 mb-1">
+      ${getBrandLogoHtml(p.brand)}
+      <a href="${searchUrl}" target="_blank" class="font-mono text-xs font-semibold text-blue-600 hover:underline">
+        ${p.articul} 🔗
+      </a>
+    </div>
+    <h4 class="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">${p.name || '—'}</h4>
+  </div>
+</div>
+
+<div class="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">
+  <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${stockBadgeClass}">${p.stockStatus}</span>
+  <div class="flex items-center gap-2">
+    <span class="text-gray-400">Եկամտաբերություն:</span>
+    ${marginBadge}
+  </div>
+</div>
+
+<div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+  <div>
+    <div class="text-[11px] text-gray-500">Մանրածախ: <span class="font-medium text-gray-700">${p.retail ? p.retail.toLocaleString('ru-RU') + ' ֏' : '—'}</span></div>
+    <div class="text-xs font-bold text-gray-900">Մեծածախ: <span class="text-green-600">${p.wholesale ? p.wholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</span></div>
+  </div>
+  <div id="card-action-${p.articul}">
+    ${getActionControlHtml(p.articul, cartItem)}
+  </div>
+</div>
+`;
+return div;
+}
+
+function getActionControlHtml(articul, cartItem) {
+if (!cartItem) {
+return `
+<button onclick="addToCart('${articul}')" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition">
+Պատվիրել
+</button>
+`;
+} else {
+return `
+<div class="inline-flex items-center border border-blue-500 rounded-lg overflow-hidden bg-blue-50">
+<button onclick="changeQty('${articul}', -1)" class="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">-</button>
+<span class="px-3 py-1 text-xs font-bold text-blue-900">${cartItem.qty}</span>
+<button onclick="changeQty('${articul}', 1)" class="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">+</button>
+</div>
+`;
+}
 }
 
 function saveCartToStorage() {
@@ -863,14 +1029,34 @@ try {
 } catch(e) {}
 }
 
-function loadCartFromStorage() {
+function loadCartFromStorage(showToast = false) {
 try {
   const saved = localStorage.getItem('zigzag_cart_' + authorizedClient);
   if (saved) {
     cart = JSON.parse(saved);
-    updateOrderPanel();
+    const count = Object.keys(cart).length;
+    if (count > 0) {
+      updateOrderPanel();
+      if (showToast) {
+        showRestoredCartToast(count);
+      }
+    }
   }
 } catch(e) {}
+}
+
+function showRestoredCartToast(itemCount) {
+  const toast = document.getElementById('restoredCartToast');
+  const txt = document.getElementById('toastRestoredText');
+  txt.innerText = `Վերականգնվել է նախորդ պատվերի ${itemCount} ապրանք:`;
+  toast.classList.remove('hidden');
+  setTimeout(() => {
+    closeCartToast();
+  }, 5000);
+}
+
+function closeCartToast() {
+  document.getElementById('restoredCartToast').classList.add('hidden');
 }
 
 function addToCart(articul) {
@@ -886,7 +1072,7 @@ cart[articul].qty += 1;
 }
 saveCartToStorage();
 updateOrderPanel();
-renderTable();
+resetAndRender();
 }
 
 function getItemWholesalePrice(item) {
@@ -930,12 +1116,20 @@ totalCount += item.qty;
 totalSum += (price * item.qty);
 });
 
+const badgeMob = document.getElementById('headerCartBadge');
+const badgeDesk = document.getElementById('headerCartBadgeDesktop');
+
 if (totalCount > 0) {
 orderPanel.classList.remove('hidden');
 document.getElementById('orderCount').innerText = `${totalCount} ապրանք`;
 document.getElementById('orderSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
+
+if (badgeMob) { badgeMob.innerText = totalCount; badgeMob.classList.remove('hidden'); }
+if (badgeDesk) { badgeDesk.innerText = totalCount; badgeDesk.classList.remove('hidden'); }
 } else {
 orderPanel.classList.add('hidden');
+if (badgeMob) badgeMob.classList.add('hidden');
+if (badgeDesk) badgeDesk.classList.add('hidden');
 }
 }
 
@@ -943,7 +1137,7 @@ function clearOrder() {
 cart = {};
 saveCartToStorage();
 updateOrderPanel();
-renderTable();
+resetAndRender();
 }
 
 function applyGlobalPayment(method) {
@@ -973,31 +1167,31 @@ const stockBadgeClass = isUtochnit
 : 'bg-emerald-100 text-emerald-800 border border-emerald-300';
 
 const div = document.createElement('div');
-div.className = 'py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-100';
+div.className = 'py-3 sm:py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-gray-100';
 div.innerHTML = `
 <div class="flex-grow">
 <div class="flex items-center gap-2 mb-1">
 <span class="font-mono text-xs text-blue-600 font-semibold">${articul}</span>
 <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${stockBadgeClass}">${stockStatus}</span>
 </div>
-<div class="text-gray-900 font-medium">${name}</div>
-<div class="text-xs text-gray-500">Մեծածախ գին՝ ${price.toLocaleString('ru-RU')} ֏</div>
+<div class="text-gray-900 font-medium text-xs sm:text-sm">${name}</div>
+<div class="text-[11px] text-gray-500">Մեծածախ գին՝ ${price.toLocaleString('ru-RU')} ֏</div>
 </div>
 
-<div class="flex items-center gap-4 flex-wrap w-full md:w-auto justify-between md:justify-end">
+<div class="flex items-center gap-3 flex-wrap w-full md:w-auto justify-between md:justify-end">
 <div>
-<select onchange="updateItemPayment('${articul}', this.value)" class="px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+<select onchange="updateItemPayment('${articul}', this.value)" class="px-2 py-1 bg-gray-50 border border-gray-300 rounded-lg text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
 <option value="Կանխիկ" ${item.paymentMethod === 'Կանխիկ' ? 'selected' : ''}>💵 Կանխիկ</option>
 <option value="Բանկային փոխանցումով" ${item.paymentMethod === 'Բանկային փոխանցումով' ? 'selected' : ''}>🏦 Բանկային փոխանցումով</option>
 </select>
 </div>
 
 <div class="flex items-center border rounded-lg overflow-hidden bg-gray-50">
-<button onclick="changeQty('${articul}', -1)" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 font-bold">-</button>
-<span class="px-4 py-1 font-semibold text-sm">${item.qty}</span>
-<button onclick="changeQty('${articul}', 1)" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 font-bold">+</button>
+<button onclick="changeQty('${articul}', -1)" class="px-2.5 py-0.5 bg-gray-200 hover:bg-gray-300 font-bold text-xs">-</button>
+<span class="px-3 py-0.5 font-semibold text-xs">${item.qty}</span>
+<button onclick="changeQty('${articul}', 1)" class="px-2.5 py-0.5 bg-gray-200 hover:bg-gray-300 font-bold text-xs">+</button>
 </div>
-<div class="font-bold text-gray-900 w-28 text-right">${sum.toLocaleString('ru-RU')} ֏</div>
+<div class="font-bold text-gray-900 text-xs sm:text-sm w-24 text-right">${sum.toLocaleString('ru-RU')} ֏</div>
 </div>
 `;
 listContainer.appendChild(div);
@@ -1022,7 +1216,7 @@ delete cart[articul];
 }
 saveCartToStorage();
 updateOrderPanel();
-renderTable();
+resetAndRender();
 
 if (Object.keys(cart).length === 0) {
 closeOrderModal();
@@ -1268,7 +1462,7 @@ reader.onload = function(e) {
     if (loadedCount > 0) {
       saveCartToStorage();
       updateOrderPanel();
-      renderTable();
+      resetAndRender();
       alert(`Նախորդ պատվերը հաջողությամբ բեռնվեց: Վերականգնվել է ${loadedCount} ապրանք:`);
     } else {
       alert('Ֆայլում հնարավոր չեղավ գտնել ապրանքների ճիշտ տվյալներ։');
@@ -1282,11 +1476,7 @@ reader.onload = function(e) {
 reader.readAsArrayBuffer(file);
 }
 
-function closeSuccessOverlay() {
-  keepCartAndCloseSuccess();
-}
-
-document.getElementById('searchInput').oninput = renderTable;
+document.getElementById('searchInput').oninput = resetAndRender;
 </script>
 </body>
 </html>
