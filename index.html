@@ -414,6 +414,53 @@ function toggleMobileFilters() {
   }
 }
 
+/* CHUVANIE I UCHITAVANJE FILTARA U LOCALSTORAGE */
+function saveFiltersToStorage() {
+  try {
+    const filtersState = {
+      brand: selectedBrand,
+      category: selectedCategory,
+      search: document.getElementById('searchInput').value || '',
+      sortBy: document.getElementById('sortBy').value || 'default',
+      promoOnly: document.getElementById('promoOnlyFilter').checked || false,
+      stockOnly: document.getElementById('stockOnlyFilter').checked || false
+    };
+    localStorage.setItem('zigzag_filters_' + authorizedClient, JSON.stringify(filtersState));
+  } catch(e) {}
+}
+
+function loadSavedFilters() {
+  try {
+    const saved = localStorage.getItem('zigzag_filters_' + authorizedClient);
+    if (saved) {
+      const f = JSON.parse(saved);
+      if (f.brand) {
+        selectedBrand = f.brand;
+        document.getElementById('brandInput').value = f.brand;
+        document.getElementById('clearBrandBtn').classList.remove('hidden');
+      }
+      if (f.category) {
+        selectedCategory = f.category;
+        document.getElementById('categoryInput').value = f.category;
+        document.getElementById('clearCategoryBtn').classList.remove('hidden');
+      }
+      if (f.search) {
+        document.getElementById('searchInput').value = f.search;
+        document.getElementById('clearSearchBtn').classList.remove('hidden');
+      }
+      if (f.sortBy) {
+        document.getElementById('sortBy').value = f.sortBy;
+      }
+      if (f.promoOnly !== undefined) {
+        document.getElementById('promoOnlyFilter').checked = f.promoOnly;
+      }
+      if (f.stockOnly !== undefined) {
+        document.getElementById('stockOnlyFilter').checked = f.stockOnly;
+      }
+    }
+  } catch(e) {}
+}
+
 function clearAllFilters() {
   clearBrandSelection();
   clearCategorySelection();
@@ -422,6 +469,11 @@ function clearAllFilters() {
   document.getElementById('stockOnlyFilter').checked = false;
   document.getElementById('searchInput').value = '';
   document.getElementById('clearSearchBtn').classList.add('hidden');
+  
+  try {
+    localStorage.removeItem('zigzag_filters_' + authorizedClient);
+  } catch(e) {}
+
   resetAndRender();
 }
 
@@ -533,6 +585,7 @@ function logout() {
 try {
   localStorage.removeItem('zigzag_client');
   localStorage.removeItem('zigzag_sheet');
+  localStorage.removeItem('zigzag_filters_' + authorizedClient);
 } catch(e) {}
 
 authorizedClient = '';
@@ -866,6 +919,7 @@ stockStatus: stockStatus
 }
 
 initFilters();
+loadSavedFilters();
 resetAndRender();
 } catch (err) {
 console.error(err);
@@ -1023,6 +1077,7 @@ filteredProducts.sort((a, b) => b.wholesale - a.wholesale);
 filteredProducts.sort((a, b) => b.marginVal - a.marginVal);
 }
 
+saveFiltersToStorage();
 document.getElementById('productCountInfo').innerText = `Գտնվել է ${filteredProducts.length} ապրանք`;
 }
 
