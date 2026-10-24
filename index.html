@@ -55,8 +55,9 @@ body { font-family: 'Inter', sans-serif; }
   }
 }
 
+/* Контейнер таблицы с фиксируемой шапкой для ПК */
 .table-scroll-wrapper {
-  max-height: calc(100vh - 200px);
+  max-height: calc(100vh - 220px);
   overflow: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -94,38 +95,30 @@ class="w-full px-4 py-3 border border-gray-300 rounded-xl text-center text-lg tr
 
 <!-- ОСНОВНОЙ КАТАЛОГ -->
 <div id="mainApp" class="hidden flex-col min-h-screen pb-24">
-<!-- Գլխավոր գլխամաս -->
-<header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
-<div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+<!-- Գլխավոր գլխամաս (Верхняя шапка сайта — обычная прокрутка) -->
+<header class="bg-white border-b border-gray-200 shadow-sm">
+<div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-3">
 <div class="flex items-center justify-between w-full sm:w-auto">
 <div class="flex items-center gap-3">
-<img src="logo.png" alt="ZIGZAG" class="h-10 w-auto object-contain max-w-[130px]" onerror="this.onerror=null; this.src='logo.PNG';">
+<img src="logo.png" alt="ZIGZAG" class="h-9 sm:h-10 w-auto object-contain max-w-[120px]" onerror="this.onerror=null; this.src='logo.PNG';">
 <div>
-<h1 class="text-base sm:text-lg font-bold text-gray-900 leading-tight">Մեծածախ ապրանքների կատալոգ</h1>
+<h1 class="text-sm sm:text-lg font-bold text-gray-900 leading-tight">Մեծածախ ապրանքների կատալոգ</h1>
 <div class="flex items-center gap-2">
-  <p class="text-xs text-blue-600 font-medium" id="welcomeMsg">Բարև ձեզ...</p>
-  <button onclick="logout()" class="text-[11px] font-semibold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded transition">
+  <p class="text-[11px] sm:text-xs text-blue-600 font-medium" id="welcomeMsg">Բարև ձեզ...</p>
+  <button onclick="logout()" class="text-[10px] sm:text-[11px] font-semibold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded transition">
     🚪 Դուրս գալ
   </button>
 </div>
 </div>
 </div>
-<button onclick="openOrderModal()" class="sm:hidden relative p-2 bg-blue-50 text-blue-600 rounded-xl border border-blue-200">
-  🛒 <span id="headerCartBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
-</button>
 </div>
 
-<div class="flex items-center gap-3 w-full sm:w-auto flex-wrap justify-end">
-<label class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold shadow transition cursor-pointer flex items-center gap-1.5" title="Բեռնել նախկինում պահպանված պատվերի Excel ֆայլը">
-  <span>📂 Բեռնել նախորդ պատվերը</span>
+<!-- Загрузка предыдущего заказа и корзина ПК (Обычный поток элементов) -->
+<div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto flex-wrap justify-end">
+<label class="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold shadow transition cursor-pointer flex items-center gap-1.5" title="Բեռնել նախկինում պահպանված պատվերի Excel ֆայլը">
+  <span>📂 Բեռնել նախորդը</span>
   <input type="file" id="loadOrderFile" accept=".xlsx, .xls" class="hidden" onchange="importPreviousOrder(event)">
 </label>
-
-<div class="relative w-full sm:w-64">
-  <input type="text" id="searchInput" placeholder="Որոնել ապրանք կամ արտիկուլ..."
-  class="w-full pl-4 pr-8 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-  <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-sm">✕</button>
-</div>
 
 <button onclick="openOrderModal()" class="hidden sm:flex relative p-2 px-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg border border-blue-200 font-semibold text-xs items-center gap-1.5 transition">
   <span>🛒 Զամբյուղ</span>
@@ -134,6 +127,17 @@ class="w-full px-4 py-3 border border-gray-300 rounded-xl text-center text-lg tr
 </div>
 </div>
 </header>
+
+<!-- ФИКСИРОВАННАЯ СТРОКА ПОИСКА В САМОМ ВВЕРХУ ДЛЯ МОБИЛЬНЫХ -->
+<div class="sticky top-0 z-40 bg-white border-b border-gray-200 p-2.5 shadow-sm">
+  <div class="max-w-7xl mx-auto flex items-center gap-2">
+    <div class="relative w-full">
+      <input type="text" id="searchInput" placeholder="Որոնել ապրանք կամ արտիկուլ..."
+      class="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-sm">✕</button>
+    </div>
+  </div>
+</div>
 
 <!-- Հիմնական բովանդակություն -->
 <main class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex-grow w-full">
@@ -189,7 +193,7 @@ class="w-full px-4 py-3 border border-gray-300 rounded-xl text-center text-lg tr
 
 <!-- ԱՊՐԱՆՔՆԵՐԻ ՑՈՒՑԱԿ -->
 <div id="catalogContent">
-  <!-- ТАБЛИЦА (для ПК/Планшетов) -->
+  <!-- ТАБЛИЦА (для ПК/Планшетов) со строкой фиксации заголовков -->
   <div class="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
   <div class="table-scroll-wrapper">
   <table class="w-full text-left border-collapse min-w-[700px]" id="catalogTable">
@@ -1116,7 +1120,6 @@ totalCount += item.qty;
 totalSum += (price * item.qty);
 });
 
-const badgeMob = document.getElementById('headerCartBadge');
 const badgeDesk = document.getElementById('headerCartBadgeDesktop');
 
 if (totalCount > 0) {
@@ -1124,11 +1127,9 @@ orderPanel.classList.remove('hidden');
 document.getElementById('orderCount').innerText = `${totalCount} ապրանք`;
 document.getElementById('orderSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
 
-if (badgeMob) { badgeMob.innerText = totalCount; badgeMob.classList.remove('hidden'); }
 if (badgeDesk) { badgeDesk.innerText = totalCount; badgeDesk.classList.remove('hidden'); }
 } else {
 orderPanel.classList.add('hidden');
-if (badgeMob) badgeMob.classList.add('hidden');
 if (badgeDesk) badgeDesk.classList.add('hidden');
 }
 }
@@ -1346,7 +1347,7 @@ if (bankItems.length > 0) {
 
 excelData.push({ 'Արտիկուլ': '', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 excelData.push({ 'Արտիկուլ': 'Կոնտրագենտ:', 'Անվանում': authorizedClient, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-excelData.push({ 'Արտիկուլ': 'ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ ԲՈԼՈՐԻ', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': (cashTotal + bankTotal), 'Վճարման եղանակ': '' });
+excelData.push({ 'Արտիկուլ': 'ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ ԲՈ🇱ՈՐԻ', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': (cashTotal + bankTotal), 'Վճարման եղանակ': '' });
 
 const worksheet = XLSX.utils.json_to_sheet(excelData);
 
