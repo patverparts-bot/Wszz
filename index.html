@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Մեծածախ Ցանկ / Կատալոգ v2.34</title>
+<title>Մեծածախ Ցանկ / Կատալոգ v2.35</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- SheetJS (XLSX reader/writer) -->
@@ -102,6 +102,34 @@ body { font-family: 'Inter', sans-serif; }
 .star-btn:active {
   transform: scale(1.3);
 }
+
+/* Стили для печати заказа */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #orderModal, #orderModal * {
+    visibility: visible;
+  }
+  #orderModal {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: auto;
+    background: white !important;
+    padding: 0 !important;
+  }
+  #orderModal .bg-white, #orderModal .dark\:bg-gray-800 {
+    background: white !important;
+    color: black !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  button, select, input, textarea, .print-hidden {
+    display: none !important;
+  }
+}
 </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 min-h-screen flex flex-col relative transition-colors duration-200">
@@ -111,16 +139,16 @@ body { font-family: 'Inter', sans-serif; }
   <div class="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/70"></div>
 
   <div class="relative z-10 bg-white/50 dark:bg-gray-900/80 backdrop-blur-md rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 dark:border-gray-800 text-center">
-    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.34</span>
+    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.35</span>
     
     <h2 class="text-2xl font-black text-gray-900 dark:text-white mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 dark:text-gray-300 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
 
     <div class="space-y-4">
-      <input type="password" id="passwordInput" placeholder="Գաղտնաբառ..."
+      <input type="password" id="passwordInput" placeholder="Գաղտնաբառ..." aria-label="Գաղտնաբառ"
       class="w-full px-4 py-3 border border-gray-300/80 dark:border-gray-700 rounded-xl text-center text-lg tracking-widest bg-white/80 dark:bg-gray-800 dark:text-white focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent shadow-inner font-bold">
       
-      <button onclick="checkPassword()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition transform hover:scale-[1.01] active:scale-[0.99]">
+      <button onclick="checkPassword()" aria-label="Մուտք գործել" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition transform hover:scale-[1.01] active:scale-[0.99]">
         Մուտք գործել
       </button>
       
@@ -141,7 +169,7 @@ body { font-family: 'Inter', sans-serif; }
 <div class="flex items-center gap-2 mt-0.5 flex-wrap">
   <p class="text-[11px] sm:text-xs text-blue-600 dark:text-blue-400 font-medium" id="welcomeMsg">Բարև ձեզ...</p>
   <span id="priceDateBadge" class="text-[10px] sm:text-[11px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded border border-gray-200 dark:border-gray-600">Պրայս...</span>
-  <button onclick="logout()" class="text-[10px] sm:text-[11px] font-semibold text-red-600 dark:text-red-400 hover:text-red-800 bg-red-50 dark:bg-red-950/50 hover:bg-red-100 px-2 py-0.5 rounded transition">
+  <button onclick="logout()" aria-label="Դուրս գալ համակարգից" class="text-[10px] sm:text-[11px] font-semibold text-red-600 dark:text-red-400 hover:text-red-800 bg-red-50 dark:bg-red-950/50 hover:bg-red-100 px-2 py-0.5 rounded transition">
     🚪 Դուրս գալ
   </button>
 </div>
@@ -150,16 +178,16 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 
 <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto flex-wrap justify-end">
-<button onclick="downloadFullPriceList()" class="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow transition cursor-pointer flex items-center gap-1.5" title="Ներբեռնել ամբողջական գնացուցակը Excel ֆայլով">
+<button onclick="downloadFullPriceList()" aria-label="Ներբեռնել ամբողջական գնացուցակը" class="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow transition cursor-pointer flex items-center gap-1.5" title="Ներբեռնել ամբողջական գնացուցակը Excel ֆայլով">
   <span>📊 Ներբեռնել գնացուցակը</span>
 </button>
 
-<label class="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold shadow transition cursor-pointer flex items-center gap-1.5" title="Բեռնել նախկինում պահպանված պատվերի Excel ֆայլը">
+<label aria-label="Բեռնել նախկինում պահպանված պատվեր" class="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold shadow transition cursor-pointer flex items-center gap-1.5" title="Բեռնել նախկինում պահպանված պատվերի Excel ֆայլը">
   <span>📂 Բեռնել նախորդը</span>
   <input type="file" id="loadOrderFile" accept=".xlsx, .xls" class="hidden" onchange="importPreviousOrder(event)">
 </label>
 
-<button onclick="openOrderModal()" class="hidden sm:flex relative p-2 px-3 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-200 dark:border-blue-800 font-semibold text-xs items-center gap-1.5 transition">
+<button onclick="openOrderModal()" aria-label="Բացել զամբյուղը" class="hidden sm:flex relative p-2 px-3 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-200 dark:border-blue-800 font-semibold text-xs items-center gap-1.5 transition">
   <span>🛒 Զամբյուղ</span>
   <span id="headerCartBadgeDesktop" class="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
 </button>
@@ -170,9 +198,9 @@ body { font-family: 'Inter', sans-serif; }
 <div class="sticky top-0 z-40 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-2.5 shadow-sm transition-colors duration-200">
   <div class="max-w-7xl mx-auto flex items-center gap-2">
     <div class="relative w-full">
-      <input type="text" id="searchInput" placeholder="Որոնել ապրանք կամ արտիկուլ..."
+      <input type="text" id="searchInput" placeholder="Որոնել ապրանք կամ արտիկուլ..." aria-label="Որոնել ապրանք կամ արտիկուլ"
       class="w-full pl-3 pr-8 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 font-bold text-sm">✕</button>
+      <button id="clearSearchBtn" onclick="clearSearch()" aria-label="Մաքրել որոնումը" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 font-bold text-sm">✕</button>
     </div>
   </div>
 </div>
@@ -180,7 +208,7 @@ body { font-family: 'Inter', sans-serif; }
 <main class="max-w-7xl mx-auto px-2 sm:px-4 py-4 lg:px-8 flex-grow w-full">
 
 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-4 overflow-visible transition-colors duration-200">
-  <button onclick="toggleMobileFilters()" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-200 md:hidden transition">
+  <button onclick="toggleMobileFilters()" aria-label="Բացել կամ փակել ֆիլտրերը" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-200 md:hidden transition">
     <span class="flex items-center gap-1.5" id="mobileFilterBtnText">⚙️ Ֆիլտրեր</span>
     <span id="filterToggleIcon" class="transform transition-transform">▼</span>
   </button>
@@ -191,10 +219,10 @@ body { font-family: 'Inter', sans-serif; }
       <div class="relative">
         <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Բրենդ</label>
         <div class="relative">
-          <input type="text" id="brandInput" placeholder="Որոնել բրենդ..." 
+          <input type="text" id="brandInput" placeholder="Որոնել բրենդ..." aria-label="Որոնել բրենդ"
           oninput="filterBrandOptions()" onfocus="showBrandDropdown()" 
           class="w-full px-3 py-1.5 pr-8 border border-gray-300 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <button id="clearBrandBtn" onclick="clearBrandSelection()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 font-bold text-xs">✕</button>
+          <button id="clearBrandBtn" onclick="clearBrandSelection()" aria-label="Մաքրել բրենդի ընտրությունը" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 font-bold text-xs">✕</button>
         </div>
         <div id="brandDropdown" class="hidden absolute left-0 right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-2xl max-h-60 overflow-y-auto z-[100] text-sm">
         </div>
@@ -203,10 +231,10 @@ body { font-family: 'Inter', sans-serif; }
       <div class="relative">
         <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Կատեգորիա</label>
         <div class="relative">
-          <input type="text" id="categoryInput" placeholder="Որոնել կատեգորիա..." 
+          <input type="text" id="categoryInput" placeholder="Որոնել կատեգորիա..." aria-label="Որոնել կատեգորիա"
           oninput="filterCategoryOptions()" onfocus="showCategoryDropdown()" 
           class="w-full px-3 py-1.5 pr-8 border border-gray-300 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <button id="clearCategoryBtn" onclick="clearCategorySelection()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 font-bold text-xs">✕</button>
+          <button id="clearCategoryBtn" onclick="clearCategorySelection()" aria-label="Մաքրել կատեգորիայի ընտրությունը" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 font-bold text-xs">✕</button>
         </div>
         <div id="categoryDropdown" class="hidden absolute left-0 right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-2xl max-h-60 overflow-y-auto z-[100] text-sm">
         </div>
@@ -214,7 +242,7 @@ body { font-family: 'Inter', sans-serif; }
 
       <div>
         <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Սորտավորում</label>
-        <select id="sortBy" onchange="resetAndRender()" class="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <select id="sortBy" onchange="resetAndRender()" aria-label="Սորտավորում" class="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option value="default">Ստանդարտ</option>
           <option value="priceAsc">Գին՝ էժանից թանկ</option>
           <option value="priceDesc">Գին՝ թանկից էժան</option>
@@ -226,20 +254,20 @@ body { font-family: 'Inter', sans-serif; }
     <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
       <div class="flex items-center gap-5 flex-wrap">
         <label class="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-300">
-          <input type="checkbox" id="favOnlyFilter" onchange="resetAndRender()" class="w-4 h-4 text-amber-500 rounded focus:ring-amber-400 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600">
+          <input type="checkbox" id="favOnlyFilter" onchange="resetAndRender()" aria-label="Միայն ընտրվածները" class="w-4 h-4 text-amber-500 rounded focus:ring-amber-400 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600">
           <span>⭐ Միայն ընտրվածները</span>
         </label>
         <label class="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-300">
-          <input type="checkbox" id="promoOnlyFilter" onchange="resetAndRender()" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600">
+          <input type="checkbox" id="promoOnlyFilter" onchange="resetAndRender()" aria-label="Միայն ակցիաներ" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600">
           <span>🔥 Միայն ակցիաներ / PROMO</span>
         </label>
         <label class="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-300">
-          <input type="checkbox" id="stockOnlyFilter" onchange="resetAndRender()" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600">
+          <input type="checkbox" id="stockOnlyFilter" onchange="resetAndRender()" aria-label="Միայն առկա պահեստում" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600">
           <span>✅ Միայն առկա պահեստում</span>
         </label>
       </div>
       <div class="flex items-center gap-3">
-        <button onclick="clearAllFilters()" class="text-xs text-red-600 dark:text-red-400 hover:underline font-semibold">🔄 Մաքրել ֆիլտրերը</button>
+        <button onclick="clearAllFilters()" aria-label="Մաքրել բոլոր ֆիլտրերը" class="text-xs text-red-600 dark:text-red-400 hover:underline font-semibold">🔄 Մաքրել ֆիլտրերը</button>
         <div class="text-xs text-gray-500 dark:text-gray-400 font-semibold" id="productCountInfo">Գտնվել է 0 ապրանք</div>
       </div>
     </div>
@@ -251,7 +279,7 @@ body { font-family: 'Inter', sans-serif; }
   <div class="text-2xl">⚠️</div>
   <h3 class="text-sm font-bold text-red-900 dark:text-red-300">Հնարավոր չեղավ բեռնել գնացուցակը</h3>
   <p class="text-xs text-red-700 dark:text-red-400 max-w-md mx-auto" id="dataErrorText">Ստուգեք ֆայլի առկայությունը սերվերում:</p>
-  <button onclick="loadPriceData()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold shadow transition">
+  <button onclick="loadPriceData()" aria-label="Կրկին փորձել" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold shadow transition">
     🔄 Կրկին փորձել
   </button>
 </div>
@@ -319,10 +347,10 @@ body { font-family: 'Inter', sans-serif; }
 <span id="orderSum" class="text-green-600 dark:text-green-400 font-bold text-base sm:text-lg">0 ֏</span>
 </div>
 <div class="flex gap-2 w-full sm:w-auto justify-end">
-<button onclick="clearOrder()" class="w-1/3 sm:w-auto px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-xs sm:text-sm font-medium transition">
+<button onclick="clearOrder()" aria-label="Մաքրել զամբյուղը" class="w-1/3 sm:w-auto px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-xs sm:text-sm font-medium transition">
 Մաքրել
 </button>
-<button onclick="openOrderModal()" class="w-2/3 sm:w-auto px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs sm:text-sm font-semibold shadow transition">
+<button onclick="openOrderModal()" aria-label="Ձևակերպել պատվերը" class="w-2/3 sm:w-auto px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs sm:text-sm font-semibold shadow transition">
 Ձևակերպել պատվերը
 </button>
 </div>
@@ -334,7 +362,7 @@ body { font-family: 'Inter', sans-serif; }
 <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-4xl w-full p-3 sm:p-6 shadow-2xl flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700" style="max-height:94vh;max-height:94dvh;">
 <div class="flex justify-between items-center mb-3 border-b dark:border-gray-700 pb-3 flex-shrink-0">
 <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white">Պատվերի պարունակությունը</h3>
-<button onclick="closeOrderModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl font-bold">&times;</button>
+<button onclick="closeOrderModal()" aria-label="Փակել պատվერის պատдиլը" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl font-bold">&times;</button>
 </div>
 
 <div id="modalBody" class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
@@ -344,7 +372,7 @@ body { font-family: 'Inter', sans-serif; }
 <span class="text-xs font-bold text-blue-900 dark:text-blue-300 uppercase">Ընդհանուր վճարման եղանակ․</span>
 </div>
 <div>
-<select id="globalPaymentSelect" onchange="applyGlobalPayment(this.value)" class="px-3 py-2 bg-white dark:bg-gray-900 border border-blue-300 dark:border-blue-800 rounded-lg text-xs sm:text-sm font-semibold text-blue-900 dark:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm">
+<select id="globalPaymentSelect" onchange="applyGlobalPayment(this.value)" aria-label="Ընդհանուր վճարման եղանակ" class="px-3 py-2 bg-white dark:bg-gray-900 border border-blue-300 dark:border-blue-800 rounded-lg text-xs sm:text-sm font-semibold text-blue-900 dark:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm">
 <option value="Բանկային փոխանցումով">🏦 Բանկային փոխանցումով</option>
 <option value="Կանխիկ">💵 Կանխիկ</option>
 </select>
@@ -354,8 +382,8 @@ body { font-family: 'Inter', sans-serif; }
 <div id="modalItemsList" class="divide-y divide-gray-100 dark:divide-gray-700 mb-3 min-h-[60px] text-sm space-y-3 sm:space-y-0">
 </div>
 
-<div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 mb-3 overflow-hidden transition-all flex-shrink-0">
-  <button onclick="toggleDeliveryDetails()" class="w-full p-3 bg-gray-100 dark:bg-gray-700/60 hover:bg-gray-200/80 dark:hover:bg-gray-700 flex items-center justify-between text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-200 transition">
+<div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 mb-3 overflow-hidden transition-all flex-shrink-0 print-hidden">
+  <button onclick="toggleDeliveryDetails()" aria-label="Կազմակերպություն և հասցե" class="w-full p-3 bg-gray-100 dark:bg-gray-700/60 hover:bg-gray-200/80 dark:hover:bg-gray-700 flex items-center justify-between text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-200 transition">
     <span class="flex items-center gap-2 min-w-0 text-left">
       📍 Կազմակերպություն, հասցե և կոնտակտային տվյալներ
       <span id="deliveryBadge" class="hidden text-blue-600 dark:text-blue-400 font-bold text-xs">●</span>
@@ -367,30 +395,30 @@ body { font-family: 'Inter', sans-serif; }
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <div class="min-w-0">
         <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase mb-1">🏢 Կազմակերպություն՝</label>
-        <select id="organizationSelect" class="w-full min-w-0 max-w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold">
+        <select id="organizationSelect" aria-label="Կազմակերպություն" class="w-full min-w-0 max-w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold">
         </select>
         <button type="button" data-act="restore-org" class="mt-1.5 text-[11px] sm:text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 hover:underline text-left">↺ Վերականգնել հասցեն և կոնտակտը՝ ըստ կազմակերպության</button>
       </div>
       <div class="min-w-0">
         <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase mb-1">📅 Ցանկալի առաքման ամսաթիվ՝</label>
-        <input type="date" id="deliveryDateInput" oninput="checkDeliveryBadge()" class="w-full min-w-0 max-w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <input type="date" id="deliveryDateInput" oninput="checkDeliveryBadge()" aria-label="Ցանկալի առաքման ամսաթիվ" class="w-full min-w-0 max-w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <div class="min-w-0">
         <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase mb-1">📍 Առաքման հասցե (կարող եք փոխել)՝</label>
-        <input type="text" id="deliveryAddressInput" oninput="checkDeliveryBadge()" placeholder="Քաղաք, փողոց, շենք..." class="w-full min-w-0 max-w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <input type="text" id="deliveryAddressInput" oninput="checkDeliveryBadge()" placeholder="Քաղաք, փողոց, շենք..." aria-label="Առաքման հասցե" class="w-full min-w-0 max-w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
       <div class="min-w-0">
         <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase mb-1">👤 Կոնտակտային անձ (կարող եք փոխել)՝</label>
-        <input type="text" id="contactPersonInput" oninput="checkDeliveryBadge()" placeholder="Անուն Ազգանուն, հեռախոս..." class="w-full min-w-0 max-w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <input type="text" id="contactPersonInput" oninput="checkDeliveryBadge()" placeholder="Անուն Ազգանուն, հեռախոս..." aria-label="Կոնտակտային անձ" class="w-full min-w-0 max-w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
     </div>
 
     <div>
       <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase mb-1">💬 Լրացուցիչ մեկնաբանություն՝</label>
-      <textarea id="orderCommentInput" oninput="checkDeliveryBadge()" placeholder="Այլ նշումներ կամ ցանկություններ..." class="w-full min-w-0 max-w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none h-14"></textarea>
+      <textarea id="orderCommentInput" oninput="checkDeliveryBadge()" placeholder="Այլ նշումներ կամ ցանկություններ..." aria-label="Լրացուցիչ մեկնաբանություն" class="w-full min-w-0 max-w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none h-14"></textarea>
     </div>
   </div>
 </div>
@@ -403,14 +431,17 @@ body { font-family: 'Inter', sans-serif; }
 <span id="modalTotalSum" class="text-base sm:text-xl font-bold text-green-600 dark:text-green-400">0 ֏</span>
 </div>
 <div class="flex gap-2 flex-wrap justify-end w-full sm:w-auto">
-<button onclick="closeOrderModal()" class="px-3.5 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-medium">Փակել</button>
-<button onclick="sendViaViber()" class="px-3.5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold shadow transition flex items-center gap-1.5" title="Ուղարկել Viber-ով">
+<button onclick="closeOrderModal()" aria-label="Փակել" class="px-3.5 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-medium print-hidden">Փակել</button>
+<button onclick="window.print()" aria-label="Տպել պատվերը" class="px-3.5 py-2.5 bg-slate-700 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow transition flex items-center gap-1.5 print-hidden" title="Տպել պատվերը">
+<span>🖨️</span> Տպել
+</button>
+<button onclick="sendViaViber()" aria-label="Ուղարկել Viber-ով" class="px-3.5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold shadow transition flex items-center gap-1.5 print-hidden" title="Ուղարկել Viber-ով">
 <span>📱</span> Viber
 </button>
-<button onclick="sendViaEmail()" class="px-3.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition flex items-center gap-1.5" title="Ուղարկել Էլ․ փոստով">
+<button onclick="sendViaEmail()" aria-label="Ուղարկել Էլ. փոստով" class="px-3.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition flex items-center gap-1.5 print-hidden" title="Ուղարկել Էլ․ փոստով">
 <span>✉️</span> Email
 </button>
-<button onclick="downloadOrderExcel()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs shadow transition flex items-center gap-1.5">
+<button onclick="downloadOrderExcel()" aria-label="Ներբեռնել Excel ֆայլով" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs shadow transition flex items-center gap-1.5 print-hidden">
 <span>📥</span> Excel
 </button>
 </div>
@@ -433,10 +464,10 @@ body { font-family: 'Inter', sans-serif; }
     </p>
 
     <div class="flex flex-col sm:flex-row gap-2.5 w-full justify-center">
-      <button onclick="keepCartAndCloseSuccess()" class="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition text-xs sm:text-sm">
+      <button onclick="keepCartAndCloseSuccess()" aria-label="Վերադառնալ" class="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition text-xs sm:text-sm">
         🔄 Վերադառնալ (Պահպանել)
       </button>
-      <button onclick="clearCartAndCloseSuccess()" class="w-full sm:w-auto px-5 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold rounded-xl border border-gray-200 dark:border-gray-600 transition text-xs sm:text-sm">
+      <button onclick="clearCartAndCloseSuccess()" aria-label="Մաքրել զամբյուղը" class="w-full sm:w-auto px-5 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold rounded-xl border border-gray-200 dark:border-gray-600 transition text-xs sm:text-sm">
         🗑️ Մաքրել զամբյուղը
       </button>
     </div>
@@ -448,18 +479,18 @@ body { font-family: 'Inter', sans-serif; }
     <p class="font-bold text-blue-200 mb-0.5">🛒 Զամբյուղը վերականգնվել է</p>
     <p class="text-gray-300" id="toastRestoredText">Վերականգնվել է նախորդ պատվերի պարունակությունը:</p>
   </div>
-  <button onclick="closeCartToast()" class="text-gray-400 hover:text-white font-bold text-lg">&times;</button>
+  <button onclick="closeCartToast()" aria-label="Փակել ծանուցումը" class="text-gray-400 hover:text-white font-bold text-lg">&times;</button>
 </div>
 
 <!-- Кнопка «Наверх» -->
-<button id="scrollTopBtn" onclick="scrollToTop()" class="fixed bottom-20 right-4 sm:right-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-2xl z-30 hidden transition transform hover:scale-110" title="Վերև">
+<button id="scrollTopBtn" onclick="scrollToTop()" aria-label="Վերև գնալ" class="fixed bottom-20 right-4 sm:right-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-2xl z-30 hidden transition transform hover:scale-110" title="Վերև">
 ⬆️
 </button>
 
 </div>
 
 <script>
-console.log("ZIGZAG Catalog v2.34 loaded successfully");
+console.log("ZIGZAG Catalog v2.35 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
@@ -571,6 +602,7 @@ function toggleFavorite(articul) {
     const isFav = favoritesSet.has(articul);
     btn.innerText = isFav ? '⭐' : '☆';
     btn.title = isFav ? 'Հեռացնել ընտրվածներից' : 'Ավելացնել ընտրվածներում';
+    btn.setAttribute('aria-label', isFav ? 'Հեռացնել ընտրվածներից' : 'Ավելացնել ընտրվածներում');
   });
 
   if (document.getElementById('favOnlyFilter').checked) {
@@ -1533,12 +1565,12 @@ const starTitle = isFav ? 'Հեռացնել ընտրվածներից' : 'Ավե�
 
 tr.innerHTML = `
 <td class="text-center">
-  <button data-act="toggle-fav" data-art="${escapeHtml(p.articul)}" class="star-btn" title="${starTitle}">${starIcon}</button>
+  <button data-act="toggle-fav" data-art="${escapeHtml(p.articul)}" class="star-btn" aria-label="${starTitle}" title="${starTitle}">${starIcon}</button>
 </td>
 <td class="font-mono font-medium">
   <div class="flex flex-col gap-1">
     <span class="text-blue-600 dark:text-blue-400 font-bold text-xs whitespace-nowrap">${escapeHtml(p.articul)}</span>
-    <a href="${escapeHtml(searchUrl)}" target="_blank" class="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded border border-blue-200 dark:border-blue-800 text-[10px] font-semibold transition w-fit shadow-xs whitespace-nowrap" title="Որոնել Zigzag.am կայքում">
+    <a href="${escapeHtml(searchUrl)}" target="_blank" aria-label="Որոնել կայքում" class="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded border border-blue-200 dark:border-blue-800 text-[10px] font-semibold transition w-fit shadow-xs whitespace-nowrap" title="Որոնել Zigzag.am կայքում">
       <span>🔍 Որոնել կայքում</span>
     </a>
   </div>
@@ -1593,14 +1625,14 @@ div.innerHTML = `
     <div class="flex-grow min-w-0 pr-6">
       <div class="flex items-center justify-between gap-2 mb-1">
         ${getBrandLogoHtml(p.brand)}
-        <a href="${escapeHtml(searchUrl)}" target="_blank" class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded border border-blue-200 dark:border-blue-800 text-[10px] font-semibold transition shadow-xs">
+        <a href="${escapeHtml(searchUrl)}" target="_blank" aria-label="Որոնել կայքում" class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded border border-blue-200 dark:border-blue-800 text-[10px] font-semibold transition shadow-xs">
           <span>🔍 Որոնել</span>
         </a>
       </div>
       <div class="font-mono text-xs font-bold text-blue-600 dark:text-blue-400 mb-0.5">${escapeHtml(p.articul)}</div>
       <h4 class="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white leading-snug">${escapeHtml(p.name || '—')}</h4>
     </div>
-    <button data-act="toggle-fav" data-art="${escapeHtml(p.articul)}" class="star-btn absolute top-3 right-3 p-1" title="${starTitle}">${starIcon}</button>
+    <button data-act="toggle-fav" data-art="${escapeHtml(p.articul)}" class="star-btn absolute top-3 right-3 p-1" aria-label="${starTitle}" title="${starTitle}">${starIcon}</button>
   </div>
 
   <div class="flex items-center justify-between pt-2.5 mt-2.5 border-t border-gray-100 dark:border-gray-700 text-xs">
@@ -1624,7 +1656,7 @@ function getActionControlHtml(articul, cartItem, isMobile = false) {
   const a = escapeHtml(articul);
   if (!cartItem) {
     const mobileBtnClass = isMobile ? "px-4 py-2 text-xs font-bold" : "px-3.5 py-1.5 text-xs font-semibold";
-    return `<button data-act="add" data-art="${a}" class="${mobileBtnClass} bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition whitespace-nowrap active:scale-95">Պատվիրել</button>`;
+    return `<button data-act="add" data-art="${a}" aria-label="Պատվիրել" class="${mobileBtnClass} bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition whitespace-nowrap active:scale-95">Պատվիրել</button>`;
   }
 
   const btnPadding = isMobile ? "px-3 py-2 text-sm" : "px-2 sm:px-2.5 py-1 text-xs";
@@ -1632,9 +1664,9 @@ function getActionControlHtml(articul, cartItem, isMobile = false) {
 
   return `
 <div class="inline-flex items-center border border-blue-500 dark:border-blue-700 rounded-lg overflow-hidden bg-blue-50 dark:bg-blue-950/60 flex-shrink-0">
-<button data-act="qty" data-delta="-1" data-art="${a}" class="${btnPadding} bg-blue-100 dark:bg-blue-900/60 hover:bg-blue-200 dark:hover:bg-blue-900 text-blue-800 dark:text-blue-200 font-bold active:bg-blue-300">-</button>
-<input type="number" data-act="qty-input" data-art="${a}" value="${cartItem.qty}" min="1" max="9999" class="${inputWidth} text-center font-bold text-blue-900 dark:text-blue-200 bg-transparent focus:outline-none focus:bg-white dark:focus:bg-gray-800 focus:ring-1 focus:ring-blue-500">
-<button data-act="qty" data-delta="1" data-art="${a}" class="${btnPadding} bg-blue-100 dark:bg-blue-900/60 hover:bg-blue-200 dark:hover:bg-blue-900 text-blue-800 dark:text-blue-200 font-bold active:bg-blue-300">+</button>
+<button data-act="qty" data-delta="-1" data-art="${a}" aria-label="Նվազեցնել քանակը" class="${btnPadding} bg-blue-100 dark:bg-blue-900/60 hover:bg-blue-200 dark:hover:bg-blue-900 text-blue-800 dark:text-blue-200 font-bold active:bg-blue-300">-</button>
+<input type="number" data-act="qty-input" data-art="${a}" value="${cartItem.qty}" min="1" max="9999" aria-label="Ապրանքի քանակ" class="${inputWidth} text-center font-bold text-blue-900 dark:text-blue-200 bg-transparent focus:outline-none focus:bg-white dark:focus:bg-gray-800 focus:ring-1 focus:ring-blue-500">
+<button data-act="qty" data-delta="1" data-art="${a}" aria-label="Ավելացնել քանակը" class="${btnPadding} bg-blue-100 dark:bg-blue-900/60 hover:bg-blue-200 dark:hover:bg-blue-900 text-blue-800 dark:text-blue-200 font-bold active:bg-blue-300">+</button>
 </div>`;
 }
 
@@ -1899,16 +1931,16 @@ function renderModalItems() {
           <span class="font-black text-green-600 dark:text-green-400 text-sm">${sum.toLocaleString('ru-RU')} ֏</span>
         </div>
 
-        <div class="flex items-center justify-between gap-2 pt-1 flex-wrap">
-          <select data-act="pay" data-art="${escapeHtml(articul)}" class="w-full sm:w-auto flex-grow px-2 py-1.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-xs font-semibold text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-xs">
+        <div class="flex items-center justify-between gap-2 pt-1 flex-wrap print-hidden">
+          <select data-act="pay" data-art="${escapeHtml(articul)}" aria-label="Վճարման եղանակ ապրանքի համար" class="w-full sm:w-auto flex-grow px-2 py-1.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-xs font-semibold text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-xs">
             <option value="Բանկային փոխանցումով" ${item.paymentMethod === 'Բանկային փոխանցումով' ? 'selected' : ''}>🏦 Բանկային փոխանցումով</option>
             <option value="Կանխիկ" ${item.paymentMethod === 'Կանխիկ' ? 'selected' : ''}>💵 Կանխիկ</option>
           </select>
 
           <div class="inline-flex items-center border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800 shadow-xs flex-shrink-0 ml-auto">
-            <button data-act="mqty" data-delta="-1" data-art="${escapeHtml(articul)}" class="px-2.5 sm:px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-xs text-gray-700 dark:text-gray-200">-</button>
-            <input type="number" data-act="mqty-input" data-art="${escapeHtml(articul)}" value="${item.qty}" min="1" max="9999" class="w-10 sm:w-12 text-center text-xs font-bold text-blue-900 dark:text-blue-200 bg-transparent focus:outline-none focus:bg-white dark:focus:bg-gray-900 focus:ring-1 focus:ring-blue-500 py-1.5">
-            <button data-act="mqty" data-delta="1" data-art="${escapeHtml(articul)}" class="px-2.5 sm:px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-xs text-gray-700 dark:text-gray-200">+</button>
+            <button data-act="mqty" data-delta="-1" data-art="${escapeHtml(articul)}" aria-label="Նվազեցնել քանակը" class="px-2.5 sm:px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-xs text-gray-700 dark:text-gray-200">-</button>
+            <input type="number" data-act="mqty-input" data-art="${escapeHtml(articul)}" value="${item.qty}" min="1" max="9999" aria-label="Ապրանքի քանակ" class="w-10 sm:w-12 text-center text-xs font-bold text-blue-900 dark:text-blue-200 bg-transparent focus:outline-none focus:bg-white dark:focus:bg-gray-900 focus:ring-1 focus:ring-blue-500 py-1.5">
+            <button data-act="mqty" data-delta="1" data-art="${escapeHtml(articul)}" aria-label="Ավելացնել քանակը" class="px-2.5 sm:px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-xs text-gray-700 dark:text-gray-200">+</button>
           </div>
         </div>
       </div>`;
