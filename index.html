@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Մեծածախ Ցանկ / Կատալոգ v2.27</title>
+<title>Մեծածախ Ցանկ / Կատալոգ v2.28</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- SheetJS (XLSX reader/writer) -->
@@ -59,8 +59,6 @@ body { font-family: 'Inter', sans-serif; }
 }
 
 .table-scroll-wrapper {
-  max-height: calc(100vh - 220px);
-  overflow-y: auto;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   position: relative;
@@ -82,7 +80,7 @@ body { font-family: 'Inter', sans-serif; }
   <div class="absolute inset-0 bg-slate-900/25"></div>
 
   <div class="relative z-10 bg-white/40 backdrop-blur-sm rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 text-center">
-    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.27</span>
+    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.28</span>
     
     <h2 class="text-2xl font-black text-gray-900 mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
@@ -390,7 +388,7 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 
 <script>
-console.log("ZIGZAG Catalog v2.27 loaded successfully");
+console.log("ZIGZAG Catalog v2.28 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
@@ -799,10 +797,6 @@ if (pwdInput) {
 }
 
 window.onscroll = function() { checkScrollPosition(); };
-const tableScrollWrapper = document.getElementById('tableScrollWrapper');
-if (tableScrollWrapper) {
-  tableScrollWrapper.onscroll = function() { checkScrollPosition(); };
-}
 
 setupIntersectionObserver();
 
@@ -819,12 +813,7 @@ document.addEventListener('click', (e) => {
 
 function checkScrollPosition() {
   const btn = document.getElementById('scrollTopBtn');
-  const tableWrapper = document.getElementById('tableScrollWrapper');
-  
   let isScrolled = document.body.scrollTop > 300 || document.documentElement.scrollTop > 300;
-  if (tableWrapper && tableWrapper.scrollTop > 300) {
-    isScrolled = true;
-  }
 
   if (isScrolled) {
     btn.classList.remove('hidden');
@@ -835,14 +824,13 @@ function checkScrollPosition() {
 
 function setupIntersectionObserver() {
   const sentinel = document.getElementById('scrollSentinel');
-  const tableWrapper = document.getElementById('tableScrollWrapper');
   if (!sentinel) return;
 
   if (observer) observer.disconnect();
 
   const options = {
-    root: (window.innerWidth >= 768) ? tableWrapper : null,
-    rootMargin: '400px',
+    root: null, // Наблюдаем относительно всего окна браузера (viewport), что гарантирует стабильную подгрузку в веб-версии
+    rootMargin: '600px',
     threshold: 0.01
   };
 
@@ -859,10 +847,6 @@ function setupIntersectionObserver() {
 
 function scrollToTop() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  const tableWrapper = document.getElementById('tableScrollWrapper');
-  if (tableWrapper) {
-    tableWrapper.scrollTo({ top: 0, behavior: 'smooth' });
-  }
 }
 
 async function loadExcelFile() {
@@ -1763,7 +1747,7 @@ function importPreviousOrder(event) {
       let loadedCount = 0;
 
       rows.forEach(r => {
-        if (!r || r.length === 0) return;
+        if (!r || r.length === 0) continue;
         let articul = '', qty = 0, payMethod = 'Բանկային փոխանցումով';
 
         for (let j = 0; j < r.length; j++) {
