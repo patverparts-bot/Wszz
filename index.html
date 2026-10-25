@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Մեծածախ Ցանկ / Կատալոգ v2.38</title>
+<title>Մեծածախ Ցանկ / Կատալոգ v2.39</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- SheetJS (XLSX reader/writer) -->
@@ -139,7 +139,7 @@ body { font-family: 'Inter', sans-serif; }
   <div class="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/70"></div>
 
   <div class="relative z-10 bg-white/50 dark:bg-gray-900/80 backdrop-blur-md rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 dark:border-gray-800 text-center">
-    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.38</span>
+    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.39</span>
     
     <h2 class="text-2xl font-black text-gray-900 dark:text-white mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 dark:text-gray-300 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
@@ -471,11 +471,11 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 </div>
 
-<!-- МОДАЛЬНОЕ ОКНО: АНՁՆԱԿԱՆ ՀԱՇԻՎ (ЛИЧНЫЙ КАБИНЕТ) -->
+<!-- МОДАЛЬНОЕ ОКНО: АՆՁՆԱԿԱՆ ՀԱՇԻՎ (ЛИЧНЫЙ КАБИНЕТ С ПЕРЕНОСОМ ДАННЫХ) -->
 <div id="cabinetModal" class="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 hidden flex items-center justify-center p-2 sm:p-4">
 <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-3xl w-full p-4 sm:p-6 shadow-2xl flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700" style="max-height:90vh;">
   
-  <div class="flex justify-between items-center mb-4 border-b dark:border-gray-700 pb-3 flex-shrink-0">
+  <div class="flex justify-between items-center mb-3 border-b dark:border-gray-700 pb-3 flex-shrink-0">
     <div>
       <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white">👤 Անձնական հաշիվ</h3>
       <p class="text-xs text-gray-500 dark:text-gray-400" id="cabinetUserSubtitle">Օգտատեր: —</p>
@@ -483,8 +483,26 @@ body { font-family: 'Inter', sans-serif; }
     <button onclick="closePersonalCabinet()" aria-label="Փակել" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl font-bold">&times;</button>
   </div>
 
+  <!-- Блок синхронизации/переноса на другое устройство -->
+  <div class="bg-indigo-50 dark:bg-indigo-950/40 p-3 rounded-xl border border-indigo-200 dark:border-indigo-900 mb-3 flex flex-col sm:flex-row justify-between items-center gap-2.5 flex-shrink-0">
+    <div class="text-xs text-indigo-900 dark:text-indigo-300">
+      <p class="font-bold">🔄 Շարունակել աշխատանքը այլ սարքում</p>
+      <p class="text-[11px] text-indigo-700 dark:text-indigo-400">Ներբեռնեք կամ ներմուծեք տվյալների ֆայլը (զամբյուղ, պատմություն, ընտրվածներ):</p>
+    </div>
+    <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
+      <button onclick="exportFullUserSession()" aria-label="Արտահանել տվյալները" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow transition whitespace-nowrap">
+        📥 Արտահանել տվյալները
+      </button>
+      <label aria-label="Ներմուծել տվյալները" class="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-semibold shadow transition cursor-pointer whitespace-nowrap">
+        📤 Ներմուծել տվյալները
+        <input type="file" id="importUserSessionFile" accept=".json" class="hidden" onchange="importFullUserSession(event)">
+      </label>
+    </div>
+  </div>
+
+  <div class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Պատվերների պատմություն և մանրամասներ․</div>
   <div id="cabinetHistoryList" class="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1">
-    <!-- Сюда динамически подгружаются заказы с датой, суммой, составом и способом формирования -->
+    <!-- Сюда динамически подгружаются заказы -->
   </div>
 
   <div class="border-t dark:border-gray-700 pt-3 mt-3 flex justify-between items-center flex-shrink-0">
@@ -539,7 +557,7 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 
 <script>
-console.log("ZIGZAG Catalog v2.38 loaded successfully");
+console.log("ZIGZAG Catalog v2.39 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
@@ -2202,7 +2220,7 @@ function getSelectedOrganizationName() {
   return (sel && sel.options.length > 0 && sel.selectedIndex >= 0) ? sel.options[sel.selectedIndex].text : authorizedClient;
 }
 
-// ----------------- ФУНКЦИИ ЛИЧНОГО КАБИНЕТА И ИСТОРИИ -----------------
+// ----------------- ФУНКЦИИ ЛИЧНОГО КАБИНЕТА И СИНХРОНИЗАЦИИ -----------------
 function saveOrderToHistory(cartItems, orgName, totalSum, actionType = 'Excel') {
   if (!authorizedClient) return;
   try {
@@ -2361,7 +2379,116 @@ function clearOrderHistory() {
     renderOrderHistoryList();
   } catch (e) {}
 }
-// ----------------- КОНЕЦ ФУНКЦИЙ КАБИНЕТА -----------------
+
+function exportFullUserSession() {
+  if (!authorizedClient) {
+    alert('Մուտք գործեք համակարգ։');
+    return;
+  }
+
+  try {
+    const historyKey = 'zigzag_history_' + authorizedClient;
+    const historyData = JSON.parse(localStorage.getItem(historyKey) || '[]');
+    const filtersData = JSON.parse(localStorage.getItem('zigzag_filters_' + authorizedClient) || '{}');
+    const favsData = JSON.parse(localStorage.getItem('zigzag_favs_' + authorizedClient) || '[]');
+
+    const fullSession = {
+      client: authorizedClient,
+      sheet: userSheetType,
+      clientRows: clientRowsData,
+      cart: cart,
+      favorites: favsData,
+      history: historyData,
+      filters: filtersData,
+      exportDate: new Date().toISOString()
+    };
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullSession, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    
+    const safeName = authorizedClient.replace(/[\s"']/g, '_');
+    downloadAnchor.setAttribute("download", `ZIGZAG_Backup_${safeName}_${Date.now()}.json`);
+    
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  } catch (err) {
+    console.error(err);
+    alert('Սխալ տվյալների արտահանման ընթացքում։');
+  }
+}
+
+function importFullUserSession(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+
+      if (!data.client || !data.cart) {
+        throw new Error('Ֆայլի սխալ ձևաչափ։');
+      }
+
+      let foundUserRecord = null;
+      Object.values(passMap).forEach(record => {
+        if (record.client.toLowerCase() === data.client.toLowerCase()) {
+          foundUserRecord = record;
+        }
+      });
+
+      if (!foundUserRecord && data.client !== "Администратор") {
+        alert(`Զգուշացում. "${data.client}" օգտատերը չի գտնվել տեղային pass.xlsx բազայում։`);
+      }
+
+      authorizedClient = data.client;
+      userSheetType = foundUserRecord ? foundUserRecord.sheet : (data.sheet || 'Dealers');
+      
+      if (foundUserRecord && foundUserRecord.rowsList && foundUserRecord.rowsList.length > 0) {
+        clientRowsData = foundUserRecord.rowsList;
+      } else {
+        clientRowsData = data.clientRows || [{ organization: authorizedClient, address: '', contact: '' }];
+      }
+
+      cart = normalizeCart(data.cart);
+
+      localStorage.setItem('zigzag_client', authorizedClient);
+      localStorage.setItem('zigzag_sheet', userSheetType);
+      localStorage.setItem('zigzag_client_rows', JSON.stringify(clientRowsData));
+      saveCartToStorage();
+
+      if (Array.isArray(data.favorites)) {
+        localStorage.setItem('zigzag_favs_' + authorizedClient, JSON.stringify(data.favorites));
+        favoritesSet = new Set(data.favorites);
+      }
+
+      if (Array.isArray(data.history)) {
+        localStorage.setItem('zigzag_history_' + authorizedClient, JSON.stringify(data.history));
+      }
+
+      if (data.filters) {
+        localStorage.setItem('zigzag_filters_' + authorizedClient, JSON.stringify(data.filters));
+      }
+
+      closePersonalCabinet();
+      document.getElementById('authScreen').classList.add('hidden');
+      
+      preloadPriceDateSilent().then(() => {
+        initAppAfterAuth();
+        alert(`Տվյալները հաջողությամբ ներմուծվեցին!\nԲարև ձեզ, ${authorizedClient}։`);
+      });
+
+    } catch (err) {
+      console.error(err);
+      alert('Սխալ ֆայլի կարդալիս։ Ընտրեք ճիշտ ֆայլ։');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+// ----------------- КОНЕЦ ФУНКЦИЙ КАБИНЕТА И СИНХРОНИЗАЦИИ -----------------
 
 function buildEmailFormattedText() {
   const orgName = getSelectedOrganizationName();
