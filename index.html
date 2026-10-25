@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Մեծածախ Ցանկ / Կատալոգ v2.31</title>
+<title>Մեծածախ Ցանկ / Կատալոգ v2.32</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- SheetJS (XLSX reader/writer) -->
@@ -86,6 +86,16 @@ body { font-family: 'Inter', sans-serif; }
 .cart-updated-anim {
   animation: pulse-subtle 0.3s ease-in-out;
 }
+
+.star-btn {
+  font-size: 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s ease;
+}
+.star-btn:active {
+  transform: scale(1.3);
+}
 </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col relative">
@@ -95,7 +105,7 @@ body { font-family: 'Inter', sans-serif; }
   <div class="absolute inset-0 bg-slate-900/25"></div>
 
   <div class="relative z-10 bg-white/40 backdrop-blur-sm rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 text-center">
-    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.31</span>
+    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.32</span>
     
     <h2 class="text-2xl font-black text-gray-900 mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
@@ -165,7 +175,7 @@ body { font-family: 'Inter', sans-serif; }
 
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-4 overflow-visible">
   <button onclick="toggleMobileFilters()" class="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 flex items-center justify-between text-xs sm:text-sm font-semibold text-gray-700 md:hidden transition">
-    <span class="flex items-center gap-1.5">⚙️ Ֆիլտրեր և կարգավորումներ</span>
+    <span class="flex items-center gap-1.5" id="mobileFilterBtnText">⚙️ Ֆիլտրեր</span>
     <span id="filterToggleIcon" class="transform transition-transform">▼</span>
   </button>
   
@@ -208,7 +218,11 @@ body { font-family: 'Inter', sans-serif; }
     </div>
 
     <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-gray-100">
-      <div class="flex items-center gap-6 flex-wrap">
+      <div class="flex items-center gap-5 flex-wrap">
+        <label class="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700">
+          <input type="checkbox" id="favOnlyFilter" onchange="resetAndRender()" class="w-4 h-4 text-amber-500 rounded focus:ring-amber-400">
+          <span>⭐ Միայն ընտրվածները</span>
+        </label>
         <label class="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700">
           <input type="checkbox" id="promoOnlyFilter" onchange="resetAndRender()" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
           <span>🔥 Միայն ակցիաներ / PROMO</span>
@@ -409,7 +423,7 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 
 <script>
-console.log("ZIGZAG Catalog v2.31 loaded successfully");
+console.log("ZIGZAG Catalog v2.32 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
@@ -421,6 +435,7 @@ let catalogLoaded = false;
 let productIndex = new Map();
 let modalFieldsInitialized = false;
 let pendingRestoreToast = false;
+let favoritesSet = new Set();
 
 const DEBOUNCE_MS = 280;
 const desktopMQ = window.matchMedia('(min-width: 768px)');
@@ -491,11 +506,77 @@ async function sha256(message) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function toggleMobileFilters() {
+function loadFavorites() {
+  if (!authorizedClient) return;
+  try {
+    const saved = localStorage.getItem('zigzag_favs_' + authorizedClient);
+    favoritesSet = saved ? new Set(JSON.parse(saved)) : new Set();
+  } catch(e) {
+    favoritesSet = new Set();
+  }
+}
+
+function saveFavorites() {
+  if (!authorizedClient) return;
+  try {
+    localStorage.setItem('zigzag_favs_' + authorizedClient, JSON.stringify([...favoritesSet]));
+  } catch(e) {}
+}
+
+function toggleFavorite(articul) {
+  if (favoritesSet.has(articul)) {
+    favoritesSet.delete(articul);
+  } else {
+    favoritesSet.add(articul);
+  }
+  saveFavorites();
+  
+  // Обновляем иконку звёздочки во всех видимых местах
+  document.querySelectorAll(`.star-btn[data-art="${escapeHtml(articul)}"]`).forEach(btn => {
+    const isFav = favoritesSet.has(articul);
+    btn.innerText = isFav ? '⭐' : '☆';
+    btn.title = isFav ? 'Հեռացնել ընտրվածներից' : 'Ավելացնել ընտրվածներում';
+  });
+
+  if (document.getElementById('favOnlyFilter').checked) {
+    resetAndRender();
+  }
+}
+
+function updateMobileFilterBadge() {
+  let count = 0;
+  if (selectedBrand) count++;
+  if (selectedCategory) count++;
+  if ((document.getElementById('searchInput').value || '').trim()) count++;
+  if (document.getElementById('sortBy').value !== 'default') count++;
+  if (document.getElementById('favOnlyFilter').checked) count++;
+  if (document.getElementById('promoOnlyFilter').checked) count++;
+  if (document.getElementById('stockOnlyFilter').checked) count++;
+
+  const btnText = document.getElementById('mobileFilterBtnText');
+  if (btnText) {
+    btnText.innerText = count > 0 ? `⚙️ Ֆիլտրեր · ${count}` : '⚙️ Ֆիլտրեր';
+  }
+}
+
+function toggleMobileFilters(forcedState) {
   const container = document.getElementById('filtersContainer');
   const icon = document.getElementById('filterToggleIcon');
-  container.classList.toggle('hidden');
-  icon.style.transform = container.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+  if (!container || !icon) return;
+
+  const shouldHide = forcedState !== undefined ? !forcedState : !container.classList.contains('hidden');
+  
+  if (shouldHide) {
+    container.classList.add('hidden');
+    icon.style.transform = 'rotate(0deg)';
+  } else {
+    container.classList.remove('hidden');
+    icon.style.transform = 'rotate(180deg)';
+  }
+
+  if (authorizedClient) {
+    try { localStorage.setItem('zigzag_filters_open_' + authorizedClient, shouldHide ? '0' : '1'); } catch(e) {}
+  }
 }
 
 function toggleDeliveryDetails() {
@@ -527,11 +608,13 @@ function saveFiltersToStorage() {
       category: selectedCategory,
       search: document.getElementById('searchInput').value || '',
       sortBy: document.getElementById('sortBy').value || 'default',
+      favOnly: document.getElementById('favOnlyFilter').checked || false,
       promoOnly: document.getElementById('promoOnlyFilter').checked || false,
       stockOnly: document.getElementById('stockOnlyFilter').checked || false
     };
     localStorage.setItem('zigzag_filters_' + authorizedClient, JSON.stringify(filtersState));
   } catch(e) {}
+  updateMobileFilterBadge();
 }
 
 function loadSavedFilters() {
@@ -557,6 +640,9 @@ function loadSavedFilters() {
       if (f.sortBy) {
         document.getElementById('sortBy').value = f.sortBy;
       }
+      if (f.favOnly !== undefined) {
+        document.getElementById('favOnlyFilter').checked = f.favOnly;
+      }
       if (f.promoOnly !== undefined) {
         document.getElementById('promoOnlyFilter').checked = f.promoOnly;
       }
@@ -564,13 +650,20 @@ function loadSavedFilters() {
         document.getElementById('stockOnlyFilter').checked = f.stockOnly;
       }
     }
+
+    const openState = localStorage.getItem('zigzag_filters_open_' + authorizedClient);
+    if (openState === '1') {
+      toggleMobileFilters(true);
+    }
   } catch(e) {}
+  updateMobileFilterBadge();
 }
 
 function clearAllFilters() {
   clearBrandSelection();
   clearCategorySelection();
   document.getElementById('sortBy').value = 'default';
+  document.getElementById('favOnlyFilter').checked = false;
   document.getElementById('promoOnlyFilter').checked = false;
   document.getElementById('stockOnlyFilter').checked = false;
   document.getElementById('searchInput').value = '';
@@ -779,12 +872,14 @@ if (authorizedClient) {
     localStorage.removeItem('zigzag_sheet');
     localStorage.removeItem('zigzag_client_rows');
     localStorage.removeItem('zigzag_filters_' + authorizedClient);
+    localStorage.removeItem('zigzag_filters_open_' + authorizedClient);
   } catch(e) {}
 }
 authorizedClient = '';
 userSheetType = '';
 clientRowsData = [];
 cart = {};
+favoritesSet.clear();
 modalFieldsInitialized = false;
 catalogLoaded = false;
 pendingRestoreToast = false;
@@ -801,6 +896,7 @@ document.getElementById('mainApp').classList.remove('hidden');
 document.getElementById('mainApp').classList.add('flex');
 document.getElementById('welcomeMsg').innerText = `Բարև ձեզ, ${authorizedClient}։`;
 
+loadFavorites();
 setupTableHeader();
 loadExcelFile();
 loadCartFromStorage(true);
@@ -811,6 +907,7 @@ const headerRow = document.getElementById('tableHeaderRow');
 const thClass = "font-semibold text-gray-700 uppercase tracking-wider border-b border-gray-200 whitespace-normal";
 
 let cols = [
+  { name: '⭐', align: 'text-center' },
   { name: 'Արտիկուլ / Որոնում', align: 'text-left' },
   { name: 'Բրենդ', align: 'text-left' },
   { name: 'Կատեգորիա', align: 'text-left' },
@@ -1251,6 +1348,7 @@ function clearSearch() {
 function filterProducts() {
 const searchQuery = (document.getElementById('searchInput').value || '').trim().toLowerCase();
 const sortBy = document.getElementById('sortBy').value;
+const favOnly = document.getElementById('favOnlyFilter').checked;
 const promoOnly = document.getElementById('promoOnlyFilter').checked;
 const stockOnly = document.getElementById('stockOnlyFilter').checked;
 
@@ -1260,9 +1358,10 @@ filteredProducts = allProducts.filter(p => {
   const matchBrand = !selectedBrand || p.brand.toLowerCase().includes(selectedBrand.toLowerCase());
   const matchCategory = !selectedCategory || p.category.toLowerCase().includes(selectedCategory.toLowerCase());
   const matchSearch = !searchQuery || (p.name || '').toLowerCase().includes(searchQuery) || (p.articul || '').toLowerCase().includes(searchQuery);
+  const matchFav = !favOnly || favoritesSet.has(p.articul);
   const matchPromo = !promoOnly || (p.isPromo || p.isWholesalePromo);
   const matchStock = !stockOnly || (authorizedClient === "Администратор" ? true : !p.stockStatus.includes('Ճշտել'));
-  return matchBrand && matchCategory && matchSearch && matchPromo && matchStock;
+  return matchBrand && matchCategory && matchSearch && matchFav && matchPromo && matchStock;
 });
 
 if (sortBy === 'priceAsc') filteredProducts.sort((a, b) => a.wholesale - b.wholesale);
@@ -1362,7 +1461,14 @@ const cartItem = cart[p.articul];
 const actionCellHtml = getActionControlHtml(p.articul, cartItem);
 const resaleColHtml = authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ" ? `<td class="text-right text-gray-700 font-medium whitespace-nowrap">${p.resaleWholesale ? p.resaleWholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</td>` : '';
 
+const isFav = favoritesSet.has(p.articul);
+const starIcon = isFav ? '⭐' : '☆';
+const starTitle = isFav ? 'Հեռացնել ընտրվածներից' : 'Ավելացնել ընտրվածներում';
+
 tr.innerHTML = `
+<td class="text-center">
+  <button data-act="toggle-fav" data-art="${escapeHtml(p.articul)}" class="star-btn" title="${starTitle}">${starIcon}</button>
+</td>
 <td class="font-mono font-medium">
   <div class="flex flex-col gap-1">
     <span class="text-blue-600 font-bold text-xs whitespace-nowrap">${escapeHtml(p.articul)}</span>
@@ -1391,14 +1497,14 @@ return tr;
 
 function createCardElement(p) {
 const div = document.createElement('div');
-div.className = 'bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col gap-3';
+div.className = 'bg-white rounded-xl p-3.5 border border-gray-200 shadow-sm flex flex-col justify-between gap-3 relative';
 
 const isUtochnit = p.stockStatus.includes('Ճշտել');
 const stockBadgeClass = authorizedClient === "Администратор" ? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-[11px]' : (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
 const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
 const cartItem = cart[p.articul];
 
-const isDomusUser = authorizedClient.toUpperCase().includes('ԴՈՄՈՒՍ') || authorizedClient.toUpperCase().includes('ДОМУՍ') || authorizedClient.toUpperCase().includes('DOMUS');
+const isDomusUser = authorizedClient.toUpperCase().includes('ԴՈ繆Ս') || authorizedClient.toUpperCase().includes('ДОМУՍ') || authorizedClient.toUpperCase().includes('DOMUS');
 
 let marginBadge = '';
 if (p.retail > 0 && p.wholesale > 0) {
@@ -1410,47 +1516,59 @@ if (p.retail > 0 && p.wholesale > 0) {
   }
 }
 
+const isFav = favoritesSet.has(p.articul);
+const starIcon = isFav ? '⭐' : '☆';
+const starTitle = isFav ? 'Հեռացնել ընտրվածներից' : 'Ավելացնել ընտրվածներում';
+
 div.innerHTML = `
-<div class="flex items-start gap-3">
-  ${getProductImageHtml(p.articul, p.name)}
-  <div class="flex-grow min-w-0">
-    <div class="flex items-center justify-between gap-2 mb-1">
-      ${getBrandLogoHtml(p.brand)}
-      <a href="${escapeHtml(searchUrl)}" target="_blank" class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200 text-[10px] font-semibold transition shadow-xs">
-        <span>🔍 Որոնել</span>
-      </a>
+<div>
+  <div class="flex items-start gap-3">
+    ${getProductImageHtml(p.articul, p.name)}
+    <div class="flex-grow min-w-0 pr-6">
+      <div class="flex items-center justify-between gap-2 mb-1">
+        ${getBrandLogoHtml(p.brand)}
+        <a href="${escapeHtml(searchUrl)}" target="_blank" class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200 text-[10px] font-semibold transition shadow-xs">
+          <span>🔍 Որոնել</span>
+        </a>
+      </div>
+      <div class="font-mono text-xs font-bold text-blue-600 mb-0.5">${escapeHtml(p.articul)}</div>
+      <h4 class="text-xs sm:text-sm font-semibold text-gray-900 leading-snug">${escapeHtml(p.name || '—')}</h4>
     </div>
-    <div class="font-mono text-xs font-bold text-blue-600 mb-0.5">${escapeHtml(p.articul)}</div>
-    <h4 class="text-sm font-semibold text-gray-900 leading-snug">${escapeHtml(p.name || '—')}</h4>
+    <button data-act="toggle-fav" data-art="${escapeHtml(p.articul)}" class="star-btn absolute top-3 right-3 p-1" title="${starTitle}">${starIcon}</button>
+  </div>
+
+  <div class="flex items-center justify-between pt-2.5 mt-2.5 border-t border-gray-100 text-xs">
+    <span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${escapeHtml(p.stockStatus)}</span>
+    <div class="flex items-center gap-1.5"><span class="text-gray-400">Եկամտաբերություն:</span>${marginBadge}</div>
   </div>
 </div>
 
-<div class="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">
-  <span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${escapeHtml(p.stockStatus)}</span>
-  <div class="flex items-center gap-2"><span class="text-gray-400">Եկամտաբերություն:</span>${marginBadge}</div>
-</div>
-
-<div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+<div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-xl border border-gray-100 mt-auto">
   <div>
     <div class="text-[11px] text-gray-500">Մանրածախ: <span class="font-medium text-gray-700">${p.retail ? p.retail.toLocaleString('ru-RU') + ' ֏' : '—'}</span></div>
-    <div class="text-xs font-bold text-gray-900">Մեծածախ: <span class="text-green-600">${p.wholesale ? p.wholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</span></div>
+    <div class="text-sm font-black text-emerald-600 mt-0.5">${p.wholesale ? p.wholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</div>
   </div>
-  <div class="js-action" data-art="${escapeHtml(p.articul)}">${getActionControlHtml(p.articul, cartItem)}</div>
+  <div class="js-action" data-art="${escapeHtml(p.articul)}">${getActionControlHtml(p.articul, cartItem, true)}</div>
 </div>
 `;
 return div;
 }
 
-function getActionControlHtml(articul, cartItem) {
+function getActionControlHtml(articul, cartItem, isMobile = false) {
   const a = escapeHtml(articul);
   if (!cartItem) {
-    return `<button data-act="add" data-art="${a}" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition whitespace-nowrap">Պատվիրել</button>`;
+    const mobileBtnClass = isMobile ? "px-4 py-2 text-xs font-bold" : "px-3.5 py-1.5 text-xs font-semibold";
+    return `<button data-act="add" data-art="${a}" class="${mobileBtnClass} bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition whitespace-nowrap active:scale-95">Պատվիրել</button>`;
   }
+
+  const btnPadding = isMobile ? "px-3 py-2 text-sm" : "px-2 sm:px-2.5 py-1 text-xs";
+  const inputWidth = isMobile ? "w-11 sm:w-12 py-1.5 text-xs" : "w-10 sm:w-12 py-1 text-xs";
+
   return `
 <div class="inline-flex items-center border border-blue-500 rounded-lg overflow-hidden bg-blue-50 flex-shrink-0">
-<button data-act="qty" data-delta="-1" data-art="${a}" class="px-2 sm:px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">-</button>
-<input type="number" data-act="qty-input" data-art="${a}" value="${cartItem.qty}" min="1" max="9999" class="w-10 sm:w-12 text-center text-xs font-bold text-blue-900 bg-transparent focus:outline-none focus:bg-white focus:ring-1 focus:ring-blue-500 py-1">
-<button data-act="qty" data-delta="1" data-art="${a}" class="px-2 sm:px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">+</button>
+<button data-act="qty" data-delta="-1" data-art="${a}" class="${btnPadding} bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold active:bg-blue-300">-</button>
+<input type="number" data-act="qty-input" data-art="${a}" value="${cartItem.qty}" min="1" max="9999" class="${inputWidth} text-center font-bold text-blue-900 bg-transparent focus:outline-none focus:bg-white focus:ring-1 focus:ring-blue-500">
+<button data-act="qty" data-delta="1" data-art="${a}" class="${btnPadding} bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold active:bg-blue-300">+</button>
 </div>`;
 }
 
@@ -1570,14 +1688,18 @@ function afterCartChange(articul) {
 
 function refreshProductActions(articul) {
   document.querySelectorAll('.js-action').forEach(el => {
-    if (el.dataset.art === articul) el.innerHTML = getActionControlHtml(articul, cart[articul]);
+    if (el.dataset.art === articul) {
+      const isMobile = !desktopMQ.matches;
+      el.innerHTML = getActionControlHtml(articul, cart[articul], isMobile);
+    }
   });
 }
 
 function refreshAllActions() {
+  const isMobile = !desktopMQ.matches;
   document.querySelectorAll('.js-action').forEach(el => {
     const art = el.dataset.art;
-    el.innerHTML = getActionControlHtml(art, cart[art]);
+    el.innerHTML = getActionControlHtml(art, cart[art], isMobile);
   });
 }
 
@@ -2044,6 +2166,7 @@ document.addEventListener('click', (e) => {
     case 'add':           addToCart(art); break;
     case 'qty':           changeQty(art, Number(el.dataset.delta)); break;
     case 'mqty':          changeQtyFromModal(art, Number(el.dataset.delta)); break;
+    case 'toggle-fav':    toggleFavorite(art); break;
     case 'pick-brand':    selectBrand(el.dataset.value); break;
     case 'pick-category': selectCategory(el.dataset.value); break;
     case 'restore-org':   restoreOrgDefaults(); break;
