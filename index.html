@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Մեծածախ Ցանկ / Կատալոգ v2.37</title>
+<title>Մեծածախ Ցանկ / Կատալոգ v2.38</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- SheetJS (XLSX reader/writer) -->
@@ -139,7 +139,7 @@ body { font-family: 'Inter', sans-serif; }
   <div class="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/70"></div>
 
   <div class="relative z-10 bg-white/50 dark:bg-gray-900/80 backdrop-blur-md rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 dark:border-gray-800 text-center">
-    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.37</span>
+    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.38</span>
     
     <h2 class="text-2xl font-black text-gray-900 dark:text-white mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 dark:text-gray-300 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
@@ -157,17 +157,17 @@ body { font-family: 'Inter', sans-serif; }
   </div>
 </div>
 
-<!-- ОКНО УВЕДОМЛЕНИЯ ОБ ОБНОВЛЕНИИ ПРАЙСА -->
+<!-- ОКНО УВЕДОМЛЕНИЯ ОБ ОБНОВЛЕНИИ ПРАЙСА (ПРИ ВХОДЕ И НА ЛЕТУ) -->
 <div id="priceUpdatePopup" class="fixed inset-0 bg-slate-950/70 backdrop-blur-md z-[100] hidden flex items-center justify-center p-4 transition-opacity duration-500">
   <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-8 sm:p-10 rounded-3xl shadow-2xl max-w-md w-full text-center transform transition-all scale-100 space-y-4">
     <div class="w-16 h-16 bg-blue-100 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-inner">
       📊
     </div>
-    <h3 class="text-xl font-black text-gray-900 dark:text-white">Գնացուցակը թարմացված է</h3>
+    <h3 class="text-xl font-black text-gray-900 dark:text-white" id="popupTitle">Գնացուցակը թարմացված է</h3>
     <p class="text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50 py-3 px-4 rounded-xl border border-blue-100 dark:border-blue-900" id="popupDateText">
       📅 Թարմացում՝ —
     </p>
-    <p class="text-xs text-gray-500 dark:text-gray-400">
+    <p class="text-xs text-gray-500 dark:text-gray-400" id="popupSubText">
       Կատալոգը պատրաստ է աշխատանքի...
     </p>
   </div>
@@ -506,7 +506,7 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 
 <script>
-console.log("ZIGZAG Catalog v2.37 loaded successfully");
+console.log("ZIGZAG Catalog v2.38 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
@@ -520,6 +520,7 @@ let modalFieldsInitialized = false;
 let pendingRestoreToast = false;
 let favoritesSet = new Set();
 let cachedPriceDateText = "";
+let backgroundPollTimer = null;
 
 const DEBOUNCE_MS = 280;
 const desktopMQ = window.matchMedia('(min-width: 768px)');
@@ -943,8 +944,8 @@ if (passMap[inputHash]) {
     localStorage.setItem('zigzag_client_rows', JSON.stringify(clientRowsData));
   } catch(e) {}
   
-  // Скрываем окно авторизации и запускаем показ модального окна с датой прайса
   document.getElementById('authScreen').classList.add('hidden');
+  await preloadPriceDateSilent();
   showPriceUpdatePopupAndStart();
 } else {
   errorMsg.innerText = 'Սխալ գաղտնաբառ։ Փորձեք կրկին։';
@@ -952,12 +953,22 @@ if (passMap[inputHash]) {
 }
 }
 
-function showPriceUpdatePopupAndStart() {
+function showPriceUpdatePopupAndStart(isBackgroundUpdate = false) {
   const popup = document.getElementById('priceUpdatePopup');
   const popupDateText = document.getElementById('popupDateText');
+  const popupTitle = document.getElementById('popupTitle');
+  const popupSubText = document.getElementById('popupSubText');
   
   const dateStr = cachedPriceDateText || '—';
   popupDateText.innerText = `📅 Թարմացում՝ ${dateStr}`;
+
+  if (isBackgroundUpdate) {
+    popupTitle.innerText = "Գնացուցակը թարմացված է!";
+    popupSubText.innerText = "Նոր գները և տվյալները հաջողությամբ ներբեռնվեցին:";
+  } else {
+    popupTitle.innerText = "Գնացուցակը պատրաստ է";
+    popupSubText.innerText = "Կատալոգը բեռնվում է...";
+  }
   
   popup.classList.remove('hidden');
   popup.classList.add('flex');
@@ -967,45 +978,84 @@ function showPriceUpdatePopupAndStart() {
     setTimeout(() => {
       popup.classList.add('hidden');
       popup.classList.remove('flex', 'opacity-0');
-      initAppAfterAuth();
+      if (!isBackgroundUpdate) {
+        initAppAfterAuth();
+        startBackgroundPricePolling();
+      }
     }, 400);
-  }, 2500);
+  }, 3000);
+}
+
+function startBackgroundPricePolling() {
+  if (backgroundPollTimer) clearInterval(backgroundPollTimer);
+  backgroundPollTimer = setInterval(async () => {
+    if (!authorizedClient) return;
+    try {
+      let newDateText = "";
+      const jsonRes = await fetch('PriceList_3.json', { cache: 'no-cache' });
+      if (jsonRes.ok) {
+        const jsonData = await jsonRes.json();
+        if (jsonData && jsonData.date) newDateText = formatExcelDateText(jsonData.date);
+      }
+
+      if (!newDateText) {
+        const response = await fetch('PriceList_3.xlsx', { cache: 'no-cache' });
+        if (response.ok) {
+          const arrayBuffer = await response.arrayBuffer();
+          const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+          if (rows.length > 0 && rows[0][0]) {
+            newDateText = formatExcelDateText(rows[0][0]);
+          }
+        }
+      }
+
+      if (newDateText && newDateText !== cachedPriceDateText) {
+        cachedPriceDateText = newDateText;
+        document.getElementById('priceDateBadge').innerText = `📅 Թարմացում ${cachedPriceDateText}`;
+        showPriceUpdatePopupAndStart(true);
+        loadPriceDataSilent();
+      }
+    } catch(e) {}
+  }, 45000);
 }
 
 function logout() {
-if (authorizedClient) {
-  try {
-    localStorage.removeItem('zigzag_client');
-    localStorage.removeItem('zigzag_sheet');
-    localStorage.removeItem('zigzag_client_rows');
-    localStorage.removeItem('zigzag_filters_' + authorizedClient);
-    localStorage.removeItem('zigzag_filters_open_' + authorizedClient);
-  } catch(e) {}
-}
-authorizedClient = '';
-userSheetType = '';
-clientRowsData = [];
-cart = {};
-favoritesSet.clear();
-modalFieldsInitialized = false;
-catalogLoaded = false;
-pendingRestoreToast = false;
+  if (backgroundPollTimer) clearInterval(backgroundPollTimer);
+  if (authorizedClient) {
+    try {
+      localStorage.removeItem('zigzag_client');
+      localStorage.removeItem('zigzag_sheet');
+      localStorage.removeItem('zigzag_client_rows');
+      localStorage.removeItem('zigzag_filters_' + authorizedClient);
+      localStorage.removeItem('zigzag_filters_open_' + authorizedClient);
+    } catch(e) {}
+  }
+  authorizedClient = '';
+  userSheetType = '';
+  clientRowsData = [];
+  cart = {};
+  favoritesSet.clear();
+  modalFieldsInitialized = false;
+  catalogLoaded = false;
+  pendingRestoreToast = false;
 
-document.getElementById('mainApp').classList.add('hidden');
-document.getElementById('mainApp').classList.remove('flex');
-document.getElementById('authScreen').classList.remove('hidden');
-document.getElementById('passwordInput').value = '';
+  document.getElementById('mainApp').classList.add('hidden');
+  document.getElementById('mainApp').classList.remove('flex');
+  document.getElementById('authScreen').classList.remove('hidden');
+  document.getElementById('passwordInput').value = '';
 }
 
 function initAppAfterAuth() {
-document.getElementById('mainApp').classList.remove('hidden');
-document.getElementById('mainApp').classList.add('flex');
-document.getElementById('welcomeMsg').innerText = `Բարև ձեզ, ${authorizedClient}։`;
+  document.getElementById('mainApp').classList.remove('hidden');
+  document.getElementById('mainApp').classList.add('flex');
+  document.getElementById('welcomeMsg').innerText = `Բարև ձեզ, ${authorizedClient}։`;
 
-loadFavorites();
-setupTableHeader();
-loadPriceData();
-loadCartFromStorage(true);
+  loadFavorites();
+  setupTableHeader();
+  loadPriceData();
+  loadCartFromStorage(true);
 }
 
 function setupTableHeader() {
@@ -1050,9 +1100,9 @@ try {
       clientRowsData = [{ organization: authorizedClient, address: '', contact: '' }];
     }
     document.getElementById('authScreen').classList.add('hidden');
-    // Предзагружаем дату и сразу показываем попап при автологине
     await preloadPriceDateSilent();
     showPriceUpdatePopupAndStart();
+    startBackgroundPricePolling();
   }
 } catch(e) {}
 
@@ -1210,6 +1260,34 @@ async function loadPriceData() {
   }
 }
 
+async function loadPriceDataSilent() {
+  try {
+    let jsonLoaded = false;
+    try {
+      const jsonRes = await fetch('PriceList_3.json', { cache: 'no-cache' });
+      if (jsonRes.ok) {
+        const jsonData = await jsonRes.json();
+        if (jsonData && Array.isArray(jsonData.products)) {
+          allProducts = jsonData.products;
+          jsonLoaded = true;
+        }
+      }
+    } catch(e) {}
+
+    if (!jsonLoaded) {
+      const response = await fetch('PriceList_3.xlsx', { cache: 'no-cache' });
+      if (!response.ok) return;
+      const arrayBuffer = await response.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+      parseExcelRows(rows, true);
+    } else {
+      finalizeDataLoad();
+    }
+  } catch(e) {}
+}
+
 function finalizeDataLoad() {
   productIndex = new Map();
   allProducts.forEach(p => { if (!productIndex.has(p.articul)) productIndex.set(p.articul, p); });
@@ -1224,7 +1302,7 @@ function finalizeDataLoad() {
   document.getElementById('catalogContent').classList.remove('opacity-40');
 }
 
-function parseExcelRows(rows) {
+function parseExcelRows(rows, isSilent = false) {
 try {
 catalogLoaded = false;
 allProducts = [];
@@ -1384,11 +1462,19 @@ for (let i = headerRowIdx + 1; i < rows.length; i++) {
 }
 
 finalizeDataLoad();
+if (isSilent) {
+  const modalEl = document.getElementById('orderModal');
+  if (modalEl && !modalEl.classList.contains('hidden')) {
+    renderModalItems();
+  }
+}
 } catch (err) {
   console.error(err);
-  document.getElementById('skeletonLoader').classList.add('hidden');
-  document.getElementById('dataErrorBox').classList.remove('hidden');
-  document.getElementById('dataErrorText').innerText = 'Սխալ Excel ֆայլի մշակման ընթացքում:';
+  if (!isSilent) {
+    document.getElementById('skeletonLoader').classList.add('hidden');
+    document.getElementById('dataErrorBox').classList.remove('hidden');
+    document.getElementById('dataErrorText').innerText = 'Սխալ Excel ֆայլի մշակման ընթացքում:';
+  }
 }
 }
 
@@ -1695,7 +1781,7 @@ if (p.retail > 0 && p.wholesale > 0) {
   if (isDomusUser) {
     marginBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold border bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600">${p.marginVal.toFixed(2)}</span>`;
   } else {
-    let colorClass = p.marginVal >= 20 ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : (p.marginVal < 5 ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800' : 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800');
+    let colorClass = p.marginVal >= 20 ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : (p.marginVal < 5 ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800' : 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800');
     marginBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold border ${colorClass}">${p.marginVal.toFixed(1)}%</span>`;
   }
 }
@@ -2104,7 +2190,8 @@ function buildEmailFormattedText() {
     text += `${i}. Արտիկուլ: ${getItemArticul(artKey, item)}\n   Անվանում: ${getItemName(item)}\n   Միավորի գին: ${price.toLocaleString('ru-RU')} ֏ | Քանակ: ${item.qty} հատ\n   Վճարում: ${item.paymentMethod || 'Բանկային փոխանցումով'}\n   Գումար: ${sum.toLocaleString('ru-RU')} ֏\n\n`;
     i++;
   });
-  text += `ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
+  text += `ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏\n`;
+  text += `Գնացուցակի թարմացում՝ ${cachedPriceDateText || '—'}`;
   return text;
 }
 
@@ -2123,7 +2210,8 @@ function buildViberFormattedText() {
   if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
   if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
   if (comment) text += `Մեկնաբանություն: ${comment}\n`;
-  text += `\nԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
+  text += `\nԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏\n`;
+  text += `Գնացուցակի թարմացում՝ ${cachedPriceDateText || '—'}`;
   return text;
 }
 
@@ -2194,6 +2282,10 @@ function generateAndDownloadExcel() {
   if (delivDate) excelData.push({ 'Արտիկուլ': 'Ցանկալի առաքման ամսաթիվ:', 'Անվանում': delivDate, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
   if (delivAddr) excelData.push({ 'Արտիկուլ': 'Առաքման հասցե:', 'Անվանում': delivAddr, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
   if (comment) excelData.push({ 'Արտիկուլ': 'Մեկնաբանություն:', 'Անվանում': comment, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+
+  // Вставка информации о дате обновления прайс-листа в самом конце таблицы
+  excelData.push({ 'Արտիկուլ': '', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+  excelData.push({ 'Արտիկուլ': 'Գնացուցակի թարմացում՝', 'Անվանում': cachedPriceDateText || '—', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 
   const worksheet = XLSX.utils.json_to_sheet(excelData, { skipHeader: true });
   
@@ -2285,7 +2377,7 @@ function importPreviousOrder(event) {
           }
 
           const firstCell = String(r[0] || '').trim();
-          if (firstCell && !firstCell.includes('Կոնտրագենտ') && !firstCell.includes('Մեկնաբանություն') && !firstCell.includes('Առաքման') && !firstCell.includes('ԸՆԴՀԱՆՈՒՐ') && !firstCell.includes('Կազմակերպություն') && !firstCell.includes('Կոնտակտային')) {
+          if (firstCell && !firstCell.includes('Կոնտրագենտ') && !firstCell.includes('Մեկնաբանություն') && !firstCell.includes('Առաքման') && !firstCell.includes('ԸՆԴՀԱՆՈՒՐ') && !firstCell.includes('Կազմակերպություն') && !firstCell.includes('Կոնտակտային') && !firstCell.includes('Գնացուցակի')) {
             articul = firstCell;
             for (let j = 1; j < r.length; j++) {
               let num = Number(r[j]);
