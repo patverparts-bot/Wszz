@@ -256,7 +256,7 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 </div>
 
-<!-- MODALNOYE OKNO ZAKAZA -->
+<!-- MODALNYE OKNO ZAKAZA -->
 <div id="orderModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-2 sm:p-4">
 <div class="bg-white rounded-2xl max-w-4xl w-full p-3 sm:p-6 shadow-2xl max-h-[96vh] sm:max-h-[92vh] flex flex-col">
 <div class="flex justify-between items-center mb-2 sm:mb-3 border-b pb-2 flex-shrink-0">
@@ -542,13 +542,14 @@ onerror="this.style.display='none'; this.nextElementSibling.style.display='inlin
 `;
 }
 
-function handleImgError(imgElement, searchUrl) {
+// 100% GARANTIROVANNYY KASKADNYY ZAGRUZCHIK FOTOGRAFIY
+function handleImageFallback(imgElement, searchUrl) {
   const container = imgElement.parentElement;
   if (!imgElement.dataset.triedPub) {
     imgElement.dataset.triedPub = "true";
-    imgElement.src = imgElement.dataset.pubUrl;
+    imgElement.src = imgElement.dataset.fallback; // Proveryayem pub/media
   } else {
-    container.outerHTML = `<a href="${searchUrl}" target="_blank" class="text-xs text-blue-600 hover:underline font-medium inline-block leading-tight">Դիտել նկարագրությունը</a>`;
+    container.outerHTML = `<a href="${searchUrl}" target="_blank" class="text-[11px] text-blue-600 hover:underline font-semibold leading-tight flex items-center justify-center h-full text-center p-1 bg-blue-50 rounded border border-blue-100">🔍 Որոնել կայքում</a>`;
   }
 }
 
@@ -563,8 +564,8 @@ const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIC
 
 return `
 <div class="product-img-container">
-<img src="${url1}" data-pub-url="${url2}" alt="${productName}" class="product-img" loading="lazy"
-onerror="handleImgError(this, '${searchUrl}')">
+<img src="${url1}" data-fallback="${url2}" alt="${productName}" class="product-img" loading="lazy"
+onerror="handleImageFallback(this, '${searchUrl}')">
 </div>
 `;
 }
@@ -576,7 +577,6 @@ if (!response.ok) throw new Error('pass.xlsx ֆայլը չի գտնվել');
 const arrayBuffer = await response.arrayBuffer();
 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
 
-// Obkhodim vse vkladki (KP, Dealers i lyubyye drugiye)
 workbook.SheetNames.forEach(sheetName => {
 const sheet = workbook.Sheets[sheetName];
 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
@@ -620,7 +620,6 @@ for (let i = headerIdx + 1; i < rows.length; i++) {
     let addrs = [];
     let contacts = [];
 
-    // Proveryayem nabor ot 1 do 5 (Կազմակերպություն 1, Կազմակերպություն 2, Կազմակերպություն 3...)
     for (let k = 1; k <= 5; k++) {
       let orgVal = '';
       let addrVal = '';
@@ -649,7 +648,6 @@ for (let i = headerIdx + 1; i < rows.length; i++) {
       }
     }
 
-    // Esli vkladka KP ili netu 1,2,3 - sobiraem obshchie kolonki
     if (orgs.length === 0) {
       let singleOrg = client;
       let singleAddr = '';
