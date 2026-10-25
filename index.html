@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Մեծածախ Ցանկ / Կատալոգ v2.6</title>
+<title>Մեծածախ Ցանկ / Կատալոգ v2.7</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- SheetJS (XLSX reader/writer) -->
@@ -80,7 +80,7 @@ body { font-family: 'Inter', sans-serif; }
   <div class="absolute inset-0 bg-slate-900/25"></div>
 
   <div class="relative z-10 bg-white/40 backdrop-blur-sm rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 text-center">
-    <span class="inline-block px-2.5 py-0.5 bg-emerald-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow">Сборка v2.6 (Авторизация исправлена)</span>
+    <span class="inline-block px-2.5 py-0.5 bg-emerald-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow">Сборка v2.7 (Фото и поиск активны)</span>
     
     <h2 class="text-2xl font-black text-gray-900 mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
@@ -391,7 +391,7 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 
 <script>
-console.log("ZIGZAG Catalog v2.6 loaded successfully");
+console.log("ZIGZAG Catalog v2.7 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
@@ -563,13 +563,12 @@ function handleImageError(imgElement, searchUrl) {
     imgElement.dataset.step = "3";
     imgElement.src = `https://www.zigzag.am/media/catalog/product/${cleanArt}.jpg`;
   } else {
+    // Если картинка не нашлась совсем, показываем заглушку с фоторюкзаком/камерой
     container.innerHTML = `
-      <a href="${searchUrl}" target="_blank" 
-         class="w-full h-full bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg flex flex-col items-center justify-center text-center p-0.5 transition shadow-sm"
-         title="Որոնել կայքում">
-        <span class="text-xs">🔍</span>
-        <span class="text-[9px] font-bold text-blue-700 leading-tight">Որոնել</span>
-      </a>`;
+      <div class="w-full h-full bg-gray-100 border border-gray-200 rounded-lg flex flex-col items-center justify-center text-center p-0.5" title="Նկարը բացակայում է">
+        <span class="text-xs">📦</span>
+        <span class="text-[8px] font-bold text-gray-500">No photo</span>
+      </div>`;
   }
 }
 
@@ -579,7 +578,6 @@ function getProductImageHtml(articul, productName) {
   const a2 = cleanArt.charAt(1) || '0';
 
   const initialUrl = `https://www.zigzag.am/media/catalog/product/${a1}/${a2}/${cleanArt}.jpg`;
-  const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(cleanArt)}`;
 
   return `
     <div class="product-img-container">
@@ -589,13 +587,12 @@ function getProductImageHtml(articul, productName) {
            alt="${productName}" 
            class="product-img" 
            loading="lazy"
-           onerror="handleImageError(this, '${searchUrl}')">
+           onerror="handleImageError(this)">
     </div>
   `;
 }
 
 async function loadPasswordsFile() {
-// Задаем администраторский хэш по умолчанию (админ / admin), чтобы вход работал даже без pass.xlsx
 passMap["d5c33d07c18e87a43d93fc607e4acc15caab0f59048a60bc034fe1737d428964"] = { 
   client: "Администратор", 
   sheet: "Dealers",
@@ -721,9 +718,8 @@ for (let i = headerIdx + 1; i < rows.length; i++) {
   }
 }
 });
-console.log("pass.xlsx successfully loaded. Total entries:", Object.keys(passMap).length);
 } catch (e) {
-console.warn("pass.xlsx fetch warning (using default credentials):", e);
+console.warn("pass.xlsx fetch warning:", e);
 }
 }
 
@@ -738,7 +734,6 @@ if (inputVal.length < 6 && /^\d+$/.test(inputVal)) {
 }
 
 const inputHash = await sha256(inputVal);
-console.log("Input password hash:", inputHash);
 
 if (passMap[inputHash]) {
 authorizedClient = passMap[inputHash].client;
@@ -796,7 +791,7 @@ const headerRow = document.getElementById('tableHeaderRow');
 const thClass = "py-3 px-4 font-semibold text-gray-700 text-xs uppercase tracking-wider border-b border-gray-200";
 
 let cols = [
-  { name: 'Արտիկուլ', align: 'text-left' },
+  { name: 'Արտիկուլ / Որոնում', align: 'text-left' },
   { name: 'Բրենդ', align: 'text-left' },
   { name: 'Կատեգորիա', align: 'text-left' },
   { name: 'Անվանում', align: 'text-left' },
@@ -1359,10 +1354,13 @@ if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
 }
 
 tr.innerHTML = `
-<td class="py-3 px-4 font-mono font-medium text-blue-600">
-<a href="${searchUrl}" target="_blank" class="hover:underline flex items-center gap-1 text-xs" title="Գտնել Zigzag.am կայքում">
-${p.articul} <span class="text-[10px] text-gray-400 font-normal">Դիտել նկարագրությունը</span>
-</a>
+<td class="py-3 px-4 font-mono font-medium">
+  <div class="flex flex-col gap-1">
+    <span class="text-blue-600 font-bold text-xs">${p.articul}</span>
+    <a href="${searchUrl}" target="_blank" class="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200 text-[10px] font-semibold transition w-fit shadow-xs" title="Որոնել Zigzag.am կայքում">
+      <span>🔍 Որոնել կայքում</span>
+    </a>
+  </div>
 </td>
 <td class="py-3 px-4">${getBrandLogoHtml(p.brand)}</td>
 <td class="py-3 px-4 text-gray-600">${p.category}</td>
@@ -1412,10 +1410,11 @@ div.innerHTML = `
   <div class="flex-grow min-w-0">
     <div class="flex items-center justify-between gap-2 mb-1">
       ${getBrandLogoHtml(p.brand)}
-      <a href="${searchUrl}" target="_blank" class="font-mono text-xs font-semibold text-blue-600 hover:underline">
-        ${p.articul} <span class="text-[10px] text-gray-400 font-normal">Դիտել նկարագրությունը</span>
+      <a href="${searchUrl}" target="_blank" class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200 text-[10px] font-semibold transition shadow-xs">
+        <span>🔍 Որոնել</span>
       </a>
     </div>
+    <div class="font-mono text-xs font-bold text-blue-600 mb-0.5">${p.articul}</div>
     <h4 class="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">${p.name || '—'}</h4>
   </div>
 </div>
@@ -1939,7 +1938,7 @@ reader.onload = function(e) {
     const workbook = XLSX.read(data, { type: 'array' });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    const rows = XLSX.utils.sheet_to_sheet_json ? [] : XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
     cart = {};
     let loadedCount = 0;
@@ -1983,7 +1982,7 @@ reader.onload = function(e) {
         const product = allProducts.find(p => p.articul === articul);
         if (product) {
           cart[articul] = { product: product, qty: qty, paymentMethod: payMethod };
-            loadedCount++;
+          loadedCount++;
         }
       }
     });
@@ -2000,7 +1999,7 @@ reader.onload = function(e) {
     console.error(err);
     alert('Ֆայլի կարդալու սխալ։');
   }
-  event.target.value = '';
+  event.target.value, event.target.value = '';
 };
 reader.readAsArrayBuffer(file);
 }
