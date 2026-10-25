@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Մեծածախ Ցանկ / Կատալոգ v2.35</title>
+<title>Մեծածախ Ցանկ / Կատալոգ v2.37</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- SheetJS (XLSX reader/writer) -->
@@ -139,7 +139,7 @@ body { font-family: 'Inter', sans-serif; }
   <div class="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/70"></div>
 
   <div class="relative z-10 bg-white/50 dark:bg-gray-900/80 backdrop-blur-md rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 dark:border-gray-800 text-center">
-    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.35</span>
+    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.37</span>
     
     <h2 class="text-2xl font-black text-gray-900 dark:text-white mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 dark:text-gray-300 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
@@ -157,6 +157,22 @@ body { font-family: 'Inter', sans-serif; }
   </div>
 </div>
 
+<!-- ОКНО УВЕДОМЛЕНИЯ ОБ ОБНОВЛЕНИИ ПРАЙСА -->
+<div id="priceUpdatePopup" class="fixed inset-0 bg-slate-950/70 backdrop-blur-md z-[100] hidden flex items-center justify-center p-4 transition-opacity duration-500">
+  <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-8 sm:p-10 rounded-3xl shadow-2xl max-w-md w-full text-center transform transition-all scale-100 space-y-4">
+    <div class="w-16 h-16 bg-blue-100 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-inner">
+      📊
+    </div>
+    <h3 class="text-xl font-black text-gray-900 dark:text-white">Գնացուցակը թարմացված է</h3>
+    <p class="text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50 py-3 px-4 rounded-xl border border-blue-100 dark:border-blue-900" id="popupDateText">
+      📅 Թարմացում՝ —
+    </p>
+    <p class="text-xs text-gray-500 dark:text-gray-400">
+      Կատալոգը պատրաստ է աշխատանքի...
+    </p>
+  </div>
+</div>
+
 <!-- OSNOVNOY KATALOG -->
 <div id="mainApp" class="hidden flex-col min-h-screen pb-24">
 <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-200">
@@ -168,7 +184,7 @@ body { font-family: 'Inter', sans-serif; }
 <h1 class="text-sm sm:text-base font-bold text-gray-900 dark:text-white leading-tight">Մեծածախ ապրանքների կատալոգ</h1>
 <div class="flex items-center gap-2 mt-0.5 flex-wrap">
   <p class="text-[11px] sm:text-xs text-blue-600 dark:text-blue-400 font-medium" id="welcomeMsg">Բարև ձեզ...</p>
-  <span id="priceDateBadge" class="text-[10px] sm:text-[11px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded border border-gray-200 dark:border-gray-600">Պրայս...</span>
+  <span id="priceDateBadge" class="text-[10px] sm:text-[11px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded border border-gray-200 dark:border-gray-600">Թարմացում...</span>
   <button onclick="logout()" aria-label="Դուրս գալ համակարգից" class="text-[10px] sm:text-[11px] font-semibold text-red-600 dark:text-red-400 hover:text-red-800 bg-red-50 dark:bg-red-950/50 hover:bg-red-100 px-2 py-0.5 rounded transition">
     🚪 Դուրս գալ
   </button>
@@ -362,7 +378,7 @@ body { font-family: 'Inter', sans-serif; }
 <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-4xl w-full p-3 sm:p-6 shadow-2xl flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700" style="max-height:94vh;max-height:94dvh;">
 <div class="flex justify-between items-center mb-3 border-b dark:border-gray-700 pb-3 flex-shrink-0">
 <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white">Պատվերի պարունակությունը</h3>
-<button onclick="closeOrderModal()" aria-label="Փակել պատվერის պատдиլը" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl font-bold">&times;</button>
+<button onclick="closeOrderModal()" aria-label="Փակել պատվერის պատուհանը" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl font-bold">&times;</button>
 </div>
 
 <div id="modalBody" class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
@@ -490,7 +506,7 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 
 <script>
-console.log("ZIGZAG Catalog v2.35 loaded successfully");
+console.log("ZIGZAG Catalog v2.37 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
@@ -503,6 +519,7 @@ let productIndex = new Map();
 let modalFieldsInitialized = false;
 let pendingRestoreToast = false;
 let favoritesSet = new Set();
+let cachedPriceDateText = "";
 
 const DEBOUNCE_MS = 280;
 const desktopMQ = window.matchMedia('(min-width: 768px)');
@@ -925,11 +942,34 @@ if (passMap[inputHash]) {
     localStorage.setItem('zigzag_sheet', userSheetType);
     localStorage.setItem('zigzag_client_rows', JSON.stringify(clientRowsData));
   } catch(e) {}
-  initAppAfterAuth();
+  
+  // Скрываем окно авторизации и запускаем показ модального окна с датой прайса
+  document.getElementById('authScreen').classList.add('hidden');
+  showPriceUpdatePopupAndStart();
 } else {
   errorMsg.innerText = 'Սխալ գաղտնաբառ։ Փորձեք կրկին։';
   errorMsg.classList.remove('hidden');
 }
+}
+
+function showPriceUpdatePopupAndStart() {
+  const popup = document.getElementById('priceUpdatePopup');
+  const popupDateText = document.getElementById('popupDateText');
+  
+  const dateStr = cachedPriceDateText || '—';
+  popupDateText.innerText = `📅 Թարմացում՝ ${dateStr}`;
+  
+  popup.classList.remove('hidden');
+  popup.classList.add('flex');
+
+  setTimeout(() => {
+    popup.classList.add('opacity-0');
+    setTimeout(() => {
+      popup.classList.add('hidden');
+      popup.classList.remove('flex', 'opacity-0');
+      initAppAfterAuth();
+    }, 400);
+  }, 2500);
 }
 
 function logout() {
@@ -958,7 +998,6 @@ document.getElementById('passwordInput').value = '';
 }
 
 function initAppAfterAuth() {
-document.getElementById('authScreen').classList.add('hidden');
 document.getElementById('mainApp').classList.remove('hidden');
 document.getElementById('mainApp').classList.add('flex');
 document.getElementById('welcomeMsg').innerText = `Բարև ձեզ, ${authorizedClient}։`;
@@ -1010,7 +1049,10 @@ try {
     if (!clientRowsData || clientRowsData.length === 0) {
       clientRowsData = [{ organization: authorizedClient, address: '', contact: '' }];
     }
-    initAppAfterAuth();
+    document.getElementById('authScreen').classList.add('hidden');
+    // Предзагружаем дату и сразу показываем попап при автологине
+    await preloadPriceDateSilent();
+    showPriceUpdatePopupAndStart();
   }
 } catch(e) {}
 
@@ -1033,6 +1075,32 @@ document.addEventListener('click', (e) => {
   if (categoryDropdown && !categoryDropdown.contains(e.target) && e.target !== categoryInput) categoryDropdown.classList.add('hidden');
 });
 });
+
+async function preloadPriceDateSilent() {
+  try {
+    const jsonRes = await fetch('PriceList_3.json', { cache: 'no-cache' });
+    if (jsonRes.ok) {
+      const jsonData = await jsonRes.json();
+      if (jsonData && jsonData.date) {
+        cachedPriceDateText = formatExcelDateText(jsonData.date);
+        return;
+      }
+    }
+  } catch(e) {}
+
+  try {
+    const response = await fetch('PriceList_3.xlsx', { cache: 'no-cache' });
+    if (response.ok) {
+      const arrayBuffer = await response.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+      if (rows.length > 0 && rows[0][0]) {
+        cachedPriceDateText = formatExcelDateText(rows[0][0]);
+      }
+    }
+  } catch(e) {}
+}
 
 function checkScrollPosition() {
   const btn = document.getElementById('scrollTopBtn');
@@ -1072,6 +1140,24 @@ function scrollToTop() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+function formatExcelDateText(rawText) {
+  if (!rawText) return '';
+  let cleanStr = String(rawText).trim();
+  if (cleanStr.toLowerCase().includes('на ')) {
+    cleanStr = cleanStr.split(/на\s+/i)[1] || cleanStr;
+  }
+  
+  const parsedDate = new Date(cleanStr);
+  if (!isNaN(parsedDate.getTime())) {
+    const pad = n => String(n).padStart(2, '0');
+    const dd = pad(parsedDate.getDate());
+    const mm = pad(parsedDate.getMonth() + 1);
+    const yy = String(parsedDate.getFullYear()).slice(-2);
+    return `${dd}/${mm}/${yy}`;
+  }
+  return cleanStr;
+}
+
 async function loadPriceData() {
   const skeleton = document.getElementById('skeletonLoader');
   const errorBox = document.getElementById('dataErrorBox');
@@ -1090,7 +1176,8 @@ async function loadPriceData() {
         if (jsonData && Array.isArray(jsonData.products)) {
           allProducts = jsonData.products;
           if (jsonData.date) {
-            document.getElementById('priceDateBadge').innerText = `📅 Պրայս՝ ${jsonData.date}`;
+            cachedPriceDateText = formatExcelDateText(jsonData.date);
+            document.getElementById('priceDateBadge').innerText = `📅 Թարմացում ${cachedPriceDateText}`;
           }
           jsonLoaded = true;
         }
@@ -1100,18 +1187,17 @@ async function loadPriceData() {
     if (!jsonLoaded) {
       const response = await fetch('PriceList_3.xlsx', { cache: 'no-cache' });
       if (!response.ok) throw new Error('PriceList_3.xlsx ֆայլը չի գտնվել սերվերում');
-      
-      const lastModHeader = response.headers.get('Last-Modified');
-      if (lastModHeader) {
-        const pDate = new Date(lastModHeader);
-        const pad = n => String(n).padStart(2, '0');
-        document.getElementById('priceDateBadge').innerText = `📅 Պրայս՝ ${pad(pDate.getDate())}.${pad(pDate.getMonth()+1)}.${pDate.getFullYear()}`;
-      }
 
       const arrayBuffer = await response.arrayBuffer();
       const workbook = XLSX.read(arrayBuffer, { type: 'array' });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+      
+      if (rows.length > 0 && rows[0][0]) {
+        cachedPriceDateText = formatExcelDateText(rows[0][0]);
+        document.getElementById('priceDateBadge').innerText = `📅 Թարմացում ${cachedPriceDateText}`;
+      }
+
       parseExcelRows(rows);
     } else {
       finalizeDataLoad();
