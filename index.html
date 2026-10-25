@@ -17,6 +17,9 @@ body { font-family: 'Inter', sans-serif; }
   width: 44px;
   height: 44px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .product-img {
@@ -542,7 +545,7 @@ onerror="this.style.display='none'; this.nextElementSibling.style.display='inlin
 `;
 }
 
-// 100% ГАРАНТИРОВАННЫЙ ЗАГРУЗЧИК ФОТО С КНОПКОЙ «Որոնել» ПРИ ОШИБКЕ
+// 100% НАДЕЖНЫЙ ОБРАБОТЧИК ОШИБОК И ФОЛБЭКОВ КАРТИНОК
 function handleImageError(imgElement, searchUrl) {
   const container = imgElement.parentElement;
   if (!container) return;
@@ -551,20 +554,20 @@ function handleImageError(imgElement, searchUrl) {
   const cleanArt = imgElement.dataset.articul || '';
   
   if (step === 1) {
-    // Шаг 2: Проверяем pub/media
+    // Шаг 2: Пробуем папку pub/media
     imgElement.dataset.step = "2";
     imgElement.src = `https://www.zigzag.am/pub/media/catalog/product/${cleanArt.charAt(0)}/${cleanArt.charAt(1)}/${cleanArt}.jpg`;
   } else if (step === 2) {
-    // Шаг 3: Проверяем прямой путь без папок
+    // Шаг 3: Пробуем прямой путь без подпапок
     imgElement.dataset.step = "3";
     imgElement.src = `https://www.zigzag.am/media/catalog/product/${cleanArt}.jpg`;
   } else {
-    // Шаг 4: Если ни один вариант не сработал — выводим кнопку «Որոնել»
+    // Шаг 4: Если все пути вернули 404 — заменяем блок на кнопку «Որոնել»
     container.innerHTML = `
       <a href="${searchUrl}" target="_blank" 
-         class="w-[44px] h-[44px] sm:w-[64px] sm:h-[64px] bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg flex flex-col items-center justify-center text-center p-0.5 transition shadow-sm"
+         class="w-full h-full bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg flex flex-col items-center justify-center text-center p-0.5 transition shadow-sm"
          title="Որոնել կայքում">
-        <span class="text-xs sm:text-sm">🔍</span>
+        <span class="text-xs">🔍</span>
         <span class="text-[9px] font-bold text-blue-700 leading-tight">Որոնել</span>
       </a>`;
   }
@@ -579,7 +582,7 @@ function getProductImageHtml(articul, productName) {
   const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(cleanArt)}`;
 
   return `
-    <div class="product-img-container flex items-center justify-center">
+    <div class="product-img-container">
       <img src="${initialUrl}" 
            data-articul="${cleanArt}"
            data-step="1"
