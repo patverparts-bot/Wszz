@@ -542,24 +542,30 @@ onerror="this.style.display='none'; this.nextElementSibling.style.display='inlin
 `;
 }
 
-// 3-LEVEL FALLBACK IMAGE LOADER (100% SUCCESS)
-function handleImageFallback(imgElement, searchUrl) {
+// 100% ГАРАНТИРОВАННЫЙ ЗАГРУЗЧИК ФОТО С КНОПКОЙ «Որոնել» ПРИ ОШИБКЕ
+function handleImageError(imgElement, searchUrl) {
   const container = imgElement.parentElement;
+  if (!container) return;
   
-  if (!imgElement.dataset.triedPub) {
-    imgElement.dataset.triedPub = "true";
-    imgElement.src = imgElement.dataset.fallback; // pub/media
-  } else if (!imgElement.dataset.triedDirect) {
-    imgElement.dataset.triedDirect = "true";
-    const cleanArt = imgElement.dataset.articul || '';
-    imgElement.src = `https://www.zigzag.am/media/catalog/product/${cleanArt}.jpg`; // direct root
+  const step = Number(imgElement.dataset.step || 1);
+  const cleanArt = imgElement.dataset.articul || '';
+  
+  if (step === 1) {
+    // Шаг 2: Проверяем pub/media
+    imgElement.dataset.step = "2";
+    imgElement.src = `https://www.zigzag.am/pub/media/catalog/product/${cleanArt.charAt(0)}/${cleanArt.charAt(1)}/${cleanArt}.jpg`;
+  } else if (step === 2) {
+    // Шаг 3: Проверяем прямой путь без папок
+    imgElement.dataset.step = "3";
+    imgElement.src = `https://www.zigzag.am/media/catalog/product/${cleanArt}.jpg`;
   } else {
-    container.outerHTML = `
+    // Шаг 4: Если ни один вариант не сработал — выводим кнопку «Որոնել»
+    container.innerHTML = `
       <a href="${searchUrl}" target="_blank" 
-         class="text-[10px] text-blue-600 hover:underline font-semibold leading-tight flex flex-col items-center justify-center h-full text-center p-1 bg-blue-50 rounded border border-blue-100" 
-         title="Սեղմեք՝ տվյալը կայքում դիտելու համար">
-        <span>📷</span>
-        <span>Որոնել</span>
+         class="w-[44px] h-[44px] sm:w-[64px] sm:h-[64px] bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg flex flex-col items-center justify-center text-center p-0.5 transition shadow-sm"
+         title="Որոնել կայքում">
+        <span class="text-xs sm:text-sm">🔍</span>
+        <span class="text-[9px] font-bold text-blue-700 leading-tight">Որոնել</span>
       </a>`;
   }
 }
@@ -569,19 +575,18 @@ function getProductImageHtml(articul, productName) {
   const a1 = cleanArt.charAt(0) || '0';
   const a2 = cleanArt.charAt(1) || '0';
 
-  const url1 = `https://www.zigzag.am/media/catalog/product/${a1}/${a2}/${cleanArt}.jpg`;
-  const url2 = `https://www.zigzag.am/pub/media/catalog/product/${a1}/${a2}/${cleanArt}.jpg`;
+  const initialUrl = `https://www.zigzag.am/media/catalog/product/${a1}/${a2}/${cleanArt}.jpg`;
   const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(cleanArt)}`;
 
   return `
-    <div class="product-img-container">
-      <img src="${url1}" 
-           data-fallback="${url2}" 
+    <div class="product-img-container flex items-center justify-center">
+      <img src="${initialUrl}" 
            data-articul="${cleanArt}"
+           data-step="1"
            alt="${productName}" 
            class="product-img" 
            loading="lazy"
-           onerror="handleImageFallback(this, '${searchUrl}')">
+           onerror="handleImageError(this, '${searchUrl}')">
     </div>
   `;
 }
