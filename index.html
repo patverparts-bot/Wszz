@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Մեծածախ Ցանկ / Կատալոգ v2.30</title>
+<title>Մեծածախ Ցանկ / Կատալոգ v2.31</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- SheetJS (XLSX reader/writer) -->
@@ -78,6 +78,14 @@ body { font-family: 'Inter', sans-serif; }
   background-color: #f3f4f6 !important;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
+
+@keyframes pulse-subtle {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+.cart-updated-anim {
+  animation: pulse-subtle 0.3s ease-in-out;
+}
 </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col relative">
@@ -87,7 +95,7 @@ body { font-family: 'Inter', sans-serif; }
   <div class="absolute inset-0 bg-slate-900/25"></div>
 
   <div class="relative z-10 bg-white/40 backdrop-blur-sm rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 text-center">
-    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.30</span>
+    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.31</span>
     
     <h2 class="text-2xl font-black text-gray-900 mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
@@ -114,8 +122,9 @@ body { font-family: 'Inter', sans-serif; }
 <img src="logo.png" alt="ZIGZAG" class="h-8 sm:h-9 w-auto object-contain flex-shrink-0" loading="lazy" onerror="this.onerror=null; this.src='logo.PNG';">
 <div class="border-l border-gray-200 pl-3">
 <h1 class="text-sm sm:text-base font-bold text-gray-900 leading-tight">Մեծածախ ապրանքների կատալոգ</h1>
-<div class="flex items-center gap-2 mt-0.5">
+<div class="flex items-center gap-2 mt-0.5 flex-wrap">
   <p class="text-[11px] sm:text-xs text-blue-600 font-medium" id="welcomeMsg">Բարև ձեզ...</p>
+  <span id="priceDateBadge" class="text-[10px] sm:text-[11px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded border border-gray-200">Պրայս...</span>
   <button onclick="logout()" class="text-[10px] sm:text-[11px] font-semibold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded transition">
     🚪 Դուրս գալ
   </button>
@@ -251,7 +260,7 @@ body { font-family: 'Inter', sans-serif; }
 
 </main>
 
-<div id="orderPanel" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 shadow-lg p-3 sm:p-4 z-40 hidden">
+<div id="orderPanel" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 shadow-lg p-3 sm:p-4 z-40 hidden transition-all duration-300">
 <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
 <div class="text-center sm:text-left">
 <span class="font-bold text-gray-900 text-sm sm:text-base">Ձեր պատվերը՝ </span>
@@ -400,7 +409,7 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 
 <script>
-console.log("ZIGZAG Catalog v2.30 loaded successfully");
+console.log("ZIGZAG Catalog v2.31 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
@@ -908,6 +917,14 @@ content.classList.add('opacity-50');
 try {
   const response = await fetch('PriceList_3.xlsx', { cache: 'no-cache' });
   if (!response.ok) throw new Error('PriceList_3.xlsx ֆայլը չի գտնվել');
+  
+  const lastModHeader = response.headers.get('Last-Modified');
+  if (lastModHeader) {
+    const pDate = new Date(lastModHeader);
+    const pad = n => String(n).padStart(2, '0');
+    document.getElementById('priceDateBadge').innerText = `📅 Պրայս՝ ${pad(pDate.getDate())}.${pad(pDate.getMonth()+1)}.${pDate.getFullYear()}`;
+  }
+
   const arrayBuffer = await response.arrayBuffer();
   const workbook = XLSX.read(arrayBuffer, { type: 'array' });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -1266,7 +1283,6 @@ function resetAndRender() {
   setupIntersectionObserver();
 }
 
-// Рендерим только ту раскладку, которая сейчас видна (таблица ИЛИ карточки)
 function appendProducts(list) {
   if (!list.length) return;
   const desktop = desktopMQ.matches;
@@ -1275,7 +1291,6 @@ function appendProducts(list) {
   document.getElementById(desktop ? 'tableBody' : 'mobileCardsContainer').appendChild(frag);
 }
 
-// При смене ширины экрана (поворот телефона, resize) перерисовываем уже показанные товары
 function rerenderVisible() {
   const keep = displayedCount;
   document.getElementById('tableBody').innerHTML = '';
@@ -1434,7 +1449,7 @@ function getActionControlHtml(articul, cartItem) {
   return `
 <div class="inline-flex items-center border border-blue-500 rounded-lg overflow-hidden bg-blue-50 flex-shrink-0">
 <button data-act="qty" data-delta="-1" data-art="${a}" class="px-2 sm:px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">-</button>
-<span class="px-2 sm:px-3 py-1 text-xs font-bold text-blue-900">${cartItem.qty}</span>
+<input type="number" data-act="qty-input" data-art="${a}" value="${cartItem.qty}" min="1" max="9999" class="w-10 sm:w-12 text-center text-xs font-bold text-blue-900 bg-transparent focus:outline-none focus:bg-white focus:ring-1 focus:ring-blue-500 py-1">
 <button data-act="qty" data-delta="1" data-art="${a}" class="px-2 sm:px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">+</button>
 </div>`;
 }
@@ -1444,8 +1459,6 @@ function saveCartToStorage() {
   try { localStorage.setItem('zigzag_cart_' + authorizedClient, JSON.stringify(cart)); } catch(e) {}
 }
 
-// В localStorage храним только артикул, количество и способ оплаты.
-// Цены, названия и остатки всегда берём из актуального прайса.
 function normalizeCart(raw) {
   const out = {};
   if (!raw || typeof raw !== 'object') return out;
@@ -1457,6 +1470,7 @@ function normalizeCart(raw) {
     out[articul] = {
       articul: articul,
       qty: qty,
+      addedPrice: Number(v.addedPrice) || 0,
       paymentMethod: v.paymentMethod === 'Կանխիկ' ? 'Կանխիկ' : 'Բանկային փոխանցումով'
     };
   });
@@ -1474,7 +1488,6 @@ function loadCartFromStorage(showToast = false) {
   }
 }
 
-// Вызывается после загрузки прайса: убирает позиции, которых больше нет, и пересчитывает панель
 function reconcileCart() {
   if (!catalogLoaded) return;
   let removed = 0;
@@ -1510,18 +1523,49 @@ function addToCart(articul) {
   const globalSel = document.getElementById('globalPaymentSelect');
   const globalMethod = globalSel ? globalSel.value : 'Բանկային փոխանցումով';
 
-  if (!cart[articul]) cart[articul] = { articul: articul, qty: 1, paymentMethod: globalMethod };
-  else cart[articul].qty += 1;
+  if (!cart[articul]) {
+    cart[articul] = { 
+      articul: articul, 
+      qty: 1, 
+      addedPrice: product.wholesale || 0, 
+      paymentMethod: globalMethod 
+    };
+  } else {
+    cart[articul].qty += 1;
+  }
 
   afterCartChange(articul);
 }
 
-// Обновляем только то, что изменилось: хранилище, нижнюю панель и кнопки этого товара.
-// Список НЕ перерисовывается, поэтому позиция прокрутки не сбрасывается.
+function setDirectQty(articul, newQty) {
+  newQty = Math.floor(Number(newQty));
+  if (isNaN(newQty) || newQty <= 0) {
+    delete cart[articul];
+  } else {
+    if (!cart[articul]) {
+      const p = getProduct(articul);
+      if (!p) return;
+      cart[articul] = { articul: articul, qty: newQty, addedPrice: p.wholesale || 0, paymentMethod: 'Բանկային փոխանցումով' };
+    } else {
+      cart[articul].qty = newQty;
+    }
+  }
+  afterCartChange(articul);
+}
+
+function animateCartPanel() {
+  const panel = document.getElementById('orderPanel');
+  if (panel && !panel.classList.contains('hidden')) {
+    panel.classList.add('cart-updated-anim');
+    setTimeout(() => panel.classList.remove('cart-updated-anim'), 300);
+  }
+}
+
 function afterCartChange(articul) {
   saveCartToStorage();
   updateOrderPanel();
   refreshProductActions(articul);
+  animateCartPanel();
 }
 
 function refreshProductActions(articul) {
@@ -1607,9 +1651,6 @@ function populateOrderModalFields() {
   orgSelect.onchange = restoreOrgDefaults;
 }
 
-// Возвращает адрес и контактное лицо выбранной организации к значениям из pass.xlsx.
-// Вызывается при смене организации и кнопкой «Վերականգնել» (повторный выбор той же
-// организации в <select> событие change не вызывает, поэтому нужна отдельная кнопка).
 function restoreOrgDefaults() {
   const orgSelect = document.getElementById('organizationSelect');
   const idx = parseInt(orgSelect.value);
@@ -1627,10 +1668,10 @@ function renderModalItems() {
   let totalSum = 0;
 
   Object.entries(cart).forEach(([artKey, item]) => {
-    const price = getItemWholesalePrice(item);
+    const currentPrice = getItemWholesalePrice(item);
     const articul = getItemArticul(artKey, item);
     const name = getItemName(item);
-    const sum = price * item.qty;
+    const sum = currentPrice * item.qty;
     totalSum += sum;
 
     if (!item.paymentMethod) {
@@ -1642,6 +1683,14 @@ function renderModalItems() {
     const isUtochnit = stockStatus.includes('Ճշտել');
     const stockBadgeClass = authorizedClient === "Администратор" ? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-[10px]' : (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
 
+    let priceDiffNotice = '';
+    if (item.addedPrice && item.addedPrice !== currentPrice && currentPrice > 0) {
+      const wasPriceStr = item.addedPrice.toLocaleString('ru-RU');
+      const isPriceStr = currentPrice.toLocaleString('ru-RU');
+      const diffColor = currentPrice > item.addedPrice ? 'text-red-600 bg-red-50 border-red-200' : 'text-emerald-700 bg-emerald-50 border-emerald-200';
+      priceDiffNotice = `<span class="px-2 py-0.5 text-[10px] font-bold rounded border ${diffColor} whitespace-nowrap">Գինը փոխվել է: ${wasPriceStr} ֏ → ${isPriceStr} ֏</span>`;
+    }
+
     const div = document.createElement('div');
     div.className = 'p-3 bg-gray-50 hover:bg-blue-50/30 rounded-xl border border-gray-200/80 flex flex-col gap-2.5 transition overflow-hidden';
     div.innerHTML = `
@@ -1650,6 +1699,7 @@ function renderModalItems() {
           <div class="flex items-center gap-2 mb-1 flex-wrap">
             <span class="font-mono text-xs text-blue-600 font-bold">${escapeHtml(articul)}</span>
             <span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${escapeHtml(stockStatus)}</span>
+            ${priceDiffNotice}
           </div>
           <div class="text-gray-900 font-semibold text-xs sm:text-sm leading-snug break-words">${escapeHtml(name)}</div>
         </div>
@@ -1657,7 +1707,7 @@ function renderModalItems() {
 
       <div class="flex flex-col gap-2 pt-2 border-t border-gray-200/60">
         <div class="flex items-center justify-between text-xs flex-wrap gap-1">
-          <span class="text-gray-500 font-medium">Միավորի գին՝ <span class="text-gray-900 font-bold">${price.toLocaleString('ru-RU')} ֏</span></span>
+          <span class="text-gray-500 font-medium">Միավորի գին՝ <span class="text-gray-900 font-bold">${currentPrice.toLocaleString('ru-RU')} ֏</span></span>
           <span class="font-black text-green-600 text-sm">${sum.toLocaleString('ru-RU')} ֏</span>
         </div>
 
@@ -1669,7 +1719,7 @@ function renderModalItems() {
 
           <div class="inline-flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white shadow-xs flex-shrink-0 ml-auto">
             <button data-act="mqty" data-delta="-1" data-art="${escapeHtml(articul)}" class="px-2.5 sm:px-3 py-1.5 bg-gray-100 hover:bg-gray-200 font-bold text-xs">-</button>
-            <span class="px-2.5 sm:px-3 py-1.5 font-bold text-xs text-blue-900 min-w-[28px] text-center">${item.qty}</span>
+            <input type="number" data-act="mqty-input" data-art="${escapeHtml(articul)}" value="${item.qty}" min="1" max="9999" class="w-10 sm:w-12 text-center text-xs font-bold text-blue-900 bg-transparent focus:outline-none focus:bg-white focus:ring-1 focus:ring-blue-500 py-1.5">
             <button data-act="mqty" data-delta="1" data-art="${escapeHtml(articul)}" class="px-2.5 sm:px-3 py-1.5 bg-gray-100 hover:bg-gray-200 font-bold text-xs">+</button>
           </div>
         </div>
@@ -1681,8 +1731,6 @@ function renderModalItems() {
   document.getElementById('modalTotalSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
 }
 
-// Поля доставки заполняются значениями по умолчанию только один раз.
-// Дальше пользовательский ввод не перезаписывается.
 function openOrderModal() {
   renderModalItems();
   if (!modalFieldsInitialized) {
@@ -1856,6 +1904,16 @@ function generateAndDownloadExcel() {
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Պատվեր");
 
+  // СОЗДАНИЕ СКРЫТОГО СИСТЕМНОГО ЛИСТА _data ДЛЯ НАДЁЖНОГО ИМПОРТА
+  const sysData = [
+    ['Articul', 'Qty', 'PaymentMethod']
+  ];
+  Object.entries(cart).forEach(([artKey, item]) => {
+    sysData.push([getItemArticul(artKey, item), item.qty, item.paymentMethod || 'Բանկային փոխանցումով']);
+  });
+  const sysSheet = XLSX.utils.aoa_to_sheet(sysData);
+  XLSX.utils.book_append_sheet(workbook, sysSheet, "_data");
+
   const now = new Date();
   const pad = n => String(n).padStart(2, '0');
   const uniqueFileName = `Zakaz_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}.xlsx`;
@@ -1886,43 +1944,73 @@ function importPreviousOrder(event) {
     try {
       const data = new Uint8Array(e.target.result);
       const workbook = XLSX.read(data, { type: 'array' });
-      const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
 
       const newCart = {};
       let loadedCount = 0;
 
-      rows.forEach(r => {
-        if (!r || r.length === 0) return;
-        let articul = '', qty = 0, payMethod = 'Բանկային փոխանցումով';
-
-        for (let j = 0; j < r.length; j++) {
-          if (String(r[j] || '').includes('ԱՐՊԱՆՔՆԵՐԻ') || String(r[j] || '').includes('ՏԵՂԵԿՈՒԹՅՈՒՆՆԵՐ') || String(r[j] || '').trim() === 'Արտիկուլ') return;
-        }
-
-        const firstCell = String(r[0] || '').trim();
-        if (firstCell && !firstCell.includes('Կոնտրագենտ') && !firstCell.includes('Մեկնաբանություն') && !firstCell.includes('Առաքման') && !firstCell.includes('ԸՆԴՀԱՆՈՒՐ') && !firstCell.includes('Կազմակերպություն') && !firstCell.includes('Կոնտակտային')) {
-          articul = firstCell;
-          for (let j = 1; j < r.length; j++) {
-            let num = Number(r[j]);
-            if (!isNaN(num) && num > 0 && num < 10000 && (j === 2 || j === 3 || j === 4)) {
-              qty = num;
-              break;
+      // ПРИՈՐԻՏԵՏ: Проверяем наличие защищенного листа _data
+      if (workbook.SheetNames.includes('_data')) {
+        const sysRows = XLSX.utils.sheet_to_json(workbook.Sheets['_data'], { header: 1 });
+        sysRows.forEach((r, idx) => {
+          if (idx === 0 || !r || r.length < 2) return;
+          const articul = String(r[0] || '').trim();
+          const qty = Number(r[1]) || 0;
+          const payMethod = String(r[2] || '').trim() || 'Բանկային փոխանցումով';
+          
+          if (articul && qty > 0) {
+            const product = getProduct(articul);
+            if (product) {
+              newCart[articul] = { 
+                articul: articul, 
+                qty: qty, 
+                addedPrice: product.wholesale || 0,
+                paymentMethod: payMethod 
+              };
+              loadedCount++;
             }
           }
-          if (!qty && r.length >= 3) qty = Number(r[2]) || 1;
-          for (let cell of r) {
-            if (String(cell || '').includes('Կանխիկ')) payMethod = 'Կանխիկ';
-          }
-        }
+        });
+      } else {
+        // РЕЗЕРВНЫЙ ВАРИАНТ (для старых файлов без листа _data)
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+        rows.forEach(r => {
+          if (!r || r.length === 0) return;
+          let articul = '', qty = 0, payMethod = 'Բանկային փոխանցումով';
 
-        if (articul && qty > 0) {
-          const product = getProduct(articul);
-          if (product) {
-            newCart[articul] = { articul: articul, qty: qty, paymentMethod: payMethod };
-            loadedCount++;
+          for (let j = 0; j < r.length; j++) {
+            if (String(r[j] || '').includes('ԱՐՊԱՆՔՆԵՐԻ') || String(r[j] || '').includes('ՏԵՂԵԿՈՒԹՅՈՒՆՆԵՐ') || String(r[j] || '').trim() === 'Արտիկուլ') return;
           }
-        }
-      });
+
+          const firstCell = String(r[0] || '').trim();
+          if (firstCell && !firstCell.includes('Կոնտրագենտ') && !firstCell.includes('Մեկնաբանություն') && !firstCell.includes('Առաքման') && !firstCell.includes('ԸՆԴՀԱՆՈՒՐ') && !firstCell.includes('Կազմակերպություն') && !firstCell.includes('Կոնտակտային')) {
+            articul = firstCell;
+            for (let j = 1; j < r.length; j++) {
+              let num = Number(r[j]);
+              if (!isNaN(num) && num > 0 && num < 10000 && (j === 2 || j === 3 || j === 4)) {
+                qty = num;
+                break;
+              }
+            }
+            if (!qty && r.length >= 3) qty = Number(r[2]) || 1;
+            for (let cell of r) {
+              if (String(cell || '').includes('Կանխիկ')) payMethod = 'Կանխիկ';
+            }
+          }
+
+          if (articul && qty > 0) {
+            const product = getProduct(articul);
+            if (product) {
+              newCart[articul] = { 
+                articul: articul, 
+                qty: qty, 
+                addedPrice: product.wholesale || 0,
+                paymentMethod: payMethod 
+              };
+              loadedCount++;
+            }
+          }
+        });
+      }
 
       if (loadedCount > 0) {
         cart = newCart;
@@ -1948,7 +2036,6 @@ searchInputEl.oninput = function () {
   debouncedResetAndRender();
 };
 
-// Единый обработчик кликов вместо inline onclick с подстановкой данных из Excel
 document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-act]');
   if (!el) return;
@@ -1966,6 +2053,13 @@ document.addEventListener('click', (e) => {
 document.addEventListener('change', (e) => {
   const el = e.target.closest('[data-act="pay"]');
   if (el) updateItemPayment(el.dataset.art, el.value);
+
+  const qInput = e.target.closest('[data-act="qty-input"], [data-act="mqty-input"]');
+  if (qInput) {
+    const art = qInput.dataset.art;
+    setDirectQty(art, qInput.value);
+    if (qInput.dataset.act === 'mqty-input') renderModalItems();
+  }
 });
 
 if (desktopMQ.addEventListener) desktopMQ.addEventListener('change', rerenderVisible);
