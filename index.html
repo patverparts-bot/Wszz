@@ -157,7 +157,7 @@ body { font-family: 'Inter', sans-serif; }
   </div>
 </div>
 
-<!-- ОКНО УВЕДОМЛЕНИЯ ОБ ОБНОВЛЕНИИ ПРАЙСА (ПРИ ВХОДЕ И НА ЛЕТУ) -->
+<!-- ОКНО УВЕДОМЛЕНИЯ ОБ ОБНОВЛЕНИИ ПРАЙСА -->
 <div id="priceUpdatePopup" class="fixed inset-0 bg-slate-950/70 backdrop-blur-md z-[100] hidden flex items-center justify-center p-4 transition-opacity duration-500">
   <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-8 sm:p-10 rounded-3xl shadow-2xl max-w-md w-full text-center transform transition-all scale-100 space-y-4">
     <div class="w-16 h-16 bg-blue-100 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-inner">
@@ -184,6 +184,12 @@ body { font-family: 'Inter', sans-serif; }
 <h1 class="text-sm sm:text-base font-bold text-gray-900 dark:text-white leading-tight">Մեծածախ ապրանքների կատալոգ</h1>
 <div class="flex items-center gap-2 mt-0.5 flex-wrap">
   <p class="text-[11px] sm:text-xs text-blue-600 dark:text-blue-400 font-medium" id="welcomeMsg">Բարև ձեզ...</p>
+  
+  <!-- Кнопка Личного кабинета рядом с приветствием -->
+  <button onclick="openPersonalCabinet()" aria-label="Անձնական հաշիվ" class="text-[10px] sm:text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 px-2 py-0.5 rounded transition flex items-center gap-1">
+    <span>👤 Անձնական հաշիվ</span>
+  </button>
+
   <span id="priceDateBadge" class="text-[10px] sm:text-[11px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded border border-gray-200 dark:border-gray-600">Թարմացում...</span>
   <button onclick="logout()" aria-label="Դուրս գալ համակարգից" class="text-[10px] sm:text-[11px] font-semibold text-red-600 dark:text-red-400 hover:text-red-800 bg-red-50 dark:bg-red-950/50 hover:bg-red-100 px-2 py-0.5 rounded transition">
     🚪 Դուրս գալ
@@ -462,6 +468,33 @@ body { font-family: 'Inter', sans-serif; }
 </button>
 </div>
 </div>
+</div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО: АНՁՆԱԿԱՆ ՀԱՇԻՎ (ЛИЧНЫЙ КАБИНЕТ) -->
+<div id="cabinetModal" class="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 hidden flex items-center justify-center p-2 sm:p-4">
+<div class="bg-white dark:bg-gray-800 rounded-2xl max-w-3xl w-full p-4 sm:p-6 shadow-2xl flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700" style="max-height:90vh;">
+  
+  <div class="flex justify-between items-center mb-4 border-b dark:border-gray-700 pb-3 flex-shrink-0">
+    <div>
+      <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white">👤 Անձնական հաշիվ</h3>
+      <p class="text-xs text-gray-500 dark:text-gray-400" id="cabinetUserSubtitle">Օգտատեր: —</p>
+    </div>
+    <button onclick="closePersonalCabinet()" aria-label="Փակել" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl font-bold">&times;</button>
+  </div>
+
+  <div id="cabinetHistoryList" class="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1">
+    <!-- Сюда динамически подгружаются заказы с датой, суммой, составом и способом формирования -->
+  </div>
+
+  <div class="border-t dark:border-gray-700 pt-3 mt-3 flex justify-between items-center flex-shrink-0">
+    <button onclick="clearOrderHistory()" aria-label="Մաքրել պատմությունը" class="px-3.5 py-2 bg-red-50 dark:bg-red-950/50 hover:bg-red-100 text-red-600 dark:text-red-400 rounded-lg text-xs font-semibold transition">
+      🗑️ Մաքրել պատմությունը
+    </button>
+    <button onclick="closePersonalCabinet()" aria-label="Փակել" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-semibold transition">
+      Փակել
+    </button>
+  </div>
 </div>
 </div>
 
@@ -1781,7 +1814,7 @@ if (p.retail > 0 && p.wholesale > 0) {
   if (isDomusUser) {
     marginBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold border bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600">${p.marginVal.toFixed(2)}</span>`;
   } else {
-    let colorClass = p.marginVal >= 20 ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : (p.marginVal < 5 ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800' : 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800');
+    let colorClass = p.marginVal >= 20 ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : (p.marginVal < 5 ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800' : 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800');
     marginBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold border ${colorClass}">${p.marginVal.toFixed(1)}%</span>`;
   }
 }
@@ -2169,6 +2202,167 @@ function getSelectedOrganizationName() {
   return (sel && sel.options.length > 0 && sel.selectedIndex >= 0) ? sel.options[sel.selectedIndex].text : authorizedClient;
 }
 
+// ----------------- ФУНКЦИИ ЛИЧНОГО КАБИНЕТА И ИСТОРИИ -----------------
+function saveOrderToHistory(cartItems, orgName, totalSum, actionType = 'Excel') {
+  if (!authorizedClient) return;
+  try {
+    const historyKey = 'zigzag_history_' + authorizedClient;
+    let history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+
+    const newOrder = {
+      id: 'ORD-' + Date.now(),
+      date: new Date().toLocaleString('ru-RU'),
+      organization: orgName || authorizedClient,
+      totalSum: totalSum,
+      itemsCount: Object.keys(cartItems).length,
+      actionType: actionType, // 'Excel', 'Viber' или 'Email'
+      cartSnapshot: JSON.parse(JSON.stringify(cartItems))
+    };
+
+    history.unshift(newOrder);
+    if (history.length > 20) history = history.slice(0, 20);
+
+    localStorage.setItem(historyKey, JSON.stringify(history));
+  } catch (e) {
+    console.error('Ошибка сохранения истории:', e);
+  }
+}
+
+function openPersonalCabinet() {
+  if (!authorizedClient) {
+    alert('Մուտք գործեք համակարգ։');
+    return;
+  }
+  document.getElementById('cabinetUserSubtitle').innerText = `Օգտատեր: ${authorizedClient} (${userSheetType})`;
+  renderOrderHistoryList();
+  document.getElementById('cabinetModal').classList.remove('hidden');
+}
+
+function closePersonalCabinet() {
+  document.getElementById('cabinetModal').classList.add('hidden');
+}
+
+function renderOrderHistoryList() {
+  const container = document.getElementById('cabinetHistoryList');
+  if (!authorizedClient) return;
+
+  const historyKey = 'zigzag_history_' + authorizedClient;
+  let history = [];
+  try {
+    history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+  } catch (e) {
+    history = [];
+  }
+
+  if (history.length === 0) {
+    container.innerHTML = `
+      <div class="p-8 text-center text-gray-400 dark:text-gray-500 text-xs sm:text-sm">
+        Դուք դեռևս չունեք պահպանված պատվերների պատմություն:
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = history.map((ord) => {
+    let actionBadgeClass = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300';
+    if (ord.actionType === 'Viber') actionBadgeClass = 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border-purple-300';
+    if (ord.actionType === 'Email') actionBadgeClass = 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border-blue-300';
+
+    let itemsHtml = '';
+    if (ord.cartSnapshot) {
+      itemsHtml = Object.values(ord.cartSnapshot).map(item => {
+        const prod = getProduct(item.articul);
+        const name = prod ? prod.name : 'Ապրանք';
+        const price = prod ? prod.wholesale : (item.addedPrice || 0);
+        return `<div class="text-[11px] text-gray-600 dark:text-gray-300 flex justify-between gap-2 border-b border-gray-100 dark:border-gray-700/50 py-0.5">
+          <span class="truncate">🔹 <strong class="font-mono">${escapeHtml(item.articul)}</strong> - ${escapeHtml(name)}</span>
+          <span class="whitespace-nowrap font-medium">${item.qty} հատ × ${price.toLocaleString('ru-RU')} ֏</span>
+        </div>`;
+      }).join('');
+    }
+
+    return `
+      <div class="p-3.5 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col gap-2.5 transition">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-gray-200/60 dark:border-gray-700 pb-2">
+          <div class="space-y-0.5">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-mono text-xs font-bold text-blue-600 dark:text-blue-400">${escapeHtml(ord.id)}</span>
+              <span class="text-xs text-gray-500 dark:text-gray-400">📅 ${escapeHtml(ord.date)}</span>
+              <span class="px-2 py-0.5 text-[10px] font-bold rounded border ${actionBadgeClass}">📤 ${escapeHtml(ord.actionType || 'Excel')}</span>
+            </div>
+            <div class="text-xs font-semibold text-gray-800 dark:text-gray-200">
+              🏢 ${escapeHtml(ord.organization)}
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-gray-500 dark:text-gray-400">Ընդհանուր՝</div>
+            <div class="text-sm font-black text-green-600 dark:text-green-400">${Number(ord.totalSum).toLocaleString('ru-RU')} ֏</div>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 p-2 rounded-lg border border-gray-100 dark:border-gray-700 max-h-32 overflow-y-auto space-y-1">
+          ${itemsHtml}
+        </div>
+
+        <div class="flex justify-end pt-1">
+          <button onclick="restoreOrderFromHistory('${ord.id}')" aria-label="Կրկնել պատվերը" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition whitespace-nowrap">
+            🛒 Կրկնել / Բեռնել զամբյուղ
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function restoreOrderFromHistory(orderId) {
+  const historyKey = 'zigzag_history_' + authorizedClient;
+  try {
+    const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+    const order = history.find(o => o.id === orderId);
+    if (!order || !order.cartSnapshot) {
+      alert('Պատվերը չի գտնվել:');
+      return;
+    }
+
+    let restoredCart = {};
+    let count = 0;
+    Object.entries(order.cartSnapshot).forEach(([art, item]) => {
+      const prod = getProduct(art);
+      if (prod) {
+        restoredCart[art] = {
+          articul: art,
+          qty: item.qty || 1,
+          addedPrice: prod.wholesale || 0,
+          paymentMethod: item.paymentMethod || 'Բանկային փոխանցումով'
+        };
+        count++;
+      }
+    });
+
+    if (count > 0) {
+      cart = restoredCart;
+      saveCartToStorage();
+      updateOrderPanel();
+      refreshAllActions();
+      closePersonalCabinet();
+      alert(`Պատվերը (${orderId}) հաջողությամբ վերականգնվել է զամբյուղում (${count} ապրանք)։`);
+    } else {
+      alert('Այս պատվերից ոչ մի ապրանք չի գտնվել ընթացիկ գնացուցակում։');
+    }
+  } catch (e) {
+    console.error(e);
+    alert('Սխալ պատվերը վերականգնելիս։');
+  }
+}
+
+function clearOrderHistory() {
+  if (!confirm('Հաստատու՞մ եք, որ ցանկանում եք մաքրել պատվերների ամբողջ պատմությունը։')) return;
+  try {
+    localStorage.removeItem('zigzag_history_' + authorizedClient);
+    renderOrderHistoryList();
+  } catch (e) {}
+}
+// ----------------- КОНЕЦ ФУНКЦИЙ КАБИНЕТА -----------------
+
 function buildEmailFormattedText() {
   const orgName = getSelectedOrganizationName();
   const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
@@ -2216,27 +2410,46 @@ function buildViberFormattedText() {
 }
 
 function sendViaViber() {
+  const orgName = getSelectedOrganizationName();
+  let totalSum = 0;
+  Object.values(cart).forEach(item => totalSum += getItemWholesalePrice(item) * item.qty);
+  
+  saveOrderToHistory(cart, orgName, totalSum, 'Viber');
+
   const viberText = buildViberFormattedText();
-  generateAndDownloadExcel();
+  generateAndDownloadExcel(true);
   setTimeout(() => window.open(`viber://forward?text=${encodeURIComponent(viberText)}`, '_blank'), 800);
 }
 
 function sendViaEmail() {
+  const orgName = getSelectedOrganizationName();
+  let totalSum = 0;
+  Object.values(cart).forEach(item => totalSum += getItemWholesalePrice(item) * item.qty);
+  
+  saveOrderToHistory(cart, orgName, totalSum, 'Email');
+
   const formattedText = buildEmailFormattedText();
-  generateAndDownloadExcel();
+  generateAndDownloadExcel(true); 
   setTimeout(() => {
     window.location.href = `mailto:${TARGET_EMAILS}?subject=${encodeURIComponent(`Պատվեր կատալոգից - ${authorizedClient}`)}&body=${encodeURIComponent(`Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը:\n\n` + formattedText)}`;
   }, 800);
 }
 
-function downloadOrderExcel() { generateAndDownloadExcel(); }
+function downloadOrderExcel() { generateAndDownloadExcel(false); }
 
-function generateAndDownloadExcel() {
+function generateAndDownloadExcel(isFromExternal = false) {
   const orgName = getSelectedOrganizationName();
   const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
   const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
   const contactPerson = (document.getElementById('contactPersonInput').value || '').trim();
   const comment = (document.getElementById('orderCommentInput').value || '').trim();
+
+  let currentTotalSum = 0;
+  Object.values(cart).forEach(item => currentTotalSum += getItemWholesalePrice(item) * item.qty);
+
+  if (!isFromExternal) {
+    saveOrderToHistory(cart, orgName, currentTotalSum, 'Excel');
+  }
 
   const excelData = [];
   let cashTotal = 0, bankTotal = 0;
@@ -2283,7 +2496,6 @@ function generateAndDownloadExcel() {
   if (delivAddr) excelData.push({ 'Արտիկուլ': 'Առաքման հասցե:', 'Անվանում': delivAddr, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
   if (comment) excelData.push({ 'Արտիկուլ': 'Մեկնաբանություն:', 'Անվանում': comment, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 
-  // Вставка информации о дате обновления прайс-листа в самом конце таблицы
   excelData.push({ 'Արտիկուլ': '', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
   excelData.push({ 'Արտիկուլ': 'Գնացուցակի թարմացում՝', 'Անվանում': cachedPriceDateText || '—', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 
