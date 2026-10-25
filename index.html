@@ -256,7 +256,7 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 </div>
 
-<!-- MODALNYE OKNO ZAKAZA -->
+<!-- MODALNOYE OKNO ZAKAZA -->
 <div id="orderModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-2 sm:p-4">
 <div class="bg-white rounded-2xl max-w-4xl w-full p-3 sm:p-6 shadow-2xl max-h-[96vh] sm:max-h-[92vh] flex flex-col">
 <div class="flex justify-between items-center mb-2 sm:mb-3 border-b pb-2 flex-shrink-0">
@@ -542,32 +542,48 @@ onerror="this.style.display='none'; this.nextElementSibling.style.display='inlin
 `;
 }
 
-// 100% GARANTIROVANNYY KASKADNYY ZAGRUZCHIK FOTOGRAFIY
+// 3-LEVEL FALLBACK IMAGE LOADER (100% SUCCESS)
 function handleImageFallback(imgElement, searchUrl) {
   const container = imgElement.parentElement;
+  
   if (!imgElement.dataset.triedPub) {
     imgElement.dataset.triedPub = "true";
-    imgElement.src = imgElement.dataset.fallback; // Proveryayem pub/media
+    imgElement.src = imgElement.dataset.fallback; // pub/media
+  } else if (!imgElement.dataset.triedDirect) {
+    imgElement.dataset.triedDirect = "true";
+    const cleanArt = imgElement.dataset.articul || '';
+    imgElement.src = `https://www.zigzag.am/media/catalog/product/${cleanArt}.jpg`; // direct root
   } else {
-    container.outerHTML = `<a href="${searchUrl}" target="_blank" class="text-[11px] text-blue-600 hover:underline font-semibold leading-tight flex items-center justify-center h-full text-center p-1 bg-blue-50 rounded border border-blue-100">🔍 Որոնել կայքում</a>`;
+    container.outerHTML = `
+      <a href="${searchUrl}" target="_blank" 
+         class="text-[10px] text-blue-600 hover:underline font-semibold leading-tight flex flex-col items-center justify-center h-full text-center p-1 bg-blue-50 rounded border border-blue-100" 
+         title="Սեղմեք՝ տվյալը կայքում դիտելու համար">
+        <span>📷</span>
+        <span>Որոնել</span>
+      </a>`;
   }
 }
 
 function getProductImageHtml(articul, productName) {
-const cleanArt = String(articul).trim();
-const a1 = cleanArt.charAt(0) || '0';
-const a2 = cleanArt.charAt(1) || '0';
+  const cleanArt = String(articul).trim();
+  const a1 = cleanArt.charAt(0) || '0';
+  const a2 = cleanArt.charAt(1) || '0';
 
-const url1 = `https://www.zigzag.am/media/catalog/product/${a1}/${a2}/${cleanArt}.jpg`;
-const url2 = `https://www.zigzag.am/pub/media/catalog/product/${a1}/${a2}/${cleanArt}.jpg`;
-const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(cleanArt)}`;
+  const url1 = `https://www.zigzag.am/media/catalog/product/${a1}/${a2}/${cleanArt}.jpg`;
+  const url2 = `https://www.zigzag.am/pub/media/catalog/product/${a1}/${a2}/${cleanArt}.jpg`;
+  const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(cleanArt)}`;
 
-return `
-<div class="product-img-container">
-<img src="${url1}" data-fallback="${url2}" alt="${productName}" class="product-img" loading="lazy"
-onerror="handleImageFallback(this, '${searchUrl}')">
-</div>
-`;
+  return `
+    <div class="product-img-container">
+      <img src="${url1}" 
+           data-fallback="${url2}" 
+           data-articul="${cleanArt}"
+           alt="${productName}" 
+           class="product-img" 
+           loading="lazy"
+           onerror="handleImageFallback(this, '${searchUrl}')">
+    </div>
+  `;
 }
 
 async function loadPasswordsFile() {
