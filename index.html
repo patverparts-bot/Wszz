@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Մեծածախ Ցանկ / Կատալոգ v2.8</title>
+<title>Մեծածախ Ցանկ / Կատալոգ v2.9</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- SheetJS (XLSX reader/writer) -->
@@ -80,7 +80,7 @@ body { font-family: 'Inter', sans-serif; }
   <div class="absolute inset-0 bg-slate-900/25"></div>
 
   <div class="relative z-10 bg-white/40 backdrop-blur-sm rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 text-center">
-    <span class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow">Сборка v2.8 (Очищено от лишнего кода)</span>
+    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.9</span>
     
     <h2 class="text-2xl font-black text-gray-900 mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
@@ -297,13 +297,11 @@ body { font-family: 'Inter', sans-serif; }
 
   <div id="deliveryDetailsContent" class="hidden p-2.5 sm:p-4 space-y-2.5 border-t border-gray-200 bg-gray-50">
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-      <!-- ԿԱԶՄԱԿԵՐՊՈՒԹՅՈՒՆ -->
       <div>
         <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 uppercase mb-1">🏢 Կազմակերպություն՝</label>
         <select id="organizationSelect" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-gray-800">
         </select>
       </div>
-      <!-- ՑԱՆԿԱԼԻ ԱՌԱՔՄԱՆ ԱՄՍԱԹԻՎ -->
       <div>
         <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 uppercase mb-1">📅 Ցանկալի առաքման ամսաթիվ՝</label>
         <input type="date" id="deliveryDateInput" oninput="checkDeliveryBadge()" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -311,12 +309,10 @@ body { font-family: 'Inter', sans-serif; }
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-      <!-- ԱՌԱՔՄԱՆ ՀԱՍՑԵ -->
       <div>
         <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 uppercase mb-1">📍 Առաքման հասցե (կարող եք փոխել)՝</label>
         <input type="text" id="deliveryAddressInput" oninput="checkDeliveryBadge()" placeholder="Քաղաք, փողոց, շենք..." class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
-      <!-- ԿՈՆՏԱԿՏԱՅԻՆ ԱՆՁ -->
       <div>
         <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 uppercase mb-1">👤 Կոնտակտային անձ (կարող եք փոխել)՝</label>
         <input type="text" id="contactPersonInput" oninput="checkDeliveryBadge()" placeholder="Անուն Ազգանուն, հեռախոս..." class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -391,7 +387,7 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 
 <script>
-console.log("ZIGZAG Catalog v2.8 loaded successfully");
+console.log("ZIGZAG Catalog v2.9 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
@@ -421,6 +417,16 @@ const brandDomains = {
 'hp': 'hp.com', 'dell': 'dell.com', 'huawei': 'huawei.com', 'babyliss': 'babyliss.com',
 'elica': 'elica.com', 'indesit': 'indesit.com'
 };
+
+function hideVersionBadge() {
+  setTimeout(() => {
+    const badge = document.getElementById('version-badge');
+    if (badge) {
+      badge.style.opacity = '0';
+      setTimeout(() => badge.remove(), 500);
+    }
+  }, 3000);
+}
 
 async function sha256(message) {
   const msgBuffer = new TextEncoder().encode(message);
@@ -763,6 +769,7 @@ headerRow.innerHTML = cols.map(c => `<th class="${thClass} ${c.align}">${c.name}
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+hideVersionBadge();
 await loadPasswordsFile();
 try {
   const savedClient = localStorage.getItem('zigzag_client');
