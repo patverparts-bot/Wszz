@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Մեծածախ Ցանկ / Կատալոգ v2.22</title>
+<title>Մեծածախ Ցանկ / Կատալոգ v2.23</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- SheetJS (XLSX reader/writer) -->
@@ -80,7 +80,7 @@ body { font-family: 'Inter', sans-serif; }
   <div class="absolute inset-0 bg-slate-900/25"></div>
 
   <div class="relative z-10 bg-white/40 backdrop-blur-sm rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 text-center">
-    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.22</span>
+    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.23</span>
     
     <h2 class="text-2xl font-black text-gray-900 mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
@@ -263,9 +263,9 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 </div>
 
-<!-- MODALNOYE OKNO ZAKAZA -->
+<!-- MODALNOYE OKNO ZAKAZA (Адаптивное с надежными переносами) -->
 <div id="orderModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-2 sm:p-4">
-<div class="bg-white rounded-2xl max-w-4xl w-full p-4 sm:p-6 shadow-2xl max-h-[96vh] sm:max-h-[92vh] flex flex-col">
+<div class="bg-white rounded-2xl max-w-4xl w-full p-3 sm:p-6 shadow-2xl max-h-[96vh] sm:max-h-[92vh] flex flex-col">
 <div class="flex justify-between items-center mb-3 border-b pb-3 flex-shrink-0">
 <h3 class="text-base sm:text-lg font-bold text-gray-900">Պատվերի պարունակությունը</h3>
 <button onclick="closeOrderModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
@@ -283,7 +283,8 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 </div>
 
-<div id="modalItemsList" class="overflow-y-auto flex-grow divide-y divide-gray-100 mb-3 min-h-[120px] max-h-[35vh] sm:max-h-[45vh] text-sm pr-1 space-y-3 sm:space-y-0">
+<!-- Список товаров с защитой от вылезания текста за рамки -->
+<div id="modalItemsList" class="overflow-y-auto flex-grow divide-y divide-gray-100 mb-3 min-h-[120px] max-h-[40vh] sm:max-h-[45vh] text-sm pr-1 space-y-3 sm:space-y-0">
 </div>
 
 <div class="bg-gray-50 rounded-xl border border-gray-200 mb-3 overflow-hidden transition-all flex-shrink-0">
@@ -388,7 +389,7 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 
 <script>
-console.log("ZIGZAG Catalog v2.22 loaded successfully");
+console.log("ZIGZAG Catalog v2.23 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
@@ -835,10 +836,12 @@ function setupIntersectionObserver() {
   const sentinel = document.getElementById('scrollSentinel');
   if (!sentinel) return;
 
+  if (observer) observer.disconnect();
+
   const options = {
     root: null,
-    rootMargin: '200px',
-    threshold: 0.1
+    rootMargin: '300px',
+    threshold: 0.05
   };
 
   observer = new IntersectionObserver((entries) => {
@@ -1216,6 +1219,7 @@ function resetAndRender() {
   document.getElementById('tableBody').innerHTML = '';
   document.getElementById('mobileCardsContainer').innerHTML = '';
   loadMoreProducts();
+  setupIntersectionObserver();
 }
 
 function loadMoreProducts() {
@@ -1258,7 +1262,7 @@ function loadMoreProducts() {
     }
     
     isLoadingMore = false;
-  }, 100);
+  }, 50);
 }
 
 function createRowElement(p) {
@@ -1513,8 +1517,9 @@ function openOrderModal() {
     const isUtochnit = stockStatus.includes('Ճշտել');
     const stockBadgeClass = authorizedClient === "Администратор" ? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-[10px]' : (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
 
+    // Адаптивная карточка товара с вертикальным разделением на мобильных и абсолютной защитой от вылезания цен
     const div = document.createElement('div');
-    div.className = 'p-3 sm:p-3.5 bg-gray-50 hover:bg-blue-50/30 rounded-xl border border-gray-200/80 flex flex-col gap-3 transition';
+    div.className = 'p-3 bg-gray-50 hover:bg-blue-50/30 rounded-xl border border-gray-200/80 flex flex-col gap-2.5 transition';
     div.innerHTML = `
       <div class="flex items-start justify-between gap-2">
         <div class="flex-grow min-w-0">
@@ -1522,28 +1527,27 @@ function openOrderModal() {
             <span class="font-mono text-xs text-blue-600 font-bold">${articul}</span>
             <span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${stockStatus}</span>
           </div>
-          <div class="text-gray-900 font-semibold text-xs sm:text-sm leading-snug">${name}</div>
+          <div class="text-gray-900 font-semibold text-xs sm:text-sm leading-snug break-words">${name}</div>
         </div>
       </div>
 
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 border-t border-gray-200/60">
-        <div class="flex items-center gap-3 text-xs">
+      <div class="flex flex-col gap-2 pt-2 border-t border-gray-200/60">
+        <div class="flex items-center justify-between text-xs">
           <span class="text-gray-500 font-medium">Միավորի գին՝ <span class="text-gray-900 font-bold">${price.toLocaleString('ru-RU')} ֏</span></span>
+          <span class="font-black text-green-600 text-sm">${sum.toLocaleString('ru-RU')} ֏</span>
         </div>
 
-        <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
-          <select onchange="updateItemPayment('${articul}', this.value)" class="px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-xs">
+        <div class="flex items-center justify-between gap-2 pt-1">
+          <select onchange="updateItemPayment('${articul}', this.value)" class="flex-grow px-2 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-xs">
             <option value="Բանկային փոխանցումով" ${item.paymentMethod === 'Բանկային փոխանցումով' ? 'selected' : ''}>🏦 Բանկային փոխանցումով</option>
             <option value="Կանխիկ" ${item.paymentMethod === 'Կանխիկ' ? 'selected' : ''}>💵 Կանխիկ</option>
           </select>
 
-          <div class="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white shadow-xs">
-            <button onclick="changeQty('${articul}', -1)" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 font-bold text-xs">-</button>
-            <span class="px-3 py-1 font-bold text-xs text-blue-900">${item.qty}</span>
-            <button onclick="changeQty('${articul}', 1)" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 font-bold text-xs">+</button>
+          <div class="inline-flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white shadow-xs flex-shrink-0">
+            <button onclick="changeQtyFromModal('${articul}', -1)" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 font-bold text-xs">-</button>
+            <span class="px-3 py-1.5 font-bold text-xs text-blue-900">${item.qty}</span>
+            <button onclick="changeQtyFromModal('${articul}', 1)" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 font-bold text-xs">+</button>
           </div>
-
-          <div class="font-black text-green-600 text-xs sm:text-sm min-w-[80px] text-right">${sum.toLocaleString('ru-RU')} ֏</div>
         </div>
       </div>`;
     listContainer.appendChild(div);
@@ -1571,7 +1575,21 @@ function changeQty(articul, delta) {
   resetAndRender();
 
   if (Object.keys(cart).length === 0) closeOrderModal();
-  else if (!document.getElementById('orderModal').classList.contains('hidden')) openOrderModal();
+}
+
+function changeQtyFromModal(articul, delta) {
+  if (!cart[articul]) return;
+  cart[articul].qty += delta;
+  if (cart[articul].qty <= 0) delete cart[articul];
+  saveCartToStorage();
+  updateOrderPanel();
+  resetAndRender();
+
+  if (Object.keys(cart).length === 0) {
+    closeOrderModal();
+  } else {
+    openOrderModal();
+  }
 }
 
 function closeOrderModal() { document.getElementById('orderModal').classList.add('hidden'); }
