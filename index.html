@@ -545,7 +545,7 @@ onerror="this.style.display='none'; this.nextElementSibling.style.display='inlin
 `;
 }
 
-// 100% НАДЕЖНЫЙ ОБРАБОТЧИК ОШИБОК И ФОЛБЭКОВ КАРТИНОК
+// УЛЬТРА-НАДЕЖНЫЙ ОБРАБОТЧИК ОШИБОК И ФОЛБЭКОВ КАРТИНОК
 function handleImageError(imgElement, searchUrl) {
   const container = imgElement.parentElement;
   if (!container) return;
@@ -554,15 +554,12 @@ function handleImageError(imgElement, searchUrl) {
   const cleanArt = imgElement.dataset.articul || '';
   
   if (step === 1) {
-    // Шаг 2: Пробуем папку pub/media
     imgElement.dataset.step = "2";
     imgElement.src = `https://www.zigzag.am/pub/media/catalog/product/${cleanArt.charAt(0)}/${cleanArt.charAt(1)}/${cleanArt}.jpg`;
   } else if (step === 2) {
-    // Шаг 3: Пробуем прямой путь без подпапок
     imgElement.dataset.step = "3";
     imgElement.src = `https://www.zigzag.am/media/catalog/product/${cleanArt}.jpg`;
   } else {
-    // Шаг 4: Если все пути вернули 404 — заменяем блок на кнопку «Որոնել»
     container.innerHTML = `
       <a href="${searchUrl}" target="_blank" 
          class="w-full h-full bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg flex flex-col items-center justify-center text-center p-0.5 transition shadow-sm"
