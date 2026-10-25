@@ -14,8 +14,8 @@ body { font-family: 'Inter', sans-serif; }
 
 .product-img-container {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -23,8 +23,8 @@ body { font-family: 'Inter', sans-serif; }
 }
 
 .product-img {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
@@ -45,12 +45,12 @@ body { font-family: 'Inter', sans-serif; }
 
 @media (max-width: 767px) {
   .product-img-container {
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
   }
   .product-img {
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
   }
   .product-img-container:hover .product-img {
     transform: scale(2);
@@ -62,6 +62,7 @@ body { font-family: 'Inter', sans-serif; }
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   position: relative;
+  width: 100%;
 }
 
 .table-scroll-wrapper th {
@@ -145,7 +146,7 @@ body { font-family: 'Inter', sans-serif; }
   </div>
 </div>
 
-<main class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex-grow w-full">
+<main class="max-w-7xl mx-auto px-2 sm:px-4 py-4 lg:px-8 flex-grow w-full">
 
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-4 overflow-visible">
   <button onclick="toggleMobileFilters()" class="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 flex items-center justify-between text-xs sm:text-sm font-semibold text-gray-700 md:hidden transition">
@@ -218,12 +219,12 @@ body { font-family: 'Inter', sans-serif; }
 <div id="catalogContent">
   <div class="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
   <div class="table-scroll-wrapper" id="tableScrollWrapper">
-  <table class="w-full text-left border-collapse min-w-[700px]" id="catalogTable">
+  <table class="w-full text-left border-collapse table-auto" id="catalogTable">
   <thead>
   <tr id="tableHeaderRow">
   </tr>
   </thead>
-  <tbody class="divide-y divide-gray-200 text-sm" id="tableBody">
+  <tbody class="divide-y divide-gray-200 text-xs sm:text-sm" id="tableBody">
   </tbody>
   </table>
   </div>
@@ -531,7 +532,7 @@ function clearAllFilters() {
 
 function getBrandLogoHtml(brandName) {
 if (!brandName || brandName === 'Այլ' || brandName === '—') {
-return `<span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-semibold">${brandName || '—'}</span>`;
+return `<span class="px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-[11px] font-semibold">${brandName || '—'}</span>`;
 }
 
 const cleanBrand = brandName.trim().toLowerCase();
@@ -539,10 +540,10 @@ const domain = brandDomains[cleanBrand] || `${cleanBrand.replace(/\s+/g, '')}.co
 const logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
 
 return `
-<div class="flex items-center gap-1.5">
-<img src="${logoUrl}" alt="${brandName}" class="h-4 w-4 sm:h-5 sm:w-5 object-contain rounded" loading="lazy" 
+<div class="flex items-center gap-1">
+<img src="${logoUrl}" alt="${brandName}" class="h-3.5 w-3.5 sm:h-4 sm:w-4 object-contain rounded flex-shrink-0" loading="lazy" 
 onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
-<span class="font-semibold text-gray-800 text-xs">${brandName}</span>
+<span class="font-semibold text-gray-800 text-xs truncate">${brandName}</span>
 </div>
 `;
 }
@@ -563,8 +564,8 @@ function handleImageError(imgElement) {
   } else {
     container.innerHTML = `
       <div class="w-full h-full bg-gray-100 border border-gray-200 rounded-lg flex flex-col items-center justify-center text-center p-0.5" title="Նկարը բացակայում է">
-        <span class="text-xs">📦</span>
-        <span class="text-[8px] font-bold text-gray-500">No photo</span>
+        <span class="text-[10px]">📦</span>
+        <span class="text-[7px] font-bold text-gray-500">No photo</span>
       </div>`;
   }
 }
@@ -751,26 +752,26 @@ loadCartFromStorage(true);
 
 function setupTableHeader() {
 const headerRow = document.getElementById('tableHeaderRow');
-const thClass = "py-3 px-4 font-semibold text-gray-700 text-xs uppercase tracking-wider border-b border-gray-200";
+const thClass = "py-2.5 px-2 sm:px-3 font-semibold text-gray-700 text-[11px] sm:text-xs uppercase tracking-wider border-b border-gray-200";
 
 let cols = [
-  { name: 'Արտիկուլ / Որոնում', align: 'text-left' },
-  { name: 'Բրենդ', align: 'text-left' },
-  { name: 'Կատեգորիա', align: 'text-left' },
-  { name: 'Անվանում', align: 'text-left' },
-  { name: 'Առկայություն', align: 'text-left' },
-  { name: 'Մանրածախ', align: 'text-right' },
-  { name: 'Եկամտաբերություն', align: 'text-center' }
+  { name: 'Արտիկուլ', align: 'text-left', extraClass: 'w-24 sm:w-28' },
+  { name: 'Բրենդ', align: 'text-left', extraClass: 'w-24 sm:w-28' },
+  { name: 'Կատեգորիա', align: 'text-left', extraClass: 'hidden lg:table-cell' },
+  { name: 'Անվանում', align: 'text-left', extraClass: 'w-auto' },
+  { name: 'Առկայություն', align: 'text-left', extraClass: 'w-24 sm:w-28' },
+  { name: 'Մանրածախ', align: 'text-right', extraClass: 'w-20 sm:w-24' },
+  { name: 'Margin', align: 'text-center', extraClass: 'w-16 sm:w-20' }
 ];
 
 if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
-  cols.push({ name: 'Վերավաճառքի մեծածախ գին', align: 'text-right' });
+  cols.push({ name: 'Վերավաճառք', align: 'text-right', extraClass: 'w-20 sm:w-24' });
 }
 
-cols.push({ name: 'Մեծածախ (Wholesale)', align: 'text-right' });
-cols.push({ name: 'Գործողություն', align: 'text-center' });
+cols.push({ name: 'Մեծածախ', align: 'text-right', extraClass: 'w-20 sm:w-24' });
+cols.push({ name: 'Գործողություն', align: 'text-center', extraClass: 'w-24 sm:w-28' });
 
-headerRow.innerHTML = cols.map(c => `<th class="${thClass} ${c.align}">${c.name}</th>`).join('');
+headerRow.innerHTML = cols.map(c => `<th class="${thClass} ${c.align} ${c.extraClass || ''}">${c.name}</th>`).join('');
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -1258,51 +1259,51 @@ const tr = document.createElement('tr');
 tr.className = 'hover:bg-blue-50/40 transition-colors border-b border-gray-100';
 
 const isUtochnit = p.stockStatus.includes('Ճշտել');
-const stockBadgeClass = authorizedClient === "Администратор" ? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-xs' : (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
+const stockBadgeClass = authorizedClient === "Администратор" ? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-[11px]' : (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
 
 const isDomusUser = authorizedClient.toUpperCase().includes('ԴՈՄՈՒՍ') || authorizedClient.toUpperCase().includes('ДОМУՍ') || authorizedClient.toUpperCase().includes('DOMUS');
 
 let marginBadge = '—';
 if (p.retail > 0 && p.wholesale > 0) {
   if (isDomusUser) {
-    marginBadge = `<span class="px-2 py-1 rounded-lg text-xs font-bold border bg-gray-100 text-gray-800 border-gray-300">${p.marginVal.toFixed(2)}</span>`;
+    marginBadge = `<span class="px-1.5 py-0.5 rounded text-[11px] font-bold border bg-gray-100 text-gray-800 border-gray-300">${p.marginVal.toFixed(2)}</span>`;
   } else {
     let colorClass = p.marginVal >= 20 ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : (p.marginVal < 5 ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-blue-100 text-blue-800 border-blue-200');
-    marginBadge = `<span class="px-2 py-1 rounded-lg text-xs font-bold border ${colorClass}">${p.marginVal.toFixed(1)}%</span>`;
+    marginBadge = `<span class="px-1.5 py-0.5 rounded text-[11px] font-bold border ${colorClass}">${p.marginVal.toFixed(1)}%</span>`;
   }
 }
 
-let retailCellHtml = p.retail > 0 ? (p.isPromo ? `<div class="flex flex-col items-end"><span class="text-gray-900 font-medium">${p.retail.toLocaleString('ru-RU')} ֏</span><span class="px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-[10px] font-bold mt-0.5 border border-red-200">ԱԿՑԻԱ</span></div>` : `<span class="text-gray-600">${p.retail.toLocaleString('ru-RU')} ֏</span>`) : '—';
-let wholesaleCellHtml = p.wholesale > 0 ? (p.isWholesalePromo ? `<div class="flex flex-col items-end"><span class="text-gray-900 font-semibold">${p.wholesale.toLocaleString('ru-RU')} ֏</span><span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold mt-0.5 border border-emerald-200">PROMO</span></div>` : `<span class="text-gray-900 font-semibold">${p.wholesale.toLocaleString('ru-RU')} ֏</span>`) : '—';
+let retailCellHtml = p.retail > 0 ? (p.isPromo ? `<div class="flex flex-col items-end"><span class="text-gray-900 font-medium whitespace-nowrap">${p.retail.toLocaleString('ru-RU')} ֏</span><span class="px-1 py-0.2 bg-red-100 text-red-700 rounded text-[9px] font-bold border border-red-200">ԱԿՑԻԱ</span></div>` : `<span class="text-gray-600 whitespace-nowrap">${p.retail.toLocaleString('ru-RU')} ֏</span>`) : '—';
+let wholesaleCellHtml = p.wholesale > 0 ? (p.isWholesalePromo ? `<div class="flex flex-col items-end"><span class="text-gray-900 font-semibold whitespace-nowrap">${p.wholesale.toLocaleString('ru-RU')} ֏</span><span class="px-1 py-0.2 bg-emerald-100 text-emerald-700 rounded text-[9px] font-bold border border-emerald-200">PROMO</span></div>` : `<span class="text-gray-900 font-semibold whitespace-nowrap">${p.wholesale.toLocaleString('ru-RU')} ֏</span>`) : '—';
 
 const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
 const cartItem = cart[p.articul];
 const actionCellHtml = getActionControlHtml(p.articul, cartItem);
-const resaleColHtml = authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ" ? `<td class="py-3 px-4 text-right text-gray-700 font-medium">${p.resaleWholesale ? p.resaleWholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</td>` : '';
+const resaleColHtml = authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ" ? `<td class="py-2.5 px-2 sm:px-3 text-right text-gray-700 font-medium whitespace-nowrap">${p.resaleWholesale ? p.resaleWholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</td>` : '';
 
 tr.innerHTML = `
-<td class="py-3 px-4 font-mono font-medium">
-  <div class="flex flex-col gap-1">
+<td class="py-2.5 px-2 sm:px-3 font-mono font-medium">
+  <div class="flex flex-col gap-0.5">
     <span class="text-blue-600 font-bold text-xs">${p.articul}</span>
-    <a href="${searchUrl}" target="_blank" class="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200 text-[10px] font-semibold transition w-fit shadow-xs" title="Որոնել Zigzag.am կայքում">
-      <span>🔍 Որոնել կայքում</span>
+    <a href="${searchUrl}" target="_blank" class="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200 text-[9px] font-semibold transition w-fit shadow-xs" title="Որոնել Zigzag.am կայքում">
+      <span>🔍 Կայք</span>
     </a>
   </div>
 </td>
-<td class="py-3 px-4">${getBrandLogoHtml(p.brand)}</td>
-<td class="py-3 px-4 text-gray-600">${p.category}</td>
-<td class="py-3 px-4">
-<div class="flex items-center gap-3">
+<td class="py-2.5 px-2 sm:px-3">${getBrandLogoHtml(p.brand)}</td>
+<td class="py-2.5 px-2 sm:px-3 text-gray-600 hidden lg:table-cell text-xs">${p.category}</td>
+<td class="py-2.5 px-2 sm:px-3">
+<div class="flex items-center gap-2">
 ${getProductImageHtml(p.articul, p.name)}
-<span class="text-gray-900 font-medium">${p.name || '—'}</span>
+<span class="text-gray-900 font-medium leading-snug line-clamp-2">${p.name || '—'}</span>
 </div>
 </td>
-<td class="py-3 px-4"><span class="px-2.5 py-1 rounded-md text-xs font-semibold ${stockBadgeClass}">${p.stockStatus}</span></td>
-<td class="py-3 px-4 text-right">${retailCellHtml}</td>
-<td class="py-3 px-4 text-center">${marginBadge}</td>
+<td class="py-2.5 px-2 sm:px-3"><span class="px-2 py-0.5 rounded-md text-[11px] font-semibold whitespace-nowrap ${stockBadgeClass}">${p.stockStatus}</span></td>
+<td class="py-2.5 px-2 sm:px-3 text-right">${retailCellHtml}</td>
+<td class="py-2.5 px-2 sm:px-3 text-center">${marginBadge}</td>
 ${resaleColHtml}
-<td class="py-3 px-4 text-right">${wholesaleCellHtml}</td>
-<td class="py-3 px-4 text-center">${actionCellHtml}</td>
+<td class="py-2.5 px-2 sm:px-3 text-right">${wholesaleCellHtml}</td>
+<td class="py-2.5 px-2 sm:px-3 text-center">${actionCellHtml}</td>
 `;
 return tr;
 }
@@ -1316,7 +1317,7 @@ const stockBadgeClass = authorizedClient === "Администратор" ? 'bg-
 const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
 const cartItem = cart[p.articul];
 
-const isDomusUser = authorizedClient.toUpperCase().includes('ԴՈՄՈՒՍ') || authorizedClient.toUpperCase().includes('ДОМУՍ') || authorizedClient.toUpperCase().includes('DOMUS');
+const isDomusUser = authorizedClient.toUpperCase().includes('ԴՈ繆Ս') || authorizedClient.toUpperCase().includes('ДОМУՍ') || authorizedClient.toUpperCase().includes('DOMUS');
 
 let marginBadge = '';
 if (p.retail > 0 && p.wholesale > 0) {
@@ -1361,13 +1362,13 @@ return div;
 
 function getActionControlHtml(articul, cartItem) {
 if (!cartItem) {
-  return `<button onclick="addToCart('${articul}')" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition">Պատվիրել</button>`;
+  return `<button onclick="addToCart('${articul}')" class="px-2.5 sm:px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition whitespace-nowrap">Պատվիրել</button>`;
 }
 return `
 <div class="inline-flex items-center border border-blue-500 rounded-lg overflow-hidden bg-blue-50 flex-shrink-0">
-<button onclick="changeQty('${articul}', -1)" class="px-2 sm:px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">-</button>
-<span class="px-2 sm:px-3 py-1 text-xs font-bold text-blue-900">${cartItem.qty}</span>
-<button onclick="changeQty('${articul}', 1)" class="px-2 sm:px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">+</button>
+<button onclick="changeQty('${articul}', -1)" class="px-1.5 sm:px-2 py-0.5 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">-</button>
+<span class="px-1.5 sm:px-2 py-0.5 text-xs font-bold text-blue-900">${cartItem.qty}</span>
+<button onclick="changeQty('${articul}', 1)" class="px-1.5 sm:px-2 py-0.5 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">+</button>
 </div>`;
 }
 
