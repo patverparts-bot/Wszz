@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Մեծածախ Ցանկ / Կատալոգ v2.11</title>
+<title>Մեծածախ Ցանկ / Կատալոգ v2.12</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- SheetJS (XLSX reader/writer) -->
@@ -80,7 +80,7 @@ body { font-family: 'Inter', sans-serif; }
   <div class="absolute inset-0 bg-slate-900/25"></div>
 
   <div class="relative z-10 bg-white/40 backdrop-blur-sm rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 text-center">
-    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.11</span>
+    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.12</span>
     
     <h2 class="text-2xl font-black text-gray-900 mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
@@ -391,7 +391,7 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 
 <script>
-console.log("ZIGZAG Catalog v2.11 loaded successfully");
+console.log("ZIGZAG Catalog v2.12 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
@@ -1007,22 +1007,31 @@ resetAndRender();
 }
 }
 
+// Обновленная функция скачивания полного прайс-листа (включает дополнительные колонки при необходимости)
 function downloadFullPriceList() {
   if (allProducts.length === 0) {
     alert('Տվյալները դեռ չեն բեռնվել կամ ապրանքներ չկան:');
     return;
   }
 
-  const exportRows = allProducts.map(p => ({
-    'Արտիկուլ': p.articul,
-    'Բրենդ': p.brand,
-    'Կատեգորիա': p.category,
-    'Անվանում': p.name,
-    'Առկայություն': p.stockStatus,
-    'Մանրածախ գին (AMD)': p.retail || 0,
-    'Եկամտաբերություն (%)': p.retail > 0 ? Number(p.marginVal.toFixed(1)) : 0,
-    'Մեծածախ գին (AMD)': p.wholesale || 0
-  }));
+  const exportRows = allProducts.map(p => {
+    let rowObj = {
+      'Արտիկուլ': p.articul,
+      'Բրենդ': p.brand,
+      'Կատեգորիա': p.category,
+      'Անվանում': p.name,
+      'Առկայություն': p.stockStatus,
+      'Մանրածախ գին (AMD)': p.retail || 0,
+      'Եկամտաբերություն (%)': p.retail > 0 ? Number(p.marginVal.toFixed(1)) : 0
+    };
+
+    if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
+      rowObj['Վերավաճառքի մեծածախ գին'] = p.resaleWholesale || 0;
+    }
+
+    rowObj['Մեծածախ գին (AMD)'] = p.wholesale || 0;
+    return rowObj;
+  });
 
   const worksheet = XLSX.utils.json_to_sheet(exportRows);
   const workbook = XLSX.utils.book_new();
@@ -1568,7 +1577,6 @@ function generateAndDownloadExcel() {
     else cashItems.push({ key: artKey, ...item });
   });
 
-  // Заголовок таблицы товаров
   excelData.push({ 'Արտիկուլ': 'ԱՊՐԱՆՔՆԵՐԻ ՑԱՆԿ (ՊԱՏՎԵՐ)', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
   excelData.push({ 'Արտիկուլ': 'Արտիկուլ', 'Անվանում': 'Անվանում', 'Քանակ (հատ)': 'Քանակ', 'Մեծածախ գին (AMD)': 'Գին', 'Գումար (AMD)': 'Գումար', 'Վճարման եղանակ': 'Վճարման եղանակ' });
 
@@ -1595,7 +1603,6 @@ function generateAndDownloadExcel() {
   excelData.push({ 'Արտիկուլ': '', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
   excelData.push({ 'Արտիկուլ': 'ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ ԲՈԼՈՐԻ', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': (cashTotal + bankTotal), 'Վճարման եղանակ': '' });
 
-  // Разделитель и блок информации о клиенте и доставке отдельно
   excelData.push({ 'Արտիկուլ': '', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
   excelData.push({ 'Արտիկուլ': 'ՏԵՂԵԿՈՒԹՅՈՒՆՆԵՐ ՊԱՏՎԻՐԱՏՈՒԻ ԵՎ ԱՌԱՔՄԱՆ ՄԱՍԻՆ', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
   excelData.push({ 'Արտիկուլ': 'Կոնտրագենտ:', 'Անվանում': authorizedClient, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
@@ -1608,14 +1615,13 @@ function generateAndDownloadExcel() {
 
   const worksheet = XLSX.utils.json_to_sheet(excelData, { skipHeader: true });
   
-  // Автоподбор ширины колонок для аккуратного отображения
   const colWidths = [
-    { wch: 22 }, // Արտիկուլ
-    { wch: 45 }, // Անվանում
-    { wch: 15 }, // Քանակ
-    { wch: 20 }, // Գին
-    { wch: 20 }, // Գումար
-    { wch: 25 }  // Վճարման եղանակ
+    { wch: 22 },
+    { wch: 45 },
+    { wch: 15 },
+    { wch: 20 },
+    { wch: 20 },
+    { wch: 25 }
   ];
   worksheet['!cols'] = colWidths;
 
