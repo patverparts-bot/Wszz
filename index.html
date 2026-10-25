@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Մեծածախ Ցանկ / Կատալոգ v2.13</title>
+<title>Մեծածախ Ցանկ / Կատալոգ v2.14</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- SheetJS (XLSX reader/writer) -->
@@ -80,7 +80,7 @@ body { font-family: 'Inter', sans-serif; }
   <div class="absolute inset-0 bg-slate-900/25"></div>
 
   <div class="relative z-10 bg-white/40 backdrop-blur-sm rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 text-center">
-    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.13</span>
+    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.14</span>
     
     <h2 class="text-2xl font-black text-gray-900 mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
@@ -391,7 +391,7 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 
 <script>
-console.log("ZIGZAG Catalog v2.13 loaded successfully");
+console.log("ZIGZAG Catalog v2.14 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
@@ -1270,10 +1270,16 @@ const stockBadgeClass = authorizedClient === "Администратор" ? 'bg-
 const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
 const cartItem = cart[p.articul];
 
+const isDomusUser = authorizedClient.toUpperCase().includes('ԴՈՄՈՒՍ') || authorizedClient.toUpperCase().includes('ДОМУՍ') || authorizedClient.toUpperCase().includes('DOMUS');
+
 let marginBadge = '';
 if (p.retail > 0 && p.wholesale > 0) {
-  let colorClass = p.marginVal >= 20 ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : (p.marginVal < 5 ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-blue-100 text-blue-800 border-blue-200');
-  marginBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold border ${colorClass}">${p.marginVal.toFixed(1)}%</span>`;
+  if (isDomusUser) {
+    marginBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold border bg-gray-100 text-gray-800 border-gray-300">${p.marginVal.toFixed(2)}</span>`;
+  } else {
+    let colorClass = p.marginVal >= 20 ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : (p.marginVal < 5 ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-blue-100 text-blue-800 border-blue-200');
+    marginBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold border ${colorClass}">${p.marginVal.toFixed(1)}%</span>`;
+  }
 }
 
 div.innerHTML = `
