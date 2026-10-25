@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Մեծածախ Ցանկ / Կատալոգ v2.9</title>
+<title>Մեծածախ Ցանկ / Կատալոգ v2.10</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- SheetJS (XLSX reader/writer) -->
@@ -80,7 +80,7 @@ body { font-family: 'Inter', sans-serif; }
   <div class="absolute inset-0 bg-slate-900/25"></div>
 
   <div class="relative z-10 bg-white/40 backdrop-blur-sm rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 text-center">
-    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.9</span>
+    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.10</span>
     
     <h2 class="text-2xl font-black text-gray-900 mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
@@ -118,6 +118,11 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 
 <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto flex-wrap justify-end">
+<!-- Кнопка скачивания персонального прайс-листа -->
+<button onclick="downloadFullPriceList()" class="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow transition cursor-pointer flex items-center gap-1.5" title="Ներբեռնել ամբողջական գնացուցակը Excel ֆայլով">
+  <span>📊 Ներբեռնել գնացուցակը</span>
+</button>
+
 <label class="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold shadow transition cursor-pointer flex items-center gap-1.5" title="Բեռնել նախկինում պահպանված պատվերի Excel ֆայլը">
   <span>📂 Բեռնել նախորդը</span>
   <input type="file" id="loadOrderFile" accept=".xlsx, .xls" class="hidden" onchange="importPreviousOrder(event)">
@@ -387,7 +392,7 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 
 <script>
-console.log("ZIGZAG Catalog v2.9 loaded successfully");
+console.log("ZIGZAG Catalog v2.10 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
@@ -1001,6 +1006,50 @@ resetAndRender();
 } catch (err) {
   console.error(err);
 }
+}
+
+// Функция для скачивания полного персонального прайс-листа текущего авторизованного пользователя
+function downloadFullPriceList() {
+  if (allProducts.length === 0) {
+    alert('Տվյալները դեռ չեն բեռնվել կամ ապրանքներ չկան:');
+    return;
+  }
+
+  const exportRows = allProducts.map(p => ({
+    'Արտիկուլ': p.articul,
+    'Բրենդ': p.brand,
+    'Կատեգորիա': p.category,
+    'Անվանում': p.name,
+    'Առկայություն': p.stockStatus,
+    'Մանրածախ գին (AMD)': p.retail || 0,
+    'Եկամտաբերություն (%)': p.retail > 0 ? Number(p.marginVal.toFixed(1)) : 0,
+    'Մեծածախ գին (AMD)': p.wholesale || 0
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(exportRows);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Գնացուցակ");
+
+  // Автоподбор ширины колонок
+  const colKeys = Object.keys(exportRows[0] || {});
+  const colWidths = colKeys.map(key => {
+    let maxLen = key ? String(key).length : 10;
+    exportRows.forEach(row => {
+      const val = row[key];
+      if (val !== undefined && val !== null) {
+        const len = String(val).length;
+        if (len > maxLen) maxLen = len;
+      }
+    });
+    return { wch: maxLen + 4 };
+  });
+  worksheet['!cols'] = colWidths;
+
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const fileName = `Full_PriceList_${authorizedClient.replace(/[\s"']/g, '_')}_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.xlsx`;
+
+  XLSX.writeFile(workbook, fileName);
 }
 
 function initFilters() {
