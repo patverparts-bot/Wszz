@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Մեծածախ Ցանկ / Կատալոգ v2.28</title>
+<title>Մեծածախ Ցանկ / Կատալոգ v2.29</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- SheetJS (XLSX reader/writer) -->
@@ -80,7 +80,7 @@ body { font-family: 'Inter', sans-serif; }
   <div class="absolute inset-0 bg-slate-900/25"></div>
 
   <div class="relative z-10 bg-white/40 backdrop-blur-sm rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 text-center">
-    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.28</span>
+    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.29</span>
     
     <h2 class="text-2xl font-black text-gray-900 mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
@@ -388,7 +388,7 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 
 <script>
-console.log("ZIGZAG Catalog v2.28 loaded successfully");
+console.log("ZIGZAG Catalog v2.29 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
@@ -687,7 +687,9 @@ for (let i = headerIdx + 1; i < rows.length; i++) {
   }
 }
 });
-} catch (e) {}
+} catch (e) {
+  console.error("Ошибка чтения pass.xlsx:", e);
+}
 }
 
 async function checkPassword() {
@@ -829,7 +831,7 @@ function setupIntersectionObserver() {
   if (observer) observer.disconnect();
 
   const options = {
-    root: null, // Наблюдаем относительно всего окна браузера (viewport), что гарантирует стабильную подгрузку в веб-версии
+    root: null,
     rootMargin: '600px',
     threshold: 0.01
   };
@@ -1747,7 +1749,7 @@ function importPreviousOrder(event) {
       let loadedCount = 0;
 
       rows.forEach(r => {
-        if (!r || r.length === 0) continue;
+        if (!r || r.length === 0) return;
         let articul = '', qty = 0, payMethod = 'Բանկային փոխանցումով';
 
         for (let j = 0; j < r.length; j++) {
