@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Մեծածախ Ցանկ / Կատալոգ v2.29</title>
+<title>Մեծածախ Ցանկ / Կատալոգ v2.30</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- SheetJS (XLSX reader/writer) -->
@@ -87,7 +87,7 @@ body { font-family: 'Inter', sans-serif; }
   <div class="absolute inset-0 bg-slate-900/25"></div>
 
   <div class="relative z-10 bg-white/40 backdrop-blur-sm rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 text-center">
-    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.29</span>
+    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.30</span>
     
     <h2 class="text-2xl font-black text-gray-900 mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
@@ -395,7 +395,7 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 
 <script>
-console.log("ZIGZAG Catalog v2.29 loaded successfully");
+console.log("ZIGZAG Catalog v2.30 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
@@ -403,6 +403,38 @@ let displayedCount = 0;
 const PAGE_SIZE = 40;
 let isLoadingMore = false;
 let observer = null;
+let catalogLoaded = false;
+let productIndex = new Map();
+let modalFieldsInitialized = false;
+let pendingRestoreToast = false;
+
+const DEBOUNCE_MS = 280;
+const desktopMQ = window.matchMedia('(min-width: 768px)');
+
+function escapeHtml(value) {
+  return String(value === null || value === undefined ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function debounce(fn, delay) {
+  let timer = null;
+  const wrapped = (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+  wrapped.cancel = () => clearTimeout(timer);
+  return wrapped;
+}
+
+const debouncedResetAndRender = debounce(() => resetAndRender(), DEBOUNCE_MS);
+
+function getProduct(articul) {
+  return productIndex.get(articul) || null;
+}
 
 let cart = {};
 let authorizedClient = '';
@@ -537,19 +569,20 @@ function clearAllFilters() {
 }
 
 function getBrandLogoHtml(brandName) {
-if (!brandName || brandName === 'Այլ' || brandName === '—') {
-return `<span class="px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-semibold">${brandName || '—'}</span>`;
-}
+  if (!brandName || brandName === 'Այլ' || brandName === '—') {
+    return `<span class="px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-semibold">${escapeHtml(brandName || '—')}</span>`;
+  }
 
-const cleanBrand = brandName.trim().toLowerCase();
-const domain = brandDomains[cleanBrand] || `${cleanBrand.replace(/\s+/g, '')}.com`;
-const logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+  const cleanBrand = brandName.trim().toLowerCase();
+  const domain = brandDomains[cleanBrand] || `${cleanBrand.replace(/\s+/g, '')}.com`;
+  const logoUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
+  const safeBrand = escapeHtml(brandName);
 
-return `
+  return `
 <div class="flex items-center gap-1">
-<img src="${logoUrl}" alt="${brandName}" class="h-4 w-4 object-contain rounded flex-shrink-0" loading="lazy" 
+<img src="${escapeHtml(logoUrl)}" alt="${safeBrand}" class="h-4 w-4 object-contain rounded flex-shrink-0" loading="lazy" 
 onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
-<span class="font-semibold text-gray-800 text-xs whitespace-normal">${brandName}</span>
+<span class="font-semibold text-gray-800 text-xs whitespace-normal">${safeBrand}</span>
 </div>
 `;
 }
@@ -580,14 +613,14 @@ function getProductImageHtml(articul, productName) {
   const cleanArt = String(articul).trim();
   const a1 = cleanArt.charAt(0) || '0';
   const a2 = cleanArt.charAt(1) || '0';
-  const initialUrl = `https://www.zigzag.am/media/catalog/product/${a1}/${a2}/${cleanArt}.jpg`;
+  const initialUrl = `https://www.zigzag.am/media/catalog/product/${encodeURIComponent(a1)}/${encodeURIComponent(a2)}/${encodeURIComponent(cleanArt)}.jpg`;
 
   return `
     <div class="product-img-container">
-      <img src="${initialUrl}" 
-           data-articul="${cleanArt}"
+      <img src="${escapeHtml(initialUrl)}" 
+           data-articul="${escapeHtml(cleanArt)}"
            data-step="1"
-           alt="${productName}" 
+           alt="${escapeHtml(productName)}" 
            class="product-img" 
            loading="lazy"
            onerror="handleImageError(this)">
@@ -603,7 +636,7 @@ passMap["d5c33d07c18e87a43d93fc607e4acc15caab0f59048a60bc034fe1737d428964"] = {
 };
 
 try {
-const response = await fetch('pass.xlsx');
+const response = await fetch('pass.xlsx', { cache: 'no-cache' });
 if (!response.ok) throw new Error('pass.xlsx ֆայլը չի գտնվել');
 const arrayBuffer = await response.arrayBuffer();
 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
@@ -738,6 +771,9 @@ authorizedClient = '';
 userSheetType = '';
 clientRowsData = [];
 cart = {};
+modalFieldsInitialized = false;
+catalogLoaded = false;
+pendingRestoreToast = false;
 
 document.getElementById('mainApp').classList.add('hidden');
 document.getElementById('mainApp').classList.remove('flex');
@@ -865,7 +901,7 @@ loader.classList.remove('hidden');
 content.classList.add('opacity-50');
 
 try {
-  const response = await fetch('PriceList_3.xlsx');
+  const response = await fetch('PriceList_3.xlsx', { cache: 'no-cache' });
   if (!response.ok) throw new Error('PriceList_3.xlsx ֆայլը չի գտնվել');
   const arrayBuffer = await response.arrayBuffer();
   const workbook = XLSX.read(arrayBuffer, { type: 'array' });
@@ -877,11 +913,13 @@ try {
 } finally {
   loader.classList.add('hidden');
   content.classList.remove('opacity-50');
+  updateOrderPanel();
 }
 }
 
 function parseExcelRows(rows) {
 try {
+catalogLoaded = false;
 allProducts = [];
 let headerRowIdx = 0;
 for (let i = 0; i < Math.min(rows.length, 25); i++) {
@@ -1038,6 +1076,11 @@ for (let i = headerRowIdx + 1; i < rows.length; i++) {
   }
 }
 
+productIndex = new Map();
+allProducts.forEach(p => { if (!productIndex.has(p.articul)) productIndex.set(p.articul, p); });
+catalogLoaded = true;
+reconcileCart();
+
 initFilters();
 loadSavedFilters();
 resetAndRender();
@@ -1111,7 +1154,7 @@ function renderBrandDropdown(brands) {
     dropdown.innerHTML = '<div class="p-2.5 text-gray-400 text-xs text-center">Ոչինչ չի գտնվել</div>';
     return;
   }
-  dropdown.innerHTML = brands.map(b => `<div onclick="selectBrand('${b}')" class="px-3 py-2 hover:bg-blue-50 cursor-pointer font-medium text-gray-800 transition border-b border-gray-50 last:border-none">${b}</div>`).join('');
+  dropdown.innerHTML = brands.map(b => `<div data-act="pick-brand" data-value="${escapeHtml(b)}" class="px-3 py-2 hover:bg-blue-50 cursor-pointer font-medium text-gray-800 transition border-b border-gray-50 last:border-none">${escapeHtml(b)}</div>`).join('');
 }
 
 function showBrandDropdown() { document.getElementById('brandDropdown').classList.remove('hidden'); }
@@ -1122,7 +1165,7 @@ function filterBrandOptions() {
   renderBrandDropdown(availableBrands.filter(b => b.toLowerCase().includes(query)));
   showBrandDropdown();
   selectedBrand = query;
-  resetAndRender();
+  debouncedResetAndRender();
 }
 
 function selectBrand(brand) {
@@ -1147,7 +1190,7 @@ function renderCategoryDropdown(categories) {
     dropdown.innerHTML = '<div class="p-2.5 text-gray-400 text-xs text-center">Ոչինչ չի գտնվել</div>';
     return;
   }
-  dropdown.innerHTML = categories.map(c => `<div onclick="selectCategory('${c}')" class="px-3 py-2 hover:bg-blue-50 cursor-pointer font-medium text-gray-800 transition border-b border-gray-50 last:border-none">${c}</div>`).join('');
+  dropdown.innerHTML = categories.map(c => `<div data-act="pick-category" data-value="${escapeHtml(c)}" class="px-3 py-2 hover:bg-blue-50 cursor-pointer font-medium text-gray-800 transition border-b border-gray-50 last:border-none">${escapeHtml(c)}</div>`).join('');
 }
 
 function showCategoryDropdown() { document.getElementById('categoryDropdown').classList.remove('hidden'); }
@@ -1158,7 +1201,7 @@ function filterCategoryOptions() {
   renderCategoryDropdown(availableCategories.filter(c => c.toLowerCase().includes(query)));
   showCategoryDropdown();
   selectedCategory = query;
-  resetAndRender();
+  debouncedResetAndRender();
 }
 
 function selectCategory(category) {
@@ -1209,6 +1252,7 @@ document.getElementById('productCountInfo').innerText = `Գտնվել է ${filte
 }
 
 function resetAndRender() {
+  debouncedResetAndRender.cancel();
   filterProducts();
   displayedCount = 0;
   document.getElementById('tableBody').innerHTML = '';
@@ -1217,10 +1261,24 @@ function resetAndRender() {
   setupIntersectionObserver();
 }
 
+// Рендерим только ту раскладку, которая сейчас видна (таблица ИЛИ карточки)
+function appendProducts(list) {
+  if (!list.length) return;
+  const desktop = desktopMQ.matches;
+  const frag = document.createDocumentFragment();
+  list.forEach(p => frag.appendChild(desktop ? createRowElement(p) : createCardElement(p)));
+  document.getElementById(desktop ? 'tableBody' : 'mobileCardsContainer').appendChild(frag);
+}
+
+// При смене ширины экрана (поворот телефона, resize) перерисовываем уже показанные товары
+function rerenderVisible() {
+  const keep = displayedCount;
+  document.getElementById('tableBody').innerHTML = '';
+  document.getElementById('mobileCardsContainer').innerHTML = '';
+  appendProducts(filteredProducts.slice(0, keep));
+}
+
 function loadMoreProducts() {
-  if (isLoadingMore || displayedCount >= filteredProducts.length) return;
-  
-  isLoadingMore = true;
   const spinner = document.getElementById('infiniteScrollSpinner');
   const textInfo = document.getElementById('infiniteScrollText');
   const noResults = document.getElementById('noResults');
@@ -1234,34 +1292,31 @@ function loadMoreProducts() {
   }
   noResults.classList.add('hidden');
 
+  if (isLoadingMore || displayedCount >= filteredProducts.length) return;
+
+  isLoadingMore = true;
   spinner.classList.remove('hidden');
   textInfo.innerText = 'Բեռնվում են հաջորդ ապրանքները...';
 
   setTimeout(() => {
-    const tbody = document.getElementById('tableBody');
-    const cardsContainer = document.getElementById('mobileCardsContainer');
-
     const nextBatch = filteredProducts.slice(displayedCount, displayedCount + PAGE_SIZE);
-    nextBatch.forEach(p => {
-      tbody.appendChild(createRowElement(p));
-      cardsContainer.appendChild(createCardElement(p));
-    });
-
+    appendProducts(nextBatch);
     displayedCount += nextBatch.length;
     spinner.classList.add('hidden');
-    
-    if (displayedCount >= filteredProducts.length) {
+
+    if (filteredProducts.length > 0 && displayedCount >= filteredProducts.length) {
       textInfo.innerText = `Բեռնված է բոլոր ${filteredProducts.length} ապրանքը`;
     } else {
       textInfo.innerText = '';
     }
-    
+
     isLoadingMore = false;
   }, 30);
 }
 
 function createRowElement(p) {
 const tr = document.createElement('tr');
+tr.dataset.art = p.articul;
 tr.className = 'hover:bg-blue-50/40 transition-colors border-b border-gray-100';
 
 const isUtochnit = p.stockStatus.includes('Ճշտել');
@@ -1290,26 +1345,26 @@ const resaleColHtml = authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ" ? `<td c
 tr.innerHTML = `
 <td class="font-mono font-medium">
   <div class="flex flex-col gap-1">
-    <span class="text-blue-600 font-bold text-xs whitespace-nowrap">${p.articul}</span>
-    <a href="${searchUrl}" target="_blank" class="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200 text-[10px] font-semibold transition w-fit shadow-xs whitespace-nowrap" title="Որոնել Zigzag.am կայքում">
+    <span class="text-blue-600 font-bold text-xs whitespace-nowrap">${escapeHtml(p.articul)}</span>
+    <a href="${escapeHtml(searchUrl)}" target="_blank" class="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200 text-[10px] font-semibold transition w-fit shadow-xs whitespace-nowrap" title="Որոնել Zigzag.am կայքում">
       <span>🔍 Որոնել կայքում</span>
     </a>
   </div>
 </td>
 <td>${getBrandLogoHtml(p.brand)}</td>
-<td class="text-gray-600 whitespace-normal">${p.category}</td>
+<td class="text-gray-600 whitespace-normal">${escapeHtml(p.category)}</td>
 <td>
 <div class="flex items-center gap-3">
 ${getProductImageHtml(p.articul, p.name)}
-<span class="text-gray-900 font-medium whitespace-normal">${p.name || '—'}</span>
+<span class="text-gray-900 font-medium whitespace-normal">${escapeHtml(p.name || '—')}</span>
 </div>
 </td>
-<td><span class="px-2.5 py-1 rounded-md font-semibold whitespace-nowrap ${stockBadgeClass}">${p.stockStatus}</span></td>
+<td><span class="px-2.5 py-1 rounded-md font-semibold whitespace-nowrap ${stockBadgeClass}">${escapeHtml(p.stockStatus)}</span></td>
 <td class="text-right">${retailCellHtml}</td>
 <td class="text-center">${marginBadge}</td>
 ${resaleColHtml}
 <td class="text-right">${wholesaleCellHtml}</td>
-<td class="text-center">${actionCellHtml}</td>
+<td class="text-center js-action" data-art="${escapeHtml(p.articul)}">${actionCellHtml}</td>
 `;
 return tr;
 }
@@ -1341,17 +1396,17 @@ div.innerHTML = `
   <div class="flex-grow min-w-0">
     <div class="flex items-center justify-between gap-2 mb-1">
       ${getBrandLogoHtml(p.brand)}
-      <a href="${searchUrl}" target="_blank" class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200 text-[10px] font-semibold transition shadow-xs">
+      <a href="${escapeHtml(searchUrl)}" target="_blank" class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200 text-[10px] font-semibold transition shadow-xs">
         <span>🔍 Որոնել</span>
       </a>
     </div>
-    <div class="font-mono text-xs font-bold text-blue-600 mb-0.5">${p.articul}</div>
-    <h4 class="text-sm font-semibold text-gray-900 leading-snug">${p.name || '—'}</h4>
+    <div class="font-mono text-xs font-bold text-blue-600 mb-0.5">${escapeHtml(p.articul)}</div>
+    <h4 class="text-sm font-semibold text-gray-900 leading-snug">${escapeHtml(p.name || '—')}</h4>
   </div>
 </div>
 
 <div class="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">
-  <span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${p.stockStatus}</span>
+  <span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${escapeHtml(p.stockStatus)}</span>
   <div class="flex items-center gap-2"><span class="text-gray-400">Եկամտաբերություն:</span>${marginBadge}</div>
 </div>
 
@@ -1360,21 +1415,22 @@ div.innerHTML = `
     <div class="text-[11px] text-gray-500">Մանրածախ: <span class="font-medium text-gray-700">${p.retail ? p.retail.toLocaleString('ru-RU') + ' ֏' : '—'}</span></div>
     <div class="text-xs font-bold text-gray-900">Մեծածախ: <span class="text-green-600">${p.wholesale ? p.wholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</span></div>
   </div>
-  <div>${getActionControlHtml(p.articul, cartItem)}</div>
+  <div class="js-action" data-art="${escapeHtml(p.articul)}">${getActionControlHtml(p.articul, cartItem)}</div>
 </div>
 `;
 return div;
 }
 
 function getActionControlHtml(articul, cartItem) {
-if (!cartItem) {
-  return `<button onclick="addToCart('${articul}')" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition whitespace-nowrap">Պատվիրել</button>`;
-}
-return `
+  const a = escapeHtml(articul);
+  if (!cartItem) {
+    return `<button data-act="add" data-art="${a}" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition whitespace-nowrap">Պատվիրել</button>`;
+  }
+  return `
 <div class="inline-flex items-center border border-blue-500 rounded-lg overflow-hidden bg-blue-50 flex-shrink-0">
-<button onclick="changeQty('${articul}', -1)" class="px-2 sm:px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">-</button>
+<button data-act="qty" data-delta="-1" data-art="${a}" class="px-2 sm:px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">-</button>
 <span class="px-2 sm:px-3 py-1 text-xs font-bold text-blue-900">${cartItem.qty}</span>
-<button onclick="changeQty('${articul}', 1)" class="px-2 sm:px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">+</button>
+<button data-act="qty" data-delta="1" data-art="${a}" class="px-2 sm:px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">+</button>
 </div>`;
 }
 
@@ -1383,50 +1439,110 @@ function saveCartToStorage() {
   try { localStorage.setItem('zigzag_cart_' + authorizedClient, JSON.stringify(cart)); } catch(e) {}
 }
 
-function loadCartFromStorage(showToast = false) {
-  if (!authorizedClient) return;
-  try {
-    const saved = localStorage.getItem('zigzag_cart_' + authorizedClient);
-    if (saved) {
-      cart = JSON.parse(saved);
-      const count = Object.keys(cart).length;
-      if (count > 0) {
-        updateOrderPanel();
-        if (showToast) showRestoredCartToast(count);
-      }
-    }
-  } catch(e) {}
+// В localStorage храним только артикул, количество и способ оплаты.
+// Цены, названия и остатки всегда берём из актуального прайса.
+function normalizeCart(raw) {
+  const out = {};
+  if (!raw || typeof raw !== 'object') return out;
+  Object.entries(raw).forEach(([key, v]) => {
+    if (!v || typeof v !== 'object') return;
+    const articul = String(v.articul || (v.product && v.product.articul) || key || '').trim();
+    const qty = Math.floor(Number(v.qty));
+    if (!articul || !(qty > 0)) return;
+    out[articul] = {
+      articul: articul,
+      qty: qty,
+      paymentMethod: v.paymentMethod === 'Կանխիկ' ? 'Կանխիկ' : 'Բանկային փոխանցումով'
+    };
+  });
+  return out;
 }
 
-function showRestoredCartToast(itemCount) {
+function loadCartFromStorage(showToast = false) {
+  if (!authorizedClient) return;
+  pendingRestoreToast = showToast;
+  try {
+    const saved = localStorage.getItem('zigzag_cart_' + authorizedClient);
+    cart = saved ? normalizeCart(JSON.parse(saved)) : {};
+  } catch(e) {
+    cart = {};
+  }
+}
+
+// Вызывается после загрузки прайса: убирает позиции, которых больше нет, и пересчитывает панель
+function reconcileCart() {
+  if (!catalogLoaded) return;
+  let removed = 0;
+  Object.keys(cart).forEach(art => {
+    if (!getProduct(art)) { delete cart[art]; removed++; }
+  });
+  if (removed > 0) saveCartToStorage();
+  updateOrderPanel();
+
+  const kept = Object.keys(cart).length;
+  if (pendingRestoreToast && (kept > 0 || removed > 0)) {
+    showRestoredCartToast(kept, removed);
+  }
+  pendingRestoreToast = false;
+}
+
+function showRestoredCartToast(itemCount, removedCount = 0) {
   const toast = document.getElementById('restoredCartToast');
-  document.getElementById('toastRestoredText').innerText = `Վերականգնվել է նախորդ պատվերի ${itemCount} ապրանք:`;
+  const parts = [];
+  if (itemCount > 0) parts.push(`Վերականգնվել է նախորդ պատվերի ${itemCount} ապրանք:`);
+  if (removedCount > 0) parts.push(`Գնացուցակում այլևս չգտնվող ${removedCount} ապրանք հանվել է:`);
+  document.getElementById('toastRestoredText').innerText = parts.join(' ');
   toast.classList.remove('hidden');
-  setTimeout(() => closeCartToast(), 5000);
+  setTimeout(() => closeCartToast(), removedCount > 0 ? 8000 : 5000);
 }
 
 function closeCartToast() { document.getElementById('restoredCartToast').classList.add('hidden'); }
 
 function addToCart(articul) {
-  const product = allProducts.find(p => p.articul === articul);
+  const product = getProduct(articul);
   if (!product) return;
-  const globalMethod = document.getElementById('globalPaymentSelect') ? document.getElementById('globalPaymentSelect').value : 'Բանկային փոխանցումով';
-  if (!cart[articul]) cart[articul] = { product: product, qty: 1, paymentMethod: globalMethod };
+
+  const globalSel = document.getElementById('globalPaymentSelect');
+  const globalMethod = globalSel ? globalSel.value : 'Բանկային փոխանցումով';
+
+  if (!cart[articul]) cart[articul] = { articul: articul, qty: 1, paymentMethod: globalMethod };
   else cart[articul].qty += 1;
+
+  afterCartChange(articul);
+}
+
+// Обновляем только то, что изменилось: хранилище, нижнюю панель и кнопки этого товара.
+// Список НЕ перерисовывается, поэтому позиция прокрутки не сбрасывается.
+function afterCartChange(articul) {
   saveCartToStorage();
   updateOrderPanel();
-  resetAndRender();
+  refreshProductActions(articul);
+}
+
+function refreshProductActions(articul) {
+  document.querySelectorAll('.js-action').forEach(el => {
+    if (el.dataset.art === articul) el.innerHTML = getActionControlHtml(articul, cart[articul]);
+  });
+}
+
+function refreshAllActions() {
+  document.querySelectorAll('.js-action').forEach(el => {
+    const art = el.dataset.art;
+    el.innerHTML = getActionControlHtml(art, cart[art]);
+  });
 }
 
 function getItemWholesalePrice(item) {
-  if (item.product && typeof item.product.wholesale === 'number' && item.product.wholesale > 0) return item.product.wholesale;
-  if (typeof item.wholesale === 'number' && item.wholesale > 0) return item.wholesale;
-  const found = allProducts.find(p => p.articul === (item.articul || (item.product && item.product.articul)));
-  return found ? found.wholesale : 0;
+  const p = getProduct(item && item.articul);
+  return p && p.wholesale > 0 ? p.wholesale : 0;
 }
 
-function getItemName(item) { return (item.product && item.product.name) ? item.product.name : (item.name || '—'); }
-function getItemArticul(artKey, item) { return (item.product && item.product.articul) ? item.product.articul : (item.articul || artKey); }
+function getItemName(item) {
+  const p = getProduct(item && item.articul);
+  return p && p.name ? p.name : '—';
+}
+
+function getItemArticul(artKey, item) { return (item && item.articul) || artKey; }
 
 function updateOrderPanel() {
   const orderPanel = document.getElementById('orderPanel');
@@ -1449,6 +1565,7 @@ function updateOrderPanel() {
 
 function clearOrder() {
   cart = {};
+  modalFieldsInitialized = false;
   ['deliveryDateInput', 'deliveryAddressInput', 'orderCommentInput', 'contactPersonInput'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
@@ -1456,13 +1573,13 @@ function clearOrder() {
   checkDeliveryBadge();
   saveCartToStorage();
   updateOrderPanel();
-  resetAndRender();
+  refreshAllActions();
 }
 
 function applyGlobalPayment(method) {
   Object.values(cart).forEach(item => item.paymentMethod = method);
   saveCartToStorage();
-  openOrderModal();
+  renderModalItems();
 }
 
 function populateOrderModalFields() {
@@ -1492,8 +1609,9 @@ function populateOrderModalFields() {
   };
 }
 
-function openOrderModal() {
+function renderModalItems() {
   const listContainer = document.getElementById('modalItemsList');
+  const prevScroll = listContainer.scrollTop;
   listContainer.innerHTML = '';
   let totalSum = 0;
 
@@ -1508,7 +1626,8 @@ function openOrderModal() {
       item.paymentMethod = 'Բանկային փոխանցումով';
     }
 
-    const stockStatus = (item.product && item.product.stockStatus) ? item.product.stockStatus : 'Առկա է';
+    const prod = getProduct(item.articul);
+    const stockStatus = (prod && prod.stockStatus) ? prod.stockStatus : 'Առկա է';
     const isUtochnit = stockStatus.includes('Ճշտել');
     const stockBadgeClass = authorizedClient === "Администратор" ? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-[10px]' : (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
 
@@ -1518,10 +1637,10 @@ function openOrderModal() {
       <div class="flex items-start justify-between gap-2">
         <div class="flex-grow min-w-0">
           <div class="flex items-center gap-2 mb-1 flex-wrap">
-            <span class="font-mono text-xs text-blue-600 font-bold">${articul}</span>
-            <span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${stockStatus}</span>
+            <span class="font-mono text-xs text-blue-600 font-bold">${escapeHtml(articul)}</span>
+            <span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${escapeHtml(stockStatus)}</span>
           </div>
-          <div class="text-gray-900 font-semibold text-xs sm:text-sm leading-snug break-words">${name}</div>
+          <div class="text-gray-900 font-semibold text-xs sm:text-sm leading-snug break-words">${escapeHtml(name)}</div>
         </div>
       </div>
 
@@ -1532,24 +1651,34 @@ function openOrderModal() {
         </div>
 
         <div class="flex items-center justify-between gap-2 pt-1 flex-wrap">
-          <select onchange="updateItemPayment('${articul}', this.value)" class="w-full sm:w-auto flex-grow px-2 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-xs">
+          <select data-act="pay" data-art="${escapeHtml(articul)}" class="w-full sm:w-auto flex-grow px-2 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-xs">
             <option value="Բանկային փոխանցումով" ${item.paymentMethod === 'Բանկային փոխանցումով' ? 'selected' : ''}>🏦 Բանկային փոխանցումով</option>
             <option value="Կանխիկ" ${item.paymentMethod === 'Կանխիկ' ? 'selected' : ''}>💵 Կանխիկ</option>
           </select>
 
           <div class="inline-flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white shadow-xs flex-shrink-0 ml-auto">
-            <button onclick="changeQtyFromModal('${articul}', -1)" class="px-2.5 sm:px-3 py-1.5 bg-gray-100 hover:bg-gray-200 font-bold text-xs">-</button>
+            <button data-act="mqty" data-delta="-1" data-art="${escapeHtml(articul)}" class="px-2.5 sm:px-3 py-1.5 bg-gray-100 hover:bg-gray-200 font-bold text-xs">-</button>
             <span class="px-2.5 sm:px-3 py-1.5 font-bold text-xs text-blue-900 min-w-[28px] text-center">${item.qty}</span>
-            <button onclick="changeQtyFromModal('${articul}', 1)" class="px-2.5 sm:px-3 py-1.5 bg-gray-100 hover:bg-gray-200 font-bold text-xs">+</button>
+            <button data-act="mqty" data-delta="1" data-art="${escapeHtml(articul)}" class="px-2.5 sm:px-3 py-1.5 bg-gray-100 hover:bg-gray-200 font-bold text-xs">+</button>
           </div>
         </div>
       </div>`;
     listContainer.appendChild(div);
   });
 
-  populateOrderModalFields();
-  checkDeliveryBadge();
+  listContainer.scrollTop = prevScroll;
   document.getElementById('modalTotalSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
+}
+
+// Поля доставки заполняются значениями по умолчанию только один раз.
+// Дальше пользовательский ввод не перезаписывается.
+function openOrderModal() {
+  renderModalItems();
+  if (!modalFieldsInitialized) {
+    populateOrderModalFields();
+    modalFieldsInitialized = true;
+  }
+  checkDeliveryBadge();
   document.getElementById('orderModal').classList.remove('hidden');
 }
 
@@ -1564,9 +1693,7 @@ function changeQty(articul, delta) {
   if (!cart[articul]) return;
   cart[articul].qty += delta;
   if (cart[articul].qty <= 0) delete cart[articul];
-  saveCartToStorage();
-  updateOrderPanel();
-  resetAndRender();
+  afterCartChange(articul);
 
   if (Object.keys(cart).length === 0) closeOrderModal();
 }
@@ -1575,14 +1702,12 @@ function changeQtyFromModal(articul, delta) {
   if (!cart[articul]) return;
   cart[articul].qty += delta;
   if (cart[articul].qty <= 0) delete cart[articul];
-  saveCartToStorage();
-  updateOrderPanel();
-  resetAndRender();
+  afterCartChange(articul);
 
   if (Object.keys(cart).length === 0) {
     closeOrderModal();
   } else {
-    openOrderModal();
+    renderModalItems();
   }
 }
 
@@ -1752,7 +1877,7 @@ function importPreviousOrder(event) {
       const workbook = XLSX.read(data, { type: 'array' });
       const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
 
-      cart = {};
+      const newCart = {};
       let loadedCount = 0;
 
       rows.forEach(r => {
@@ -1780,18 +1905,19 @@ function importPreviousOrder(event) {
         }
 
         if (articul && qty > 0) {
-          const product = allProducts.find(p => p.articul === articul);
+          const product = getProduct(articul);
           if (product) {
-            cart[articul] = { product: product, qty: qty, paymentMethod: payMethod };
+            newCart[articul] = { articul: articul, qty: qty, paymentMethod: payMethod };
             loadedCount++;
           }
         }
       });
 
       if (loadedCount > 0) {
+        cart = newCart;
         saveCartToStorage();
         updateOrderPanel();
-        resetAndRender();
+        refreshAllActions();
         alert(`Նախորդ պատվերը հաջողությամբ բեռնվեց: Վերականգնվել է ${loadedCount} ապրանք:`);
       } else {
         alert('Ֆայլում հնարավոր չեղավ գտնել ապրանքների ճիշտ տվյալներ։');
@@ -1805,13 +1931,33 @@ function importPreviousOrder(event) {
   reader.readAsArrayBuffer(file);
 }
 
-let searchTimeout = null;
-document.getElementById('searchInput').oninput = function() {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    resetAndRender();
-  }, 250);
+const searchInputEl = document.getElementById('searchInput');
+searchInputEl.oninput = function () {
+  document.getElementById('clearSearchBtn').classList.toggle('hidden', searchInputEl.value.trim().length === 0);
+  debouncedResetAndRender();
 };
+
+// Единый обработчик кликов вместо inline onclick с подстановкой данных из Excel
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const art = el.dataset.art;
+  switch (el.dataset.act) {
+    case 'add':           addToCart(art); break;
+    case 'qty':           changeQty(art, Number(el.dataset.delta)); break;
+    case 'mqty':          changeQtyFromModal(art, Number(el.dataset.delta)); break;
+    case 'pick-brand':    selectBrand(el.dataset.value); break;
+    case 'pick-category': selectCategory(el.dataset.value); break;
+  }
+});
+
+document.addEventListener('change', (e) => {
+  const el = e.target.closest('[data-act="pay"]');
+  if (el) updateItemPayment(el.dataset.art, el.value);
+});
+
+if (desktopMQ.addEventListener) desktopMQ.addEventListener('change', rerenderVisible);
+else if (desktopMQ.addListener) desktopMQ.addListener(rerenderVisible);
 </script>
 </body>
 </html>
