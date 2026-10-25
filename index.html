@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Մեծածախ Ցանկ / Կատալոգ v2.14</title>
+<title>Մեծածախ Ցանկ / Կատալոգ v2.16</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- SheetJS (XLSX reader/writer) -->
@@ -80,7 +80,7 @@ body { font-family: 'Inter', sans-serif; }
   <div class="absolute inset-0 bg-slate-900/25"></div>
 
   <div class="relative z-10 bg-white/40 backdrop-blur-sm rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 text-center">
-    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.14</span>
+    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.16</span>
     
     <h2 class="text-2xl font-black text-gray-900 mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
@@ -217,7 +217,7 @@ body { font-family: 'Inter', sans-serif; }
 
 <div id="catalogContent">
   <div class="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-  <div class="table-scroll-wrapper">
+  <div class="table-scroll-wrapper" id="tableScrollWrapper">
   <table class="w-full text-left border-collapse min-w-[700px]" id="catalogTable">
   <thead>
   <tr id="tableHeaderRow">
@@ -236,11 +236,10 @@ body { font-family: 'Inter', sans-serif; }
   Ապրանքներ չեն գտնվել Ձեր որոնման կամ պահեստի պայմաններին համապատասխան:
   </div>
 
-  <div id="loadMoreContainer" class="hidden text-center mt-6">
-    <button onclick="loadMoreProducts()" class="px-6 py-3 bg-white hover:bg-gray-50 border border-gray-300 text-blue-600 font-semibold text-sm rounded-xl shadow-sm transition transform hover:scale-105 inline-flex items-center gap-2">
-      <span>🔽 Բեռնել ավելին</span>
-      <span id="loadMoreCounter" class="text-xs text-gray-400 font-normal"></span>
-    </button>
+  <!-- Sentinel element for Intersection Observer -->
+  <div id="scrollSentinel" class="py-6 flex flex-col items-center justify-center gap-2">
+    <div id="infiniteScrollSpinner" class="hidden w-6 h-6 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+    <span id="infiniteScrollText" class="text-xs text-gray-400 font-medium"></span>
   </div>
 </div>
 
@@ -391,12 +390,14 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 
 <script>
-console.log("ZIGZAG Catalog v2.14 loaded successfully");
+console.log("ZIGZAG Catalog v2.16 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
 let displayedCount = 0;
 const PAGE_SIZE = 40;
+let isLoadingMore = false;
+let observer = null;
 
 let cart = {};
 let authorizedClient = '';
@@ -806,6 +807,8 @@ window.onscroll = function() {
   }
 };
 
+setupIntersectionObserver();
+
 document.addEventListener('click', (e) => {
   const brandDropdown = document.getElementById('brandDropdown');
   const brandInput = document.getElementById('brandInput');
@@ -816,6 +819,27 @@ document.addEventListener('click', (e) => {
   if (categoryDropdown && !categoryDropdown.contains(e.target) && e.target !== categoryInput) categoryDropdown.classList.add('hidden');
 });
 });
+
+function setupIntersectionObserver() {
+  const sentinel = document.getElementById('scrollSentinel');
+  if (!sentinel) return;
+
+  const options = {
+    root: null,
+    rootMargin: '200px',
+    threshold: 0.1
+  };
+
+  observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && displayedCount < filteredProducts.length && !isLoadingMore) {
+        loadMoreProducts();
+      }
+    });
+  }, options);
+
+  observer.observe(sentinel);
+}
 
 function scrollToTop() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1180,31 +1204,46 @@ function resetAndRender() {
 }
 
 function loadMoreProducts() {
-  const tbody = document.getElementById('tableBody');
-  const cardsContainer = document.getElementById('mobileCardsContainer');
+  if (isLoadingMore || displayedCount >= filteredProducts.length) return;
+  
+  isLoadingMore = true;
+  const spinner = document.getElementById('infiniteScrollSpinner');
+  const textInfo = document.getElementById('infiniteScrollText');
   const noResults = document.getElementById('noResults');
-  const loadMoreContainer = document.getElementById('loadMoreContainer');
 
   if (filteredProducts.length === 0) {
     noResults.classList.remove('hidden');
-    loadMoreContainer.classList.add('hidden');
+    spinner.classList.add('hidden');
+    textInfo.innerText = '';
+    isLoadingMore = false;
     return;
   }
   noResults.classList.add('hidden');
 
-  const nextBatch = filteredProducts.slice(displayedCount, displayedCount + PAGE_SIZE);
-  nextBatch.forEach(p => {
-    tbody.appendChild(createRowElement(p));
-    cardsContainer.appendChild(createCardElement(p));
-  });
+  spinner.classList.remove('hidden');
+  textInfo.innerText = 'Բեռնվում են հաջորդ ապրանքները...';
 
-  displayedCount += nextBatch.length;
-  if (displayedCount < filteredProducts.length) {
-    loadMoreContainer.classList.remove('hidden');
-    document.getElementById('loadMoreCounter').innerText = `(${displayedCount} / ${filteredProducts.length})`;
-  } else {
-    loadMoreContainer.classList.add('hidden');
-  }
+  setTimeout(() => {
+    const tbody = document.getElementById('tableBody');
+    const cardsContainer = document.getElementById('mobileCardsContainer');
+
+    const nextBatch = filteredProducts.slice(displayedCount, displayedCount + PAGE_SIZE);
+    nextBatch.forEach(p => {
+      tbody.appendChild(createRowElement(p));
+      cardsContainer.appendChild(createCardElement(p));
+    });
+
+    displayedCount += nextBatch.length;
+    spinner.classList.add('hidden');
+    
+    if (displayedCount >= filteredProducts.length) {
+      textInfo.innerText = `Բեռնված է բոլոր ${filteredProducts.length} ապրանքը`;
+    } else {
+      textInfo.innerText = '';
+    }
+    
+    isLoadingMore = false;
+  }, 100);
 }
 
 function createRowElement(p) {
@@ -1724,7 +1763,13 @@ function importPreviousOrder(event) {
   reader.readAsArrayBuffer(file);
 }
 
-document.getElementById('searchInput').oninput = resetAndRender;
+let searchTimeout = null;
+document.getElementById('searchInput').oninput = function() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    resetAndRender();
+  }, 250);
+};
 </script>
 </body>
 </html>
