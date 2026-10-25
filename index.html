@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Մեծածախ Ցանկ / Կատալոգ v2.7</title>
+<title>Մեծածախ Ցանկ / Կատալոգ v2.8</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- SheetJS (XLSX reader/writer) -->
@@ -80,7 +80,7 @@ body { font-family: 'Inter', sans-serif; }
   <div class="absolute inset-0 bg-slate-900/25"></div>
 
   <div class="relative z-10 bg-white/40 backdrop-blur-sm rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 text-center">
-    <span class="inline-block px-2.5 py-0.5 bg-emerald-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow">Сборка v2.7 (Фото и поиск активны)</span>
+    <span class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow">Сборка v2.8 (Очищено от лишнего кода)</span>
     
     <h2 class="text-2xl font-black text-gray-900 mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
@@ -297,7 +297,7 @@ body { font-family: 'Inter', sans-serif; }
 
   <div id="deliveryDetailsContent" class="hidden p-2.5 sm:p-4 space-y-2.5 border-t border-gray-200 bg-gray-50">
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-      <!-- ԿԱԶՄԱԿԵՐՊՈՒԹՅՈՒՆ (Raskrivayuschiysya spisok) -->
+      <!-- ԿԱԶՄԱԿԵՐՊՈՒԹՅՈՒՆ -->
       <div>
         <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 uppercase mb-1">🏢 Կազմակերպություն՝</label>
         <select id="organizationSelect" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-gray-800">
@@ -311,12 +311,12 @@ body { font-family: 'Inter', sans-serif; }
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-      <!-- ԱՌԱՔՄԱՆ ՀԱՍՑԵ (Avtozapolnyaemy i redaktiruemy) -->
+      <!-- ԱՌԱՔՄԱՆ ՀԱՍՑԵ -->
       <div>
         <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 uppercase mb-1">📍 Առաքման հասցե (կարող եք փոխել)՝</label>
         <input type="text" id="deliveryAddressInput" oninput="checkDeliveryBadge()" placeholder="Քաղաք, փողոց, շենք..." class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
-      <!-- ԿՈՆՏԱԿՏԱՅԻՆ ԱՆՁ (Avtozapolnyaemy i redaktiruemy) -->
+      <!-- ԿՈՆՏԱԿՏԱՅԻՆ ԱՆՁ -->
       <div>
         <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 uppercase mb-1">👤 Կոնտակտային անձ (կարող եք փոխել)՝</label>
         <input type="text" id="contactPersonInput" oninput="checkDeliveryBadge()" placeholder="Անուն Ազգանուն, հեռախոս..." class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -391,7 +391,7 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 
 <script>
-console.log("ZIGZAG Catalog v2.7 loaded successfully");
+console.log("ZIGZAG Catalog v2.8 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
@@ -433,22 +433,14 @@ function toggleMobileFilters() {
   const container = document.getElementById('filtersContainer');
   const icon = document.getElementById('filterToggleIcon');
   container.classList.toggle('hidden');
-  if (container.classList.contains('hidden')) {
-    icon.style.transform = 'rotate(0deg)';
-  } else {
-    icon.style.transform = 'rotate(180deg)';
-  }
+  icon.style.transform = container.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
 }
 
 function toggleDeliveryDetails() {
   const content = document.getElementById('deliveryDetailsContent');
   const icon = document.getElementById('deliveryToggleIcon');
   content.classList.toggle('hidden');
-  if (content.classList.contains('hidden')) {
-    icon.style.transform = 'rotate(0deg)';
-  } else {
-    icon.style.transform = 'rotate(180deg)';
-  }
+  icon.style.transform = content.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
 }
 
 function checkDeliveryBadge() {
@@ -523,11 +515,8 @@ function clearAllFilters() {
   document.getElementById('clearSearchBtn').classList.add('hidden');
   
   if (authorizedClient) {
-    try {
-      localStorage.removeItem('zigzag_filters_' + authorizedClient);
-    } catch(e) {}
+    try { localStorage.removeItem('zigzag_filters_' + authorizedClient); } catch(e) {}
   }
-
   resetAndRender();
 }
 
@@ -549,7 +538,7 @@ onerror="this.style.display='none'; this.nextElementSibling.style.display='inlin
 `;
 }
 
-function handleImageError(imgElement, searchUrl) {
+function handleImageError(imgElement) {
   const container = imgElement.parentElement;
   if (!container) return;
   
@@ -563,7 +552,6 @@ function handleImageError(imgElement, searchUrl) {
     imgElement.dataset.step = "3";
     imgElement.src = `https://www.zigzag.am/media/catalog/product/${cleanArt}.jpg`;
   } else {
-    // Если картинка не нашлась совсем, показываем заглушку с фоторюкзаком/камерой
     container.innerHTML = `
       <div class="w-full h-full bg-gray-100 border border-gray-200 rounded-lg flex flex-col items-center justify-center text-center p-0.5" title="Նկարը բացակայում է">
         <span class="text-xs">📦</span>
@@ -576,7 +564,6 @@ function getProductImageHtml(articul, productName) {
   const cleanArt = String(articul).trim();
   const a1 = cleanArt.charAt(0) || '0';
   const a2 = cleanArt.charAt(1) || '0';
-
   const initialUrl = `https://www.zigzag.am/media/catalog/product/${a1}/${a2}/${cleanArt}.jpg`;
 
   return `
@@ -639,37 +626,19 @@ for (let i = headerIdx + 1; i < rows.length; i++) {
   let client = r[clientColIdx] !== null && r[clientColIdx] !== undefined ? String(r[clientColIdx]).trim() : '';
   
   if (pHash) {
-    let rowDataObj = {
-      client: client,
-      sheet: sheetName,
-      rowsList: []
-    };
-
-    let orgs = [];
-    let addrs = [];
-    let contacts = [];
+    let rowDataObj = { client: client, sheet: sheetName, rowsList: [] };
+    let orgs = [], addrs = [], contacts = [];
 
     for (let k = 1; k <= 5; k++) {
-      let orgVal = '';
-      let addrVal = '';
-      let contVal = '';
-
+      let orgVal = '', addrVal = '', contVal = '';
       headers.forEach((h, idx) => {
         let hClean = h.replace(/\s+/g, ' ').trim().toLowerCase();
         let val = r[idx] !== undefined && r[idx] !== null ? String(r[idx]).trim() : '';
         if (!val) return;
-
-        if (hClean === `կազմակերպություն ${k}` || hClean === `organization ${k}` || (k === 1 && (hClean === 'կազմակերպություն' || hClean === 'контрагент'))) {
-          orgVal = val;
-        }
-        if (hClean === `առաքման հացսե ${k}` || hClean === `առաքման հասցե ${k}` || hClean === `address ${k}` || (k === 1 && (hClean === 'առաքման հացսե' || hClean === 'առաքման հասցե'))) {
-          addrVal = val;
-        }
-        if (hClean === `կոնտակտային անձ ${k}` || hClean === `contact ${k}` || (k === 1 && (hClean === 'կոնտակտային անձ' || hClean === 'contact'))) {
-          contVal = val;
-        }
+        if (hClean === `կազմակերպություն ${k}` || hClean === `organization ${k}` || (k === 1 && (hClean === 'կազմակերպություն' || hClean === 'контрагент'))) orgVal = val;
+        if (hClean === `առաքման հացսե ${k}` || hClean === `առաքման հասցե ${k}` || hClean === `address ${k}` || (k === 1 && (hClean === 'առաքման հացսե' || hClean === 'առաքման հասցե'))) addrVal = val;
+        if (hClean === `կոնտակտային անձ ${k}` || hClean === `contact ${k}` || (k === 1 && (hClean === 'կոնտակտային անձ' || hClean === 'contact'))) contVal = val;
       });
-
       if (orgVal || addrVal || contVal) {
         orgs.push(orgVal || client);
         addrs.push(addrVal);
@@ -678,10 +647,7 @@ for (let i = headerIdx + 1; i < rows.length; i++) {
     }
 
     if (orgs.length === 0) {
-      let singleOrg = client;
-      let singleAddr = '';
-      let singleCont = '';
-
+      let singleOrg = client, singleAddr = '', singleCont = '';
       headers.forEach((h, idx) => {
         let hL = h.toLowerCase();
         let val = r[idx] !== undefined && r[idx] !== null ? String(r[idx]).trim() : '';
@@ -690,7 +656,6 @@ for (let i = headerIdx + 1; i < rows.length; i++) {
         if (hL.includes('адрес') || hL.includes('հասցե')) singleAddr = val;
         if (hL.includes('контакт') || hL.includes('կոնտակտ') || hL.includes('contact')) singleCont = val;
       });
-
       orgs.push(singleOrg);
       addrs.push(singleAddr);
       contacts.push(singleCont);
@@ -702,31 +667,23 @@ for (let i = headerIdx + 1; i < rows.length; i++) {
       let aName = addrs[k] || addrs[0] || '';
       let cName = contacts[k] || contacts[0] || '';
       if (oName || aName || cName) {
-        rowDataObj.rowsList.push({
-          organization: oName,
-          address: aName,
-          contact: cName
-        });
+        rowDataObj.rowsList.push({ organization: oName, address: aName, contact: cName });
       }
     }
 
     if (rowDataObj.rowsList.length === 0) {
       rowDataObj.rowsList.push({ organization: client, address: '', contact: '' });
     }
-
     passMap[pHash] = rowDataObj;
   }
 }
 });
-} catch (e) {
-console.warn("pass.xlsx fetch warning:", e);
-}
+} catch (e) {}
 }
 
 async function checkPassword() {
 let inputVal = document.getElementById('passwordInput').value.trim();
 const errorMsg = document.getElementById('errorMsg');
-
 if (!inputVal) return;
 
 if (inputVal.length < 6 && /^\d+$/.test(inputVal)) {
@@ -734,22 +691,19 @@ if (inputVal.length < 6 && /^\d+$/.test(inputVal)) {
 }
 
 const inputHash = await sha256(inputVal);
-
 if (passMap[inputHash]) {
-authorizedClient = passMap[inputHash].client;
-userSheetType = passMap[inputHash].sheet;
-clientRowsData = passMap[inputHash].rowsList || [];
-
-try {
-  localStorage.setItem('zigzag_client', authorizedClient);
-  localStorage.setItem('zigzag_sheet', userSheetType);
-  localStorage.setItem('zigzag_client_rows', JSON.stringify(clientRowsData));
-} catch(e) {}
-
-initAppAfterAuth();
+  authorizedClient = passMap[inputHash].client;
+  userSheetType = passMap[inputHash].sheet;
+  clientRowsData = passMap[inputHash].rowsList || [];
+  try {
+    localStorage.setItem('zigzag_client', authorizedClient);
+    localStorage.setItem('zigzag_sheet', userSheetType);
+    localStorage.setItem('zigzag_client_rows', JSON.stringify(clientRowsData));
+  } catch(e) {}
+  initAppAfterAuth();
 } else {
-errorMsg.innerText = 'Սխալ գաղտնաբառ։ Փորձեք կրկին։';
-errorMsg.classList.remove('hidden');
+  errorMsg.innerText = 'Սխալ գաղտնաբառ։ Փորձեք կրկին։';
+  errorMsg.classList.remove('hidden');
 }
 }
 
@@ -762,7 +716,6 @@ if (authorizedClient) {
     localStorage.removeItem('zigzag_filters_' + authorizedClient);
   } catch(e) {}
 }
-
 authorizedClient = '';
 userSheetType = '';
 clientRowsData = [];
@@ -778,7 +731,6 @@ function initAppAfterAuth() {
 document.getElementById('authScreen').classList.add('hidden');
 document.getElementById('mainApp').classList.remove('hidden');
 document.getElementById('mainApp').classList.add('flex');
-
 document.getElementById('welcomeMsg').innerText = `Բարև ձեզ, ${authorizedClient}։`;
 
 setupTableHeader();
@@ -812,7 +764,6 @@ headerRow.innerHTML = cols.map(c => `<th class="${thClass} ${c.align}">${c.name}
 
 document.addEventListener('DOMContentLoaded', async () => {
 await loadPasswordsFile();
-
 try {
   const savedClient = localStorage.getItem('zigzag_client');
   const savedSheet = localStorage.getItem('zigzag_sheet');
@@ -832,9 +783,7 @@ try {
 
 const pwdInput = document.getElementById('passwordInput');
 if (pwdInput) {
-pwdInput.addEventListener('keypress', (e) => {
-if (e.key === 'Enter') checkPassword();
-});
+  pwdInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') checkPassword(); });
 }
 
 window.onscroll = function() {
@@ -849,15 +798,11 @@ window.onscroll = function() {
 document.addEventListener('click', (e) => {
   const brandDropdown = document.getElementById('brandDropdown');
   const brandInput = document.getElementById('brandInput');
-  if (brandDropdown && !brandDropdown.contains(e.target) && e.target !== brandInput) {
-    brandDropdown.classList.add('hidden');
-  }
+  if (brandDropdown && !brandDropdown.contains(e.target) && e.target !== brandInput) brandDropdown.classList.add('hidden');
 
   const categoryDropdown = document.getElementById('categoryDropdown');
   const categoryInput = document.getElementById('categoryInput');
-  if (categoryDropdown && !categoryDropdown.contains(e.target) && e.target !== categoryInput) {
-    categoryDropdown.classList.add('hidden');
-  }
+  if (categoryDropdown && !categoryDropdown.contains(e.target) && e.target !== categoryInput) categoryDropdown.classList.add('hidden');
 });
 });
 
@@ -872,56 +817,48 @@ loader.classList.remove('hidden');
 content.classList.add('opacity-50');
 
 try {
-const response = await fetch('PriceList_3.xlsx');
-if (!response.ok) throw new Error('PriceList_3.xlsx ֆայլը չի գտնվել սերվերում (404).');
-
-const arrayBuffer = await response.arrayBuffer();
-const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-const sheetName = workbook.SheetNames[0];
-const sheet = workbook.Sheets[sheetName];
-const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-if (!rows || !Array.isArray(rows) || rows.length === 0) {
-throw new Error('Աղյուսակը դատարկ է։');
-}
-
-parseExcelRows(rows);
+  const response = await fetch('PriceList_3.xlsx');
+  if (!response.ok) throw new Error('PriceList_3.xlsx ֆայլը չի գտնվել');
+  const arrayBuffer = await response.arrayBuffer();
+  const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+  parseExcelRows(rows);
 } catch (error) {
-console.error(error);
+  console.error(error);
 } finally {
-loader.classList.add('hidden');
-content.classList.remove('opacity-50');
+  loader.classList.add('hidden');
+  content.classList.remove('opacity-50');
 }
 }
 
 function parseExcelRows(rows) {
 try {
 allProducts = [];
-
 let headerRowIdx = 0;
 for (let i = 0; i < Math.min(rows.length, 25); i++) {
-const row = rows[i];
-if (!row || !Array.isArray(row)) continue;
-const rowStr = row.map(c => (c !== null && c !== undefined ? String(c) : '').toLowerCase()).join(' ');
-if (rowStr.includes('artikul') || rowStr.includes('brand') || rowStr.includes('wholesale') || rowStr.includes('գին') || rowStr.includes('артикул') || rowStr.includes('արտիկուլ') || rowStr.includes('բրենդ')) {
-headerRowIdx = i;
-break;
-}
+  const row = rows[i];
+  if (!row || !Array.isArray(row)) continue;
+  const rowStr = row.map(c => (c !== null && c !== undefined ? String(c) : '').toLowerCase()).join(' ');
+  if (rowStr.includes('artikul') || rowStr.includes('brand') || rowStr.includes('wholesale') || rowStr.includes('գին') || rowStr.includes('артикул') || rowStr.includes('արտիկուլ')) {
+    headerRowIdx = i;
+    break;
+  }
 }
 
 const headerRow = (rows[headerRowIdx] && Array.isArray(rows[headerRowIdx])) ? rows[headerRowIdx] : [];
 const headers = headerRow.map(c => (c !== null && c !== undefined ? String(c).trim() : ''));
 
 const colMap = {
-art: headers.findIndex(h => h && (h.toLowerCase().includes('art') || h.toLowerCase().includes('артикул') || h.toLowerCase().includes('արտիկուլ'))),
-brand: headers.findIndex(h => h && (h.toLowerCase().includes('brand') || h.toLowerCase().includes('бренд') || h.toLowerCase().includes('բրենդ'))),
-category: headers.findIndex(h => h && (h.toLowerCase().includes('group') || h.toLowerCase().includes('kategoriya') || h.toLowerCase().includes('группа') || h.toLowerCase().includes('категория') || h.toLowerCase().includes('խումբ') || h.toLowerCase().includes('կատեգորիա'))),
-name: headers.findIndex(h => h && (h.toLowerCase().includes('name') || h.toLowerCase().includes('naimenovanie') || h.toLowerCase().includes('наименование') || h.toLowerCase().includes('товар') || h.toLowerCase().includes('անվանում'))),
-retail: headers.findIndex(h => h && (h.includes('Զեղչված') || h.toLowerCase().includes('roznich') || h.toLowerCase().includes('discount') || h.toLowerCase().includes('մանրածախ'))),
-baseRetail: headers.findIndex(h => h && (h.toLowerCase().includes('roznich') || h.toLowerCase().includes('մանրածախ') || h.toLowerCase().includes('розница'))),
-wholesale: headers.findIndex(h => h && (h.includes('Wholesale') || h.toLowerCase().includes('wholesale') || h.toLowerCase().includes('опт') || h.toLowerCase().includes('մեծածախ'))),
-kpPromo: headers.findIndex(h => h && h.includes("Key Partner's promo AMD")),
-kpNormal: headers.findIndex(h => h && h.includes("Key Partner's AMD"))
+  art: headers.findIndex(h => h && (h.toLowerCase().includes('art') || h.toLowerCase().includes('артикул') || h.toLowerCase().includes('արտիկուլ'))),
+  brand: headers.findIndex(h => h && (h.toLowerCase().includes('brand') || h.toLowerCase().includes('бренд') || h.toLowerCase().includes('բրենդ'))),
+  category: headers.findIndex(h => h && (h.toLowerCase().includes('group') || h.toLowerCase().includes('kategoriya') || h.toLowerCase().includes('группа') || h.toLowerCase().includes('категория') || h.toLowerCase().includes('խումբ') || h.toLowerCase().includes('կատեգորիա'))),
+  name: headers.findIndex(h => h && (h.toLowerCase().includes('name') || h.toLowerCase().includes('naimenovanie') || h.toLowerCase().includes('наименование') || h.toLowerCase().includes('товар') || h.toLowerCase().includes('անվանում'))),
+  retail: headers.findIndex(h => h && (h.includes('Զեղչված') || h.toLowerCase().includes('roznich') || h.toLowerCase().includes('discount') || h.toLowerCase().includes('մանրածախ'))),
+  baseRetail: headers.findIndex(h => h && (h.toLowerCase().includes('roznich') || h.toLowerCase().includes('մանրածախ') || h.toLowerCase().includes('розница'))),
+  wholesale: headers.findIndex(h => h && (h.includes('Wholesale') || h.toLowerCase().includes('wholesale') || h.toLowerCase().includes('опт') || h.toLowerCase().includes('մեծածախ'))),
+  kpPromo: headers.findIndex(h => h && h.includes("Key Partner's promo AMD")),
+  kpNormal: headers.findIndex(h => h && h.includes("Key Partner's AMD"))
 };
 
 if (colMap.art === -1) colMap.art = 0;
@@ -935,183 +872,133 @@ const warehouseCols = [];
 for (let j = 0; j < headers.length; j++) {
   if (j !== colMap.art && j !== colMap.brand && j !== colMap.category && j !== colMap.name && j !== colMap.retail && j !== colMap.baseRetail && j !== colMap.wholesale && j !== colMap.kpPromo && j !== colMap.kpNormal) {
     let hName = headers[j];
-    if (hName) {
-      warehouseCols.push({ index: j, name: hName });
-    }
+    if (hName) warehouseCols.push({ index: j, name: hName });
   }
 }
 
 for (let i = headerRowIdx + 1; i < rows.length; i++) {
-const r = rows[i];
-if (!r || !Array.isArray(r) || r.length === 0) continue;
+  const r = rows[i];
+  if (!r || !Array.isArray(r) || r.length === 0) continue;
 
-const artVal = r[colMap.art];
-const art = (artVal !== null && artVal !== undefined) ? String(artVal).trim() : '';
-if (!art || art.toLowerCase().includes('artikul') || art.toLowerCase().includes('արտիկուլ') || art.length > 30) continue;
+  const artVal = r[colMap.art];
+  const art = (artVal !== null && artVal !== undefined) ? String(artVal).trim() : '';
+  if (!art || art.toLowerCase().includes('artikul') || art.length > 30) continue;
 
-const defaultWholesale = Number(r[colMap.wholesale]) || 0;
-let wholesale = 0;
-let isWholesalePromo = false;
-let resaleWholesale = defaultWholesale;
+  const defaultWholesale = Number(r[colMap.wholesale]) || 0;
+  let wholesale = 0, isWholesalePromo = false, resaleWholesale = defaultWholesale;
 
-if (userSheetType === 'KP' && authorizedClient !== "Администратор") {
-  const promoVal = colMap.kpPromo !== -1 ? Number(r[colMap.kpPromo]) : 0;
-  const normalVal = colMap.kpNormal !== -1 ? Number(r[colMap.kpNormal]) : 0;
-  
-  if (promoVal && promoVal > 0) {
-    wholesale = promoVal;
-    isWholesalePromo = true;
-  } else if (normalVal && normalVal > 0) {
-    wholesale = normalVal;
+  if (userSheetType === 'KP' && authorizedClient !== "Администратор") {
+    const promoVal = colMap.kpPromo !== -1 ? Number(r[colMap.kpPromo]) : 0;
+    const normalVal = colMap.kpNormal !== -1 ? Number(r[colMap.kpNormal]) : 0;
+    if (promoVal && promoVal > 0) {
+      wholesale = promoVal;
+      isWholesalePromo = true;
+    } else if (normalVal && normalVal > 0) {
+      wholesale = normalVal;
+    } else {
+      wholesale = defaultWholesale;
+    }
   } else {
     wholesale = defaultWholesale;
   }
-} else {
-  wholesale = defaultWholesale;
-}
 
-if (!wholesale || wholesale <= 0) {
-continue;
-}
+  if (!wholesale || wholesale <= 0) continue;
 
-const brandVal = r[colMap.brand];
-const brand = (brandVal !== null && brandVal !== undefined) ? String(brandVal).trim() : 'Այլ';
+  const brandVal = r[colMap.brand];
+  const brand = (brandVal !== null && brandVal !== undefined) ? String(brandVal).trim() : 'Այլ';
+  const cleanBrandLower = brand.toLowerCase();
 
-const cleanBrandLower = brand.toLowerCase();
-if (authorizedClient === "ՎԵԳԱ ՈՒՈՐԼԴ" || authorizedClient === "ԷԼՄԱՐԿԵՏ ՍՊԸ" || authorizedClient === "ՎԻԷԼՎԻ ՍԵՆԹՐ ՍՊԸ") {
-  const allowedBrands = ["babyliss", "bosch", "delonghi", "elica", "indesit"];
-  if (!allowedBrands.includes(cleanBrandLower)) {
-    continue;
+  if (authorizedClient === "ՎԵԳԱ ՈՒՈՐԼԴ" || authorizedClient === "ԷԼՄԱՐԿԵՏ ՍՊԸ" || authorizedClient === "ՎԻԷԼՎԻ ՍԵՆԹՐ ՍՊԸ") {
+    if (!["babyliss", "bosch", "delonghi", "elica", "indesit"].includes(cleanBrandLower)) continue;
+  } else if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
+    if (!["indesit", "bosch"].includes(cleanBrandLower)) continue;
   }
-} else if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
-  const allowedBrands = ["indesit", "bosch"];
-  if (!allowedBrands.includes(cleanBrandLower)) {
-    continue;
-  }
-}
 
-const catVal = r[colMap.category];
-const category = (catVal !== null && catVal !== undefined) ? String(catVal).trim() : 'Ընդհանուր';
+  const catVal = r[colMap.category];
+  const category = (catVal !== null && catVal !== undefined) ? String(catVal).trim() : 'Ընդհանուր';
 
-let name = '';
-if (r[colMap.name] !== undefined && r[colMap.name] !== null) {
-name = String(r[colMap.name]).trim();
-} else {
-for (let cell of r) {
-if (typeof cell === 'string' && cell.length > 3 && cell !== art && cell !== brand && cell !== category) {
-name = cell.trim();
-break;
-}
-}
-}
-
-const retail = Number(r[colMap.retail]) || 0;
-const baseRetail = colMap.baseRetail !== -1 ? (Number(r[colMap.baseRetail]) || retail) : retail;
-
-const isPromo = retail > 0 && baseRetail > 0 && retail < baseRetail;
-
-let marginVal = 0;
-if (retail > 0 && wholesale > 0) {
-  if (authorizedClient === "«ԴՈ繆ՈՒՍ» ՓԲԸ") {
-    marginVal = retail / wholesale;
+  let name = '';
+  if (r[colMap.name] !== undefined && r[colMap.name] !== null) {
+    name = String(r[colMap.name]).trim();
   } else {
-    marginVal = (1 - (wholesale / retail)) * 100;
-  }
-}
-
-if (authorizedClient !== "Администратор" && retail > 0 && wholesale > 0) {
-  if (authorizedClient === "«ԴՈ繆ՈՒՍ» ՓԲԸ") {
-    if (marginVal < 1.0) continue;
-  } else {
-    if (marginVal < 0) continue;
-  }
-}
-
-let adminStockDetails = [];
-let targetWarehousesStock = 0;
-let otherWarehousesSum = 0;
-
-let baseSum = 0;
-let otherStockList = [];
-
-warehouseCols.forEach(wh => {
-  const qty = Number(r[wh.index]) || 0;
-  if (qty > 0) {
-    const wName = wh.name.trim();
-    if (wName === '003' || wName === '023' || wName === '026' || wName === '031') {
-      baseSum += qty;
-      targetWarehousesStock += qty;
-    } else {
-      otherStockList.push({ name: wName, qty: qty });
-      otherWarehousesSum += qty;
+    for (let cell of r) {
+      if (typeof cell === 'string' && cell.length > 3 && cell !== art && cell !== brand && cell !== category) {
+        name = cell.trim();
+        break;
+      }
     }
   }
-});
 
-if (baseSum > 0) {
-  adminStockDetails.push({ name: 'База', qty: baseSum });
-}
-otherStockList.forEach(item => {
-  adminStockDetails.push(item);
-});
+  const retail = Number(r[colMap.retail]) || 0;
+  const baseRetail = colMap.baseRetail !== -1 ? (Number(r[colMap.baseRetail]) || retail) : retail;
+  const isPromo = retail > 0 && baseRetail > 0 && retail < baseRetail;
 
-let stockStatus = '';
-let isValidStock = false;
-
-if (authorizedClient === "Администратор") {
-  if (adminStockDetails.length > 0) {
-    isValidStock = true;
-    stockStatus = adminStockDetails.map(s => `${s.name}: ${s.qty}`).join(', ');
-  } else {
-    isValidStock = false;
+  let marginVal = 0;
+  if (retail > 0 && wholesale > 0) {
+    marginVal = (authorizedClient === "«ԴՈ繆ՈՒՍ» ՓԲԸ") ? (retail / wholesale) : ((1 - (wholesale / retail)) * 100);
   }
-} else {
-  if (targetWarehousesStock >= 2) {
-    isValidStock = true;
-    stockStatus = 'Առկա է';
-  } else if (targetWarehousesStock === 0 && otherWarehousesSum < 5) {
-    isValidStock = false;
-  } else if (targetWarehousesStock < 2 && otherWarehousesSum < 5) {
-    isValidStock = true;
-    stockStatus = 'Ճշտել առկայությունը';
-  } else if (targetWarehousesStock === 0 && otherWarehousesSum >= 5) {
-    isValidStock = true;
-    stockStatus = 'Ճշտել առկայությունը';
-  } else {
-    isValidStock = true;
-    stockStatus = 'Ճշտել առկայությունը';
-  }
-}
 
-if (isValidStock) {
-allProducts.push({
-articul: art,
-brand: brand,
-category: category,
-name: name,
-retail: retail,
-isPromo: isPromo,
-wholesale: wholesale,
-isWholesalePromo: isWholesalePromo,
-resaleWholesale: resaleWholesale,
-marginVal: marginVal,
-stockStatus: stockStatus
-});
-}
+  if (authorizedClient !== "Администратор" && retail > 0 && wholesale > 0) {
+    if (authorizedClient === "«ԴՈ繆ՈՒՍ» ՓԲԸ" && marginVal < 1.0) continue;
+    if (authorizedClient !== "«ԴՈ繆ՈՒՍ» ՓԲԸ" && marginVal < 0) continue;
+  }
+
+  let adminStockDetails = [], targetWarehousesStock = 0, otherWarehousesSum = 0, baseSum = 0, otherStockList = [];
+
+  warehouseCols.forEach(wh => {
+    const qty = Number(r[wh.index]) || 0;
+    if (qty > 0) {
+      const wName = wh.name.trim();
+      if (['003', '023', '026', '031'].includes(wName)) {
+        baseSum += qty;
+        targetWarehousesStock += qty;
+      } else {
+        otherStockList.push({ name: wName, qty: qty });
+        otherWarehousesSum += qty;
+      }
+    }
+  });
+
+  if (baseSum > 0) adminStockDetails.push({ name: 'База', qty: baseSum });
+  otherStockList.forEach(item => adminStockDetails.push(item));
+
+  let stockStatus = '', isValidStock = false;
+  if (authorizedClient === "Администратор") {
+    if (adminStockDetails.length > 0) {
+      isValidStock = true;
+      stockStatus = adminStockDetails.map(s => `${s.name}: ${s.qty}`).join(', ');
+    }
+  } else {
+    if (targetWarehousesStock >= 2) {
+      isValidStock = true;
+      stockStatus = 'Առկա է';
+    } else {
+      isValidStock = true;
+      stockStatus = 'Ճշտել առկայությունը';
+    }
+  }
+
+  if (isValidStock) {
+    allProducts.push({
+      articul: art, brand: brand, category: category, name: name,
+      retail: retail, isPromo: isPromo, wholesale: wholesale,
+      isWholesalePromo: isWholesalePromo, resaleWholesale: resaleWholesale,
+      marginVal: marginVal, stockStatus: stockStatus
+    });
+  }
 }
 
 initFilters();
 loadSavedFilters();
 resetAndRender();
 } catch (err) {
-console.error(err);
+  console.error(err);
 }
 }
 
 function initFilters() {
 availableBrands = [...new Set(allProducts.map(p => p.brand).filter(b => b))].sort();
 availableCategories = [...new Set(allProducts.map(p => p.category).filter(c => c))].sort();
-
 renderBrandDropdown(availableBrands);
 renderCategoryDropdown(availableCategories);
 }
@@ -1122,31 +1009,16 @@ function renderBrandDropdown(brands) {
     dropdown.innerHTML = '<div class="p-2.5 text-gray-400 text-xs text-center">Ոչինչ չի գտնվել</div>';
     return;
   }
-  dropdown.innerHTML = brands.map(b => `
-    <div onclick="selectBrand('${b}')" class="px-3 py-2 hover:bg-blue-50 cursor-pointer font-medium text-gray-800 transition border-b border-gray-50 last:border-none">
-      ${b}
-    </div>
-  `).join('');
+  dropdown.innerHTML = brands.map(b => `<div onclick="selectBrand('${b}')" class="px-3 py-2 hover:bg-blue-50 cursor-pointer font-medium text-gray-800 transition border-b border-gray-50 last:border-none">${b}</div>`).join('');
 }
 
-function showBrandDropdown() {
-  document.getElementById('brandDropdown').classList.remove('hidden');
-}
+function showBrandDropdown() { document.getElementById('brandDropdown').classList.remove('hidden'); }
 
 function filterBrandOptions() {
   const query = document.getElementById('brandInput').value.trim().toLowerCase();
-  const clearBtn = document.getElementById('clearBrandBtn');
-  
-  if (query.length > 0) {
-    clearBtn.classList.remove('hidden');
-  } else {
-    clearBtn.classList.add('hidden');
-  }
-
-  const filtered = availableBrands.filter(b => b.toLowerCase().includes(query));
-  renderBrandDropdown(filtered);
+  document.getElementById('clearBrandBtn').classList.toggle('hidden', query.length === 0);
+  renderBrandDropdown(availableBrands.filter(b => b.toLowerCase().includes(query)));
   showBrandDropdown();
-
   selectedBrand = query;
   resetAndRender();
 }
@@ -1173,31 +1045,16 @@ function renderCategoryDropdown(categories) {
     dropdown.innerHTML = '<div class="p-2.5 text-gray-400 text-xs text-center">Ոչինչ չի գտնվել</div>';
     return;
   }
-  dropdown.innerHTML = categories.map(c => `
-    <div onclick="selectCategory('${c}')" class="px-3 py-2 hover:bg-blue-50 cursor-pointer font-medium text-gray-800 transition border-b border-gray-50 last:border-none">
-      ${c}
-    </div>
-  `).join('');
+  dropdown.innerHTML = categories.map(c => `<div onclick="selectCategory('${c}')" class="px-3 py-2 hover:bg-blue-50 cursor-pointer font-medium text-gray-800 transition border-b border-gray-50 last:border-none">${c}</div>`).join('');
 }
 
-function showCategoryDropdown() {
-  document.getElementById('categoryDropdown').classList.remove('hidden');
-}
+function showCategoryDropdown() { document.getElementById('categoryDropdown').classList.remove('hidden'); }
 
 function filterCategoryOptions() {
   const query = document.getElementById('categoryInput').value.trim().toLowerCase();
-  const clearBtn = document.getElementById('clearCategoryBtn');
-  
-  if (query.length > 0) {
-    clearBtn.classList.remove('hidden');
-  } else {
-    clearBtn.classList.add('hidden');
-  }
-
-  const filtered = availableCategories.filter(c => c.toLowerCase().includes(query));
-  renderCategoryDropdown(filtered);
+  document.getElementById('clearCategoryBtn').classList.toggle('hidden', query.length === 0);
+  renderCategoryDropdown(availableCategories.filter(c => c.toLowerCase().includes(query)));
   showCategoryDropdown();
-
   selectedCategory = query;
   resetAndRender();
 }
@@ -1230,33 +1087,20 @@ const sortBy = document.getElementById('sortBy').value;
 const promoOnly = document.getElementById('promoOnlyFilter').checked;
 const stockOnly = document.getElementById('stockOnlyFilter').checked;
 
-const clearBtn = document.getElementById('clearSearchBtn');
-if (searchQuery.length > 0) {
-  clearBtn.classList.remove('hidden');
-} else {
-  clearBtn.classList.add('hidden');
-}
+document.getElementById('clearSearchBtn').classList.toggle('hidden', searchQuery.length === 0);
 
 filteredProducts = allProducts.filter(p => {
-const matchBrand = !selectedBrand || p.brand.toLowerCase().includes(selectedBrand.toLowerCase());
-const matchCategory = !selectedCategory || p.category.toLowerCase().includes(selectedCategory.toLowerCase());
-const matchSearch = !searchQuery ||
-(p.name || '').toLowerCase().includes(searchQuery) ||
-(p.articul || '').toLowerCase().includes(searchQuery);
-
-const matchPromo = !promoOnly || (p.isPromo || p.isWholesalePromo);
-const matchStock = !stockOnly || (authorizedClient === "Администратор" ? true : !p.stockStatus.includes('Ճշտել'));
-
-return matchBrand && matchCategory && matchSearch && matchPromo && matchStock;
+  const matchBrand = !selectedBrand || p.brand.toLowerCase().includes(selectedBrand.toLowerCase());
+  const matchCategory = !selectedCategory || p.category.toLowerCase().includes(selectedCategory.toLowerCase());
+  const matchSearch = !searchQuery || (p.name || '').toLowerCase().includes(searchQuery) || (p.articul || '').toLowerCase().includes(searchQuery);
+  const matchPromo = !promoOnly || (p.isPromo || p.isWholesalePromo);
+  const matchStock = !stockOnly || (authorizedClient === "Администратор" ? true : !p.stockStatus.includes('Ճշտել'));
+  return matchBrand && matchCategory && matchSearch && matchPromo && matchStock;
 });
 
-if (sortBy === 'priceAsc') {
-filteredProducts.sort((a, b) => a.wholesale - b.wholesale);
-} else if (sortBy === 'priceDesc') {
-filteredProducts.sort((a, b) => b.wholesale - a.wholesale);
-} else if (sortBy === 'marginDesc') {
-filteredProducts.sort((a, b) => b.marginVal - a.marginVal);
-}
+if (sortBy === 'priceAsc') filteredProducts.sort((a, b) => a.wholesale - b.wholesale);
+else if (sortBy === 'priceDesc') filteredProducts.sort((a, b) => b.wholesale - a.wholesale);
+else if (sortBy === 'marginDesc') filteredProducts.sort((a, b) => b.marginVal - a.marginVal);
 
 saveFiltersToStorage();
 document.getElementById('productCountInfo').innerText = `Գտնվել է ${filteredProducts.length} ապրանք`;
@@ -1280,19 +1124,16 @@ function loadMoreProducts() {
     noResults.classList.remove('hidden');
     loadMoreContainer.classList.add('hidden');
     return;
-  } else {
-    noResults.classList.add('hidden');
   }
+  noResults.classList.add('hidden');
 
   const nextBatch = filteredProducts.slice(displayedCount, displayedCount + PAGE_SIZE);
-
   nextBatch.forEach(p => {
     tbody.appendChild(createRowElement(p));
     cardsContainer.appendChild(createCardElement(p));
   });
 
   displayedCount += nextBatch.length;
-
   if (displayedCount < filteredProducts.length) {
     loadMoreContainer.classList.remove('hidden');
     document.getElementById('loadMoreCounter').innerText = `(${displayedCount} / ${filteredProducts.length})`;
@@ -1306,52 +1147,25 @@ const tr = document.createElement('tr');
 tr.className = 'hover:bg-blue-50/40 transition-colors border-b border-gray-100';
 
 const isUtochnit = p.stockStatus.includes('Ճշտել');
-const stockBadgeClass = authorizedClient === "Администратор"
-? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-xs'
-: (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
+const stockBadgeClass = authorizedClient === "Администратор" ? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-xs' : (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
 
 let marginBadge = '—';
 if (p.retail > 0 && p.wholesale > 0) {
   if (authorizedClient === "«ԴՈ繆ՈՒՍ» ՓԲԸ") {
     marginBadge = `<span class="px-2 py-1 rounded-lg text-xs font-bold border bg-gray-100 text-gray-800 border-gray-300">${p.marginVal.toFixed(2)}</span>`;
   } else {
-    let colorClass = 'bg-blue-100 text-blue-800 border-blue-200';
-    if (p.marginVal >= 20) colorClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
-    else if (p.marginVal < 5) colorClass = 'bg-amber-100 text-amber-800 border-amber-200';
-    
+    let colorClass = p.marginVal >= 20 ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : (p.marginVal < 5 ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-blue-100 text-blue-800 border-blue-200');
     marginBadge = `<span class="px-2 py-1 rounded-lg text-xs font-bold border ${colorClass}">${p.marginVal.toFixed(1)}%</span>`;
   }
 }
 
-let retailCellHtml = '—';
-if (p.retail > 0) {
-  const priceFormatted = p.retail.toLocaleString('ru-RU') + ' ֏';
-  if (p.isPromo) {
-    retailCellHtml = `<div class="flex flex-col items-end"><span class="text-gray-900 font-medium">${priceFormatted}</span><span class="px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-[10px] font-bold mt-0.5 border border-red-200">ԱԿՑԻԱ</span></div>`;
-  } else {
-    retailCellHtml = `<span class="text-gray-600">${priceFormatted}</span>`;
-  }
-}
-
-let wholesaleCellHtml = '—';
-if (p.wholesale > 0) {
-  const wholesaleFormatted = p.wholesale.toLocaleString('ru-RU') + ' ֏';
-  if (p.isWholesalePromo) {
-    wholesaleCellHtml = `<div class="flex flex-col items-end"><span class="text-gray-900 font-semibold">${wholesaleFormatted}</span><span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold mt-0.5 border border-emerald-200">PROMO</span></div>`;
-  } else {
-    wholesaleCellHtml = `<span class="text-gray-900 font-semibold">${wholesaleFormatted}</span>`;
-  }
-}
+let retailCellHtml = p.retail > 0 ? (p.isPromo ? `<div class="flex flex-col items-end"><span class="text-gray-900 font-medium">${p.retail.toLocaleString('ru-RU')} ֏</span><span class="px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-[10px] font-bold mt-0.5 border border-red-200">ԱԿՑԻԱ</span></div>` : `<span class="text-gray-600">${p.retail.toLocaleString('ru-RU')} ֏</span>`) : '—';
+let wholesaleCellHtml = p.wholesale > 0 ? (p.isWholesalePromo ? `<div class="flex flex-col items-end"><span class="text-gray-900 font-semibold">${p.wholesale.toLocaleString('ru-RU')} ֏</span><span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold mt-0.5 border border-emerald-200">PROMO</span></div>` : `<span class="text-gray-900 font-semibold">${p.wholesale.toLocaleString('ru-RU')} ֏</span>`) : '—';
 
 const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
 const cartItem = cart[p.articul];
-
-let actionCellHtml = getActionControlHtml(p.articul, cartItem);
-
-let resaleColHtml = '';
-if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
-  resaleColHtml = `<td class="py-3 px-4 text-right text-gray-700 font-medium">${p.resaleWholesale ? p.resaleWholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</td>`;
-}
+const actionCellHtml = getActionControlHtml(p.articul, cartItem);
+const resaleColHtml = authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ" ? `<td class="py-3 px-4 text-right text-gray-700 font-medium">${p.resaleWholesale ? p.resaleWholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</td>` : '';
 
 tr.innerHTML = `
 <td class="py-3 px-4 font-mono font-medium">
@@ -1385,23 +1199,14 @@ const div = document.createElement('div');
 div.className = 'bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col gap-3';
 
 const isUtochnit = p.stockStatus.includes('Ճշտել');
-const stockBadgeClass = authorizedClient === "Администратор"
-? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-[11px]'
-: (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
-
+const stockBadgeClass = authorizedClient === "Администратор" ? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-[11px]' : (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
 const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
 const cartItem = cart[p.articul];
 
 let marginBadge = '';
 if (p.retail > 0 && p.wholesale > 0) {
-  if (authorizedClient === "«ԴՈ繆ՈՒՍ» ՓԲԸ") {
-    marginBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold border bg-gray-100 text-gray-800 border-gray-300">${p.marginVal.toFixed(2)}</span>`;
-  } else {
-    let colorClass = 'bg-blue-100 text-blue-800 border-blue-200';
-    if (p.marginVal >= 20) colorClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
-    else if (p.marginVal < 5) colorClass = 'bg-amber-100 text-amber-800 border-amber-200';
-    marginBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold border ${colorClass}">${p.marginVal.toFixed(1)}%</span>`;
-  }
+  let colorClass = p.marginVal >= 20 ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : (p.marginVal < 5 ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-blue-100 text-blue-800 border-blue-200');
+  marginBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold border ${colorClass}">${p.marginVal.toFixed(1)}%</span>`;
 }
 
 div.innerHTML = `
@@ -1421,10 +1226,7 @@ div.innerHTML = `
 
 <div class="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">
   <span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${p.stockStatus}</span>
-  <div class="flex items-center gap-2">
-    <span class="text-gray-400">Եկամտաբերություն:</span>
-    ${marginBadge}
-  </div>
+  <div class="flex items-center gap-2"><span class="text-gray-400">Եկամտաբերություն:</span>${marginBadge}</div>
 </div>
 
 <div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-lg border border-gray-100">
@@ -1432,9 +1234,7 @@ div.innerHTML = `
     <div class="text-[11px] text-gray-500">Մանրածախ: <span class="font-medium text-gray-700">${p.retail ? p.retail.toLocaleString('ru-RU') + ' ֏' : '—'}</span></div>
     <div class="text-xs font-bold text-gray-900">Մեծածախ: <span class="text-green-600">${p.wholesale ? p.wholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</span></div>
   </div>
-  <div id="card-action-${p.articul}">
-    ${getActionControlHtml(p.articul, cartItem)}
-  </div>
+  <div>${getActionControlHtml(p.articul, cartItem)}</div>
 </div>
 `;
 return div;
@@ -1442,164 +1242,107 @@ return div;
 
 function getActionControlHtml(articul, cartItem) {
 if (!cartItem) {
-return `
-<button onclick="addToCart('${articul}')" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition">
-Պատվիրել
-</button>
-`;
-} else {
+  return `<button onclick="addToCart('${articul}')" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition">Պատվիրել</button>`;
+}
 return `
 <div class="inline-flex items-center border border-blue-500 rounded-lg overflow-hidden bg-blue-50">
 <button onclick="changeQty('${articul}', -1)" class="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">-</button>
 <span class="px-3 py-1 text-xs font-bold text-blue-900">${cartItem.qty}</span>
 <button onclick="changeQty('${articul}', 1)" class="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs">+</button>
-</div>
-`;
-}
+</div>`;
 }
 
 function saveCartToStorage() {
-if (!authorizedClient) return;
-try {
-  localStorage.setItem('zigzag_cart_' + authorizedClient, JSON.stringify(cart));
-} catch(e) {}
+  if (!authorizedClient) return;
+  try { localStorage.setItem('zigzag_cart_' + authorizedClient, JSON.stringify(cart)); } catch(e) {}
 }
 
 function loadCartFromStorage(showToast = false) {
-if (!authorizedClient) return;
-try {
-  const saved = localStorage.getItem('zigzag_cart_' + authorizedClient);
-  if (saved) {
-    cart = JSON.parse(saved);
-    const count = Object.keys(cart).length;
-    if (count > 0) {
-      updateOrderPanel();
-      if (showToast) {
-        showRestoredCartToast(count);
+  if (!authorizedClient) return;
+  try {
+    const saved = localStorage.getItem('zigzag_cart_' + authorizedClient);
+    if (saved) {
+      cart = JSON.parse(saved);
+      const count = Object.keys(cart).length;
+      if (count > 0) {
+        updateOrderPanel();
+        if (showToast) showRestoredCartToast(count);
       }
     }
-  }
-} catch(e) {}
+  } catch(e) {}
 }
 
 function showRestoredCartToast(itemCount) {
   const toast = document.getElementById('restoredCartToast');
-  const txt = document.getElementById('toastRestoredText');
-  txt.innerText = `Վերականգնվել է նախորդ պատվերի ${itemCount} ապրանք:`;
+  document.getElementById('toastRestoredText').innerText = `Վերականգնվել է նախորդ պատվերի ${itemCount} ապրանք:`;
   toast.classList.remove('hidden');
-  setTimeout(() => {
-    closeCartToast();
-  }, 5000);
+  setTimeout(() => closeCartToast(), 5000);
 }
 
-function closeCartToast() {
-  document.getElementById('restoredCartToast').classList.add('hidden');
-}
+function closeCartToast() { document.getElementById('restoredCartToast').classList.add('hidden'); }
 
 function addToCart(articul) {
-const product = allProducts.find(p => p.articul === articul);
-if (!product) return;
-
-const globalMethod = document.getElementById('globalPaymentSelect') ? document.getElementById('globalPaymentSelect').value : 'Կանխիկ';
-
-if (!cart[articul]) {
-cart[articul] = { product: product, qty: 1, paymentMethod: globalMethod };
-} else {
-cart[articul].qty += 1;
-}
-saveCartToStorage();
-updateOrderPanel();
-resetAndRender();
+  const product = allProducts.find(p => p.articul === articul);
+  if (!product) return;
+  const globalMethod = document.getElementById('globalPaymentSelect') ? document.getElementById('globalPaymentSelect').value : 'Կանխիկ';
+  if (!cart[articul]) cart[articul] = { product: product, qty: 1, paymentMethod: globalMethod };
+  else cart[articul].qty += 1;
+  saveCartToStorage();
+  updateOrderPanel();
+  resetAndRender();
 }
 
 function getItemWholesalePrice(item) {
-  if (item.product && typeof item.product.wholesale === 'number' && item.product.wholesale > 0) {
-    return item.product.wholesale;
-  }
-  if (typeof item.wholesale === 'number' && item.wholesale > 0) {
-    return item.wholesale;
-  }
-  if (item.articul) {
-    const found = allProducts.find(p => p.articul === item.articul);
-    if (found && found.wholesale) return found.wholesale;
-  }
-  if (item.product && item.product.articul) {
-    const found = allProducts.find(p => p.articul === item.product.articul);
-    if (found && found.wholesale) return found.wholesale;
-  }
-  return 0;
+  if (item.product && typeof item.product.wholesale === 'number' && item.product.wholesale > 0) return item.product.wholesale;
+  if (typeof item.wholesale === 'number' && item.wholesale > 0) return item.wholesale;
+  const found = allProducts.find(p => p.articul === (item.articul || (item.product && item.product.articul)));
+  return found ? found.wholesale : 0;
 }
 
-function getItemName(item) {
-  if (item.product && item.product.name) return item.product.name;
-  if (item.name) return item.name;
-  return '—';
-}
-
-function getItemArticul(artKey, item) {
-  if (item.product && item.product.articul) return item.product.articul;
-  if (item.articul) return item.articul;
-  return artKey;
-}
+function getItemName(item) { return (item.product && item.product.name) ? item.product.name : (item.name || '—'); }
+function getItemArticul(artKey, item) { return (item.product && item.product.articul) ? item.product.articul : (item.articul || artKey); }
 
 function updateOrderPanel() {
-const orderPanel = document.getElementById('orderPanel');
-let totalCount = 0;
-let totalSum = 0;
-
-Object.values(cart).forEach(item => {
-const price = getItemWholesalePrice(item);
-totalCount += item.qty;
-totalSum += (price * item.qty);
-});
-
-const badgeDesk = document.getElementById('headerCartBadgeDesktop');
-
-if (totalCount > 0) {
-orderPanel.classList.remove('hidden');
-document.getElementById('orderCount').innerText = `${totalCount} ապրանք`;
-document.getElementById('orderSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
-
-if (badgeDesk) { badgeDesk.innerText = totalCount; badgeDesk.classList.remove('hidden'); }
-} else {
-orderPanel.classList.add('hidden');
-if (badgeDesk) badgeDesk.classList.add('hidden');
-}
+  const orderPanel = document.getElementById('orderPanel');
+  let totalCount = 0, totalSum = 0;
+  Object.values(cart).forEach(item => {
+    totalCount += item.qty;
+    totalSum += getItemWholesalePrice(item) * item.qty;
+  });
+  const badgeDesk = document.getElementById('headerCartBadgeDesktop');
+  if (totalCount > 0) {
+    orderPanel.classList.remove('hidden');
+    document.getElementById('orderCount').innerText = `${totalCount} ապրանք`;
+    document.getElementById('orderSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
+    if (badgeDesk) { badgeDesk.innerText = totalCount; badgeDesk.classList.remove('hidden'); }
+  } else {
+    orderPanel.classList.add('hidden');
+    if (badgeDesk) badgeDesk.classList.add('hidden');
+  }
 }
 
 function clearOrder() {
-cart = {};
-const dateInput = document.getElementById('deliveryDateInput');
-const addrInput = document.getElementById('deliveryAddressInput');
-const commentInput = document.getElementById('orderCommentInput');
-const contactInput = document.getElementById('contactPersonInput');
-
-if (dateInput) dateInput.value = '';
-if (addrInput) addrInput.value = '';
-if (commentInput) commentInput.value = '';
-if (contactInput) contactInput.value = '';
-
-checkDeliveryBadge();
-saveCartToStorage();
-updateOrderPanel();
-resetAndRender();
+  cart = {};
+  ['deliveryDateInput', 'deliveryAddressInput', 'orderCommentInput', 'contactPersonInput'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  checkDeliveryBadge();
+  saveCartToStorage();
+  updateOrderPanel();
+  resetAndRender();
 }
 
 function applyGlobalPayment(method) {
-Object.values(cart).forEach(item => {
-item.paymentMethod = method;
-});
-saveCartToStorage();
-openOrderModal();
+  Object.values(cart).forEach(item => item.paymentMethod = method);
+  saveCartToStorage();
+  openOrderModal();
 }
 
 function populateOrderModalFields() {
   const orgSelect = document.getElementById('organizationSelect');
   orgSelect.innerHTML = '';
-
-  if (!clientRowsData || clientRowsData.length === 0) {
-    clientRowsData = [{ organization: authorizedClient, address: '', contact: '' }];
-  }
+  if (!clientRowsData || clientRowsData.length === 0) clientRowsData = [{ organization: authorizedClient, address: '', contact: '' }];
 
   clientRowsData.forEach((row, index) => {
     const opt = document.createElement('option');
@@ -1624,93 +1367,76 @@ function populateOrderModalFields() {
 }
 
 function openOrderModal() {
-const listContainer = document.getElementById('modalItemsList');
-listContainer.innerHTML = '';
-let totalSum = 0;
+  const listContainer = document.getElementById('modalItemsList');
+  listContainer.innerHTML = '';
+  let totalSum = 0;
 
-Object.entries(cart).forEach(([artKey, item]) => {
-const price = getItemWholesalePrice(item);
-const articul = getItemArticul(artKey, item);
-const name = getItemName(item);
-const sum = price * item.qty;
-totalSum += sum;
+  Object.entries(cart).forEach(([artKey, item]) => {
+    const price = getItemWholesalePrice(item);
+    const articul = getItemArticul(artKey, item);
+    const name = getItemName(item);
+    const sum = price * item.qty;
+    totalSum += sum;
 
-const stockStatus = (item.product && item.product.stockStatus) ? item.product.stockStatus : 'Առկա է';
-const isUtochnit = stockStatus.includes('Ճշտել');
-const stockBadgeClass = authorizedClient === "Администратор"
-? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-[10px]'
-: (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
+    const stockStatus = (item.product && item.product.stockStatus) ? item.product.stockStatus : 'Առկա է';
+    const isUtochnit = stockStatus.includes('Ճշտել');
+    const stockBadgeClass = authorizedClient === "Администратор" ? 'bg-gray-100 text-gray-800 border border-gray-200 font-mono text-[10px]' : (isUtochnit ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300');
 
-const div = document.createElement('div');
-div.className = 'py-2.5 sm:py-3.5 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b border-gray-100';
-div.innerHTML = `
-<div class="flex-grow">
-<div class="flex items-center gap-2 mb-1">
-<span class="font-mono text-xs text-blue-600 font-semibold">${articul}</span>
-<span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${stockStatus}</span>
-</div>
-<div class="text-gray-900 font-medium text-xs sm:text-sm">${name}</div>
-</div>
+    const div = document.createElement('div');
+    div.className = 'py-2.5 sm:py-3.5 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b border-gray-100';
+    div.innerHTML = `
+      <div class="flex-grow">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="font-mono text-xs text-blue-600 font-semibold">${articul}</span>
+          <span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${stockStatus}</span>
+        </div>
+        <div class="text-gray-900 font-medium text-xs sm:text-sm">${name}</div>
+      </div>
+      <div class="flex items-center gap-2 sm:gap-3 flex-wrap w-full md:w-auto justify-between md:justify-end">
+        <select onchange="updateItemPayment('${articul}', this.value)" class="px-2 py-1 bg-gray-50 border border-gray-300 rounded-lg text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="Կանխիկ" ${item.paymentMethod === 'Կանխիկ' ? 'selected' : ''}>💵 Կանխիկ</option>
+          <option value="Բանկային փոխանցումով" ${item.paymentMethod === 'Բանկային փոխանցումով' ? 'selected' : ''}>🏦 Բանկային փոխանցումով</option>
+        </select>
+        <div class="flex items-center border rounded-lg overflow-hidden bg-gray-50">
+          <button onclick="changeQty('${articul}', -1)" class="px-2.5 py-0.5 bg-gray-200 hover:bg-gray-300 font-bold text-xs">-</button>
+          <span class="px-3 py-0.5 font-semibold text-xs">${item.qty}</span>
+          <button onclick="changeQty('${articul}', 1)" class="px-2.5 py-0.5 bg-gray-200 hover:bg-gray-300 font-bold text-xs">+</button>
+        </div>
+        <div class="font-bold text-gray-900 text-xs sm:text-sm w-24 text-right">${sum.toLocaleString('ru-RU')} ֏</div>
+      </div>`;
+    listContainer.appendChild(div);
+  });
 
-<div class="flex items-center gap-2 sm:gap-3 flex-wrap w-full md:w-auto justify-between md:justify-end">
-<div>
-<select onchange="updateItemPayment('${articul}', this.value)" class="px-2 py-1 bg-gray-50 border border-gray-300 rounded-lg text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
-<option value="Կանխիկ" ${item.paymentMethod === 'Կանխիկ' ? 'selected' : ''}>💵 Կանխիկ</option>
-<option value="Բանկային փոխանցումով" ${item.paymentMethod === 'Բանկային փոխանցումով' ? 'selected' : ''}>🏦 Բանկային փոխանցումով</option>
-</select>
-</div>
-
-<div class="flex items-center border rounded-lg overflow-hidden bg-gray-50">
-<button onclick="changeQty('${articul}', -1)" class="px-2.5 py-0.5 bg-gray-200 hover:bg-gray-300 font-bold text-xs">-</button>
-<span class="px-3 py-0.5 font-semibold text-xs">${item.qty}</span>
-<button onclick="changeQty('${articul}', 1)" class="px-2.5 py-0.5 bg-gray-200 hover:bg-gray-300 font-bold text-xs">+</button>
-</div>
-<div class="font-bold text-gray-900 text-xs sm:text-sm w-24 text-right">${sum.toLocaleString('ru-RU')} ֏</div>
-</div>
-`;
-listContainer.appendChild(div);
-});
-
-populateOrderModalFields();
-checkDeliveryBadge();
-document.getElementById('modalTotalSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
-document.getElementById('orderModal').classList.remove('hidden');
+  populateOrderModalFields();
+  checkDeliveryBadge();
+  document.getElementById('modalTotalSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
+  document.getElementById('orderModal').classList.remove('hidden');
 }
 
 function updateItemPayment(articul, method) {
-if (cart[articul]) {
-  cart[articul].paymentMethod = method;
-  saveCartToStorage();
-}
+  if (cart[articul]) {
+    cart[articul].paymentMethod = method;
+    saveCartToStorage();
+  }
 }
 
 function changeQty(articul, delta) {
-if (!cart[articul]) return;
-cart[articul].qty += delta;
-if (cart[articul].qty <= 0) {
-delete cart[articul];
-}
-saveCartToStorage();
-updateOrderPanel();
-resetAndRender();
+  if (!cart[articul]) return;
+  cart[articul].qty += delta;
+  if (cart[articul].qty <= 0) delete cart[articul];
+  saveCartToStorage();
+  updateOrderPanel();
+  resetAndRender();
 
-if (Object.keys(cart).length === 0) {
-closeOrderModal();
-} else if (!document.getElementById('orderModal').classList.contains('hidden')) {
-openOrderModal();
-}
+  if (Object.keys(cart).length === 0) closeOrderModal();
+  else if (!document.getElementById('orderModal').classList.contains('hidden')) openOrderModal();
 }
 
-function closeOrderModal() {
-document.getElementById('orderModal').classList.add('hidden');
-}
+function closeOrderModal() { document.getElementById('orderModal').classList.add('hidden'); }
 
 function getSelectedOrganizationName() {
   const sel = document.getElementById('organizationSelect');
-  if (sel && sel.options.length > 0 && sel.selectedIndex >= 0) {
-    return sel.options[sel.selectedIndex].text;
-  }
-  return authorizedClient;
+  return (sel && sel.options.length > 0 && sel.selectedIndex >= 0) ? sel.options[sel.selectedIndex].text : authorizedClient;
 }
 
 function buildEmailFormattedText() {
@@ -1720,28 +1446,20 @@ function buildEmailFormattedText() {
   const contactPerson = (document.getElementById('contactPersonInput').value || '').trim();
   const comment = (document.getElementById('orderCommentInput').value || '').trim();
 
-  let text = `ՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\n`;
-  text += `Կազմակերպություն: ${orgName}\n`;
+  let text = `ՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\nԿազմակերպություն: ${orgName}\n`;
   if (contactPerson) text += `Կոնտակտային անձ: ${contactPerson}\n`;
   if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
   if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
-  if (comment) text += `Մեկնաբանություն: ${comment}\n`;
-  text += `\n`;
+  if (comment) text += `Մեկնաբանություն: ${comment}\n\n`;
 
-  let total = 0;
-  let i = 1;
-
+  let total = 0, i = 1;
   Object.entries(cart).forEach(([artKey, item]) => {
-  const price = getItemWholesalePrice(item);
-  const articul = getItemArticul(artKey, item);
-  const name = getItemName(item);
-  const sum = price * item.qty;
-  total += sum;
-
-  text += `${i}. Արտիկուլ: ${articul}\n   Անվանում: ${name}\n   Քանակ: ${item.qty} հատ | Վճարում: ${item.paymentMethod || 'Կանխիկ'}\n   Գումար: ${sum.toLocaleString('ru-RU')} ֏\n\n`;
-  i++;
+    const price = getItemWholesalePrice(item);
+    const sum = price * item.qty;
+    total += sum;
+    text += `${i}. Արտիկուլ: ${getItemArticul(artKey, item)}\n   Անվանում: ${getItemName(item)}\n   Քանակ: ${item.qty} հատ | Վճարում: ${item.paymentMethod || 'Կանխիկ'}\n   Գումար: ${sum.toLocaleString('ru-RU')} ֏\n\n`;
+    i++;
   });
-
   text += `ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
   return text;
 }
@@ -1754,166 +1472,92 @@ function buildViberFormattedText() {
   const comment = (document.getElementById('orderCommentInput').value || '').trim();
 
   let total = 0;
-  Object.entries(cart).forEach(([artKey, item]) => {
-    const price = getItemWholesalePrice(item);
-    total += (price * item.qty);
-  });
+  Object.values(cart).forEach(item => total += getItemWholesalePrice(item) * item.qty);
 
-  let text = `Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը (խնդրում ենք կցել նոր ներբեռնված ֆայլը):\n`;
-  text += `Կազմակերպություն: ${orgName}\n`;
+  let text = `Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը:\nԿազմակերպություն: ${orgName}\n`;
   if (contactPerson) text += `Կոնտակտային անձ: ${contactPerson}\n`;
   if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
   if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
   if (comment) text += `Մեկնաբանություն: ${comment}\n`;
-
-  text += `\nՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\nԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
+  text += `\nԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏`;
   return text;
 }
 
 function sendViaViber() {
   const viberText = buildViberFormattedText();
   generateAndDownloadExcel();
-
-  setTimeout(() => {
-    const encodedText = encodeURIComponent(viberText);
-    window.open(`viber://forward?text=${encodedText}`, '_blank');
-  }, 800);
+  setTimeout(() => window.open(`viber://forward?text=${encodeURIComponent(viberText)}`, '_blank'), 800);
 }
 
 function sendViaEmail() {
   const formattedText = buildEmailFormattedText();
   generateAndDownloadExcel();
-
   setTimeout(() => {
-    const subject = encodeURIComponent(`Պատվեր կատալոգից - ${authorizedClient}`);
-    const body = encodeURIComponent(`Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը (խնդրում ենք կցել նոր ներբեռնված ֆայլը):\n\n` + formattedText);
-    window.location.href = `mailto:${TARGET_EMAILS}?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:${TARGET_EMAILS}?subject=${encodeURIComponent(`Պատվեր կատալոգից - ${authorizedClient}`)}&body=${encodeURIComponent(`Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը:\n\n` + formattedText)}`;
   }, 800);
 }
 
-function downloadOrderExcel() {
-  generateAndDownloadExcel();
-}
+function downloadOrderExcel() { generateAndDownloadExcel(); }
 
 function generateAndDownloadExcel() {
-const orgName = getSelectedOrganizationName();
-const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
-const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
-const contactPerson = (document.getElementById('contactPersonInput').value || '').trim();
-const comment = (document.getElementById('orderCommentInput').value || '').trim();
+  const orgName = getSelectedOrganizationName();
+  const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
+  const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
+  const contactPerson = (document.getElementById('contactPersonInput').value || '').trim();
+  const comment = (document.getElementById('orderCommentInput').value || '').trim();
 
-const excelData = [];
-let cashTotal = 0;
-let bankTotal = 0;
+  const excelData = [];
+  let cashTotal = 0, bankTotal = 0;
+  const cashItems = [], bankItems = [];
 
-const cashItems = [];
-const bankItems = [];
-
-Object.entries(cart).forEach(([artKey, item]) => {
-if (item.paymentMethod === 'Բանկային փոխանցումով') {
-  bankItems.push({ key: artKey, ...item });
-} else {
-  cashItems.push({ key: artKey, ...item });
-}
-});
-
-if (cashItems.length > 0) {
-  cashItems.forEach(item => {
-    const price = getItemWholesalePrice(item);
-    const articul = getItemArticul(item.key, item);
-    const name = getItemName(item);
-    const sum = price * item.qty;
-    cashTotal += sum;
-    excelData.push({
-      'Արտիկուլ': articul,
-      'Անվանում': name,
-      'Քանակ (հատ)': item.qty,
-      'Մեծածախ գին (AMD)': price,
-      'Գումար (AMD)': sum,
-      'Վճարման եղանակ': 'Կանխիկ'
-    });
+  Object.entries(cart).forEach(([artKey, item]) => {
+    if (item.paymentMethod === 'Բանկային փոխանցումով') bankItems.push({ key: artKey, ...item });
+    else cashItems.push({ key: artKey, ...item });
   });
-  excelData.push({ 'Արտիկուլ': '', 'Անվանում': 'ԸՆԴՀԱՆՈՒՐ (ԿԱՆԽԻԿ)', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': cashTotal, 'Վճարման եղանակ': 'Կանխիկ' });
+
+  if (cashItems.length > 0) {
+    cashItems.forEach(item => {
+      const price = getItemWholesalePrice(item);
+      const sum = price * item.qty;
+      cashTotal += sum;
+      excelData.push({ 'Արտիկուլ': getItemArticul(item.key, item), 'Անվանում': getItemName(item), 'Քանակ (հատ)': item.qty, 'Մեծածախ գին (AMD)': price, 'Գումար (AMD)': sum, 'Վճարման եղանակ': 'Կանխիկ' });
+    });
+    excelData.push({ 'Արտիկուլ': '', 'Անվանում': 'ԸՆԴՀԱՆՈՒՐ (ԿԱՆԽԻԿ)', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': cashTotal, 'Վճարման եղանակ': 'Կանխիկ' });
+    excelData.push({ 'Արտիկուլ': '', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+  }
+
+  if (bankItems.length > 0) {
+    bankItems.forEach(item => {
+      const price = getItemWholesalePrice(item);
+      const sum = price * item.qty;
+      bankTotal += sum;
+      excelData.push({ 'Արտիկուլ': getItemArticul(item.key, item), 'Անվանում': getItemName(item), 'Քանակ (հատ)': item.qty, 'Մեծածախ գին (AMD)': price, 'Գումար (AMD)': sum, 'Վճարման եղանակ': 'Բանկային փոխանցումով' });
+    });
+    excelData.push({ 'Արտիկուլ': '', 'Անվանում': 'ԸՆԴՀԱՆՈՒՐ (ԲԱՆԿԱՅԻՆ)', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': bankTotal, 'Վճարման եղանակ': 'Բանկային փոխանցումով' });
+  }
+
   excelData.push({ 'Արտիկուլ': '', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-}
+  excelData.push({ 'Արտիկուլ': 'Կոնտրագենտ:', 'Անվանում': authorizedClient, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+  excelData.push({ 'Արտիկուլ': 'Կազմակերպություն:', 'Անվանում': orgName, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 
-if (bankItems.length > 0) {
-  bankItems.forEach(item => {
-    const price = getItemWholesalePrice(item);
-    const articul = getItemArticul(item.key, item);
-    const name = getItemName(item);
-    const sum = price * item.qty;
-    bankTotal += sum;
-    excelData.push({
-      'Արտիկուլ': articul,
-      'Անվանում': name,
-      'Քանակ (հատ)': item.qty,
-      'Մեծածախ գին (AMD)': price,
-      'Գումար (AMD)': sum,
-      'Վճարման եղանակ': 'Բանկային փոխանցումով'
-    });
-  });
-  excelData.push({ 'Արտիկուլ': '', 'Անվանում': 'ԸՆԴՀԱՆՈՒՐ (ԲԱՆԿԱՅԻՆ)', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': bankTotal, 'Վճարման եղանակ': 'Բանկային փոխանցումով' });
-}
+  if (contactPerson) excelData.push({ 'Արտիկուլ': 'Կոնտակտային անձ:', 'Անվանում': contactPerson, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+  if (delivDate) excelData.push({ 'Արտիկուլ': 'Ցանկալի առաքման ամսաթիվ:', 'Անվանում': delivDate, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+  if (delivAddr) excelData.push({ 'Արտիկուլ': 'Առաքման հասցե:', 'Անվանում': delivAddr, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+  if (comment) excelData.push({ 'Արտիկուլ': 'Մեկնաբանություն:', 'Անվանում': comment, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+  excelData.push({ 'Արտիկուլ': 'ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ ԲՈԼՈՐԻ', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': (cashTotal + bankTotal), 'Վճարման եղանակ': '' });
 
-excelData.push({ 'Արտիկուլ': '', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-excelData.push({ 'Արտիկուլ': 'Կոնտրագենտ:', 'Անվանում': authorizedClient, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-excelData.push({ 'Արտիկուլ': 'Կազմակերպություն:', 'Անվանում': orgName, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+  const worksheet = XLSX.utils.json_to_sheet(excelData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Պատվեր");
 
-if (contactPerson) {
-  excelData.push({ 'Արտիկուլ': 'Կոնտակտային անձ:', 'Անվանում': contactPerson, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-}
-if (delivDate) {
-  excelData.push({ 'Արտիկուլ': 'Ցանկալի առաքման ամսաթիվ:', 'Անվանում': delivDate, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-}
-if (delivAddr) {
-  excelData.push({ 'Արտիկուլ': 'Առաքման հասցե:', 'Անվանում': delivAddr, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-}
-if (comment) {
-  excelData.push({ 'Արտիկուլ': 'Մեկնաբանություն:', 'Անվանում': comment, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-}
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const uniqueFileName = `Zakaz_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}.xlsx`;
 
-excelData.push({ 'Արտիկուլ': 'ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ ԲՈԼՈՐԻ', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': (cashTotal + bankTotal), 'Վճարման եղանակ': '' });
-
-const worksheet = XLSX.utils.json_to_sheet(excelData);
-
-if (excelData.length > 0) {
-  const colKeys = Object.keys(excelData[0]);
-  const colWidths = colKeys.map(key => {
-    let maxLen = key ? String(key).length : 10;
-    excelData.forEach(row => {
-      const val = row[key];
-      if (val !== undefined && val !== null) {
-        const len = String(val).length;
-        if (len > maxLen) {
-          maxLen = len;
-        }
-      }
-    });
-    return { wch: maxLen + 4 };
-  });
-  worksheet['!cols'] = colWidths;
-}
-
-const workbook = XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(workbook, worksheet, "Պատվեր");
-
-const now = new Date();
-const pad = (n) => String(n).padStart(2, '0');
-const year = now.getFullYear();
-const month = pad(now.getMonth() + 1);
-const day = pad(now.getDate());
-const hours = pad(now.getHours());
-const minutes = pad(now.getMinutes());
-const seconds = pad(now.getSeconds());
-
-const uniqueFileName = `Zakaz_${year}-${month}-${day}_${hours}-${minutes}-${seconds}.xlsx`;
-
-XLSX.writeFile(workbook, uniqueFileName);
-
-closeOrderModal();
-document.getElementById('successOverlay').classList.remove('hidden');
-document.getElementById('successOverlay').classList.add('flex');
+  XLSX.writeFile(workbook, uniqueFileName);
+  closeOrderModal();
+  document.getElementById('successOverlay').classList.remove('hidden');
+  document.getElementById('successOverlay').classList.add('flex');
 }
 
 function keepCartAndCloseSuccess() {
@@ -1928,80 +1572,67 @@ function clearCartAndCloseSuccess() {
 }
 
 function importPreviousOrder(event) {
-const file = event.target.files[0];
-if (!file) return;
+  const file = event.target.files[0];
+  if (!file) return;
 
-const reader = new FileReader();
-reader.onload = function(e) {
-  try {
-    const data = new Uint8Array(e.target.result);
-    const workbook = XLSX.read(data, { type: 'array' });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_sheet_json ? [] : XLSX.utils.sheet_to_json(sheet, { header: 1 });
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
 
-    cart = {};
-    let loadedCount = 0;
+      cart = {};
+      let loadedCount = 0;
 
-    rows.forEach(r => {
-      if (!r || r.length === 0) return;
-      let articul = '';
-      let qty = 0;
-      let payMethod = 'Կանխիկ';
+      rows.forEach(r => {
+        if (!r || r.length === 0) return;
+        let articul = '', qty = 0, payMethod = 'Կանխիկ';
 
-      for (let j = 0; j < r.length; j++) {
-        let val = String(r[j] || '').trim();
-        if (val === 'Արտիկուլ' || val === 'Articul' || val.includes('---')) {
-          return;
+        for (let j = 0; j < r.length; j++) {
+          if (String(r[j] || '').trim() === 'Արտիկուլ' || String(r[j] || '').includes('---')) return;
         }
-      }
 
-      const firstCell = String(r[0] || '').trim();
-      if (firstCell !== '' && !firstCell.includes('Կոնտրագենտ') && !firstCell.includes('Մեկնաբանություն') && !firstCell.includes('Առաքման') && !firstCell.includes('ամսաթիվ') && !firstCell.includes('Վճարման') && !firstCell.includes('ԸՆԴՀԱՆՈՒՐ') && !firstCell.includes('Կազմակերպություն') && !firstCell.includes('Կոնտակտային')) {
-        articul = firstCell;
-        for (let j = 1; j < r.length; j++) {
-          let num = Number(r[j]);
-          if (!isNaN(num) && num > 0 && num < 10000 && (j === 2 || j === 3 || j === 4)) {
-            qty = num;
-            break;
+        const firstCell = String(r[0] || '').trim();
+        if (firstCell && !firstCell.includes('Կոնտրագենտ') && !firstCell.includes('Մեկնաբանություն') && !firstCell.includes('Առաքման') && !firstCell.includes('ԸՆԴՀԱՆՈՒՐ') && !firstCell.includes('Կազմակերպություն') && !firstCell.includes('Կոնտակտային')) {
+          articul = firstCell;
+          for (let j = 1; j < r.length; j++) {
+            let num = Number(r[j]);
+            if (!isNaN(num) && num > 0 && num < 10000 && (j === 2 || j === 3 || j === 4)) {
+              qty = num;
+              break;
+            }
+          }
+          if (!qty && r.length >= 3) qty = Number(r[2]) || 1;
+          for (let cell of r) {
+            if (String(cell || '').includes('Բանկային')) payMethod = 'Բանկային փոխանցումով';
           }
         }
-        if (!qty && r.length >= 3) {
-          qty = Number(r[2]) || 1;
-        }
 
-        for (let cell of r) {
-          let sCell = String(cell || '');
-          if (sCell.includes('Բանկային')) {
-            payMethod = 'Բանկային փոխանցումով';
+        if (articul && qty > 0) {
+          const product = allProducts.find(p => p.articul === articul);
+          if (product) {
+            cart[articul] = { product: product, qty: qty, paymentMethod: payMethod };
+            loadedCount++;
           }
         }
-      }
+      });
 
-      if (articul && qty > 0) {
-        const product = allProducts.find(p => p.articul === articul);
-        if (product) {
-          cart[articul] = { product: product, qty: qty, paymentMethod: payMethod };
-          loadedCount++;
-        }
+      if (loadedCount > 0) {
+        saveCartToStorage();
+        updateOrderPanel();
+        resetAndRender();
+        alert(`Նախորդ պատվերը հաջողությամբ բեռնվեց: Վերականգնվել է ${loadedCount} ապրանք:`);
+      } else {
+        alert('Ֆայլում հնարավոր չեղավ գտնել ապրանքների ճիշտ տվյալներ։');
       }
-    });
-
-    if (loadedCount > 0) {
-      saveCartToStorage();
-      updateOrderPanel();
-      resetAndRender();
-      alert(`Նախորդ պատվերը հաջողությամբ բեռնվեց: Վերականգնվել է ${loadedCount} ապրանք:`);
-    } else {
-      alert('Ֆայլում հնարավոր չեղավ գտնել ապրանքների ճիշտ տվյալներ։');
+    } catch (err) {
+      console.error(err);
+      alert('Ֆայլի կարդալու սխալ։');
     }
-  } catch (err) {
-    console.error(err);
-    alert('Ֆայլի կարդալու սխալ։');
-  }
-  event.target.value, event.target.value = '';
-};
-reader.readAsArrayBuffer(file);
+    event.target.value = '';
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 document.getElementById('searchInput').oninput = resetAndRender;
