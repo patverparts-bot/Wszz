@@ -31,6 +31,19 @@ body { font-family: 'Inter', sans-serif; }
   overflow-wrap: anywhere;
 }
 
+/* Keep the column-heading row compact while allowing two-line labels. */
+#catalogTable thead tr,
+#catalogTable thead th {
+  height: 48px;
+}
+
+#catalogTable thead th {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  vertical-align: middle;
+  line-height: 1.25;
+}
+
 /* Proportional widths keep each authorized column set inside the available viewport. */
 #catalogTable.layout-standard th:nth-child(1) { width: 3%; }
 #catalogTable.layout-standard th:nth-child(2) { width: 12%; }
