@@ -132,6 +132,11 @@ body { font-family: 'Inter', sans-serif; }
   width: 100%;
 }
 
+/* Keep the floating return-to-top control above sticky table and category rows. */
+#scrollTopBtn {
+  z-index: 60;
+}
+
 .table-scroll-wrapper thead {
   position: sticky;
   top: var(--stick-top, 58px);
