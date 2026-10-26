@@ -102,8 +102,8 @@ body { font-family: 'Inter', sans-serif; }
   cursor: pointer;
 }
 
-.product-img-container:hover .product-img {
-  transform: scale(5.915);
+.product-img-container:hover .product-img.image-loaded {
+  transform: scale(8.281);
   z-index: 50;
   position: absolute;
   top: -10px;
@@ -121,7 +121,7 @@ body { font-family: 'Inter', sans-serif; }
     width: 56px;
     height: 56px;
   }
-  .product-img-container:hover .product-img {
+  .product-img-container:hover .product-img.image-loaded {
     transform: scale(2);
     top: -5px;
   }
