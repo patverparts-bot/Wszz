@@ -103,11 +103,14 @@ body { font-family: 'Inter', sans-serif; }
 }
 
 .product-img-container:hover .product-img {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+  transform: scale(4.55);
+  z-index: 50;
+  position: absolute;
+  top: -10px;
+  left: 0;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
 }
 
-.product-img { cursor: zoom-in; }
 
 @media (max-width: 767px) {
   .product-img-container {
@@ -117,6 +120,10 @@ body { font-family: 'Inter', sans-serif; }
   .product-img {
     width: 56px;
     height: 56px;
+  }
+  .product-img-container:hover .product-img {
+    transform: scale(2);
+    top: -5px;
   }
 }
 
@@ -243,48 +250,3 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
   .order-modal-body-grid { display: block; }
 }
 
-/* Large, viewport-aware product photo preview for desktop pointer hover. */
-.product-image-preview {
-  z-index: 9998;
-  pointer-events: none;
-}
-.product-image-preview-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  max-width: calc(100vw - 2rem);
-  max-height: calc(100dvh - 2rem);
-  margin: 0;
-  padding: 12px;
-  overflow: hidden;
-  border: 1px solid rgba(255,255,255,.38);
-  border-radius: 18px;
-  background: #fff;
-  box-shadow: 0 24px 80px rgba(0,0,0,.45);
-}
-.product-image-preview-card img {
-  display: block;
-  width: min(64vw, 1120px);
-  height: min(82vh, 920px);
-  height: min(82dvh, 920px);
-  max-width: calc(100vw - 3.5rem);
-  max-height: calc(100dvh - 6rem);
-  object-fit: contain;
-  border-radius: 10px;
-  background: #f8fafc;
-}
-.product-image-preview-card figcaption {
-  width: 100%;
-  padding: 8px 4px 0;
-  color: #1f2937;
-  font-size: 13px;
-  font-weight: 700;
-  text-align: center;
-  overflow-wrap: anywhere;
-}
-.dark .product-image-preview-card { background: #1f2937; border-color: #475569; }
-.dark .product-image-preview-card img { background: #111827; }
-.dark .product-image-preview-card figcaption { color: #f3f4f6; }
-@media (hover: none), (pointer: coarse) {
-  .product-image-preview { display: none !important; }
-}

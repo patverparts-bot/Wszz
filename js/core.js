@@ -405,38 +405,3 @@ function getProductImageHtml(articul, productName) {
 }
 
 
-
-function showProductImagePreview(image) {
-  if (!image || !image.src) return;
-  const preview = document.getElementById('productImagePreview');
-  const previewImage = document.getElementById('productImagePreviewImg');
-  const caption = document.getElementById('productImagePreviewCaption');
-  if (!preview || !previewImage) return;
-  previewImage.src = image.currentSrc || image.src;
-  previewImage.alt = image.alt || '';
-  if (caption) {
-    const articul = image.dataset.articul || '';
-    caption.textContent = articul ? (articul + (image.alt ? ' · ' + image.alt : '')) : (image.alt || '');
-  }
-  preview.classList.remove('hidden');
-}
-
-function hideProductImagePreview() {
-  const preview = document.getElementById('productImagePreview');
-  if (preview) preview.classList.add('hidden');
-}
-
-document.addEventListener('pointerover', (event) => {
-  if (event.pointerType === 'touch') return;
-  const image = event.target.closest && event.target.closest('.product-img');
-  if (!image || (event.relatedTarget && image.contains(event.relatedTarget))) return;
-  showProductImagePreview(image);
-});
-
-document.addEventListener('pointerout', (event) => {
-  const image = event.target.closest && event.target.closest('.product-img');
-  if (!image || (event.relatedTarget && image.contains(event.relatedTarget))) return;
-  hideProductImagePreview();
-});
-
-window.addEventListener('blur', hideProductImagePreview);
