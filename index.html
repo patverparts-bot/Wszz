@@ -812,8 +812,10 @@ function loadSavedFilters() {
       selectedCategories = Array.isArray(f.categories) ? f.categories : (f.category ? [f.category] : []);
       updateBrandSelectionSummary();
       updateCategorySelectionSummary();
-      renderBrandDropdown(availableBrands);
-      renderCategoryDropdown(availableCategories);
+      reconcileFilterSelections();
+      updateBrandSelectionSummary();
+      updateCategorySelectionSummary();
+      renderDependentFilterOptions();
       if (f.search) {
         document.getElementById('searchInput').value = f.search;
         document.getElementById('clearSearchBtn').classList.remove('hidden');
@@ -1653,6 +1655,37 @@ renderBrandDropdown(availableBrands);
 renderCategoryDropdown(availableCategories);
 }
 
+function getCategoryOptionsForSelectedBrands() {
+  const matchingCategories = new Set(allProducts
+    .filter(p => !selectedBrands.length || selectedBrands.some(b => String(p.brand || '').toLowerCase() === b.toLowerCase()))
+    .map(p => String(p.category || ''))
+    .filter(Boolean));
+  return availableCategories.filter(category => matchingCategories.has(category));
+}
+
+function getBrandOptionsForSelectedCategories() {
+  const matchingBrands = new Set(allProducts
+    .filter(p => !selectedCategories.length || selectedCategories.some(c => String(p.category || '').toLowerCase() === c.toLowerCase()))
+    .map(p => String(p.brand || ''))
+    .filter(Boolean));
+  return availableBrands.filter(brand => matchingBrands.has(brand));
+}
+
+function reconcileFilterSelections() {
+  const categoryOptions = new Set(getCategoryOptionsForSelectedBrands().map(c => c.toLowerCase()));
+  selectedCategories = selectedCategories.filter(c => categoryOptions.has(c.toLowerCase()));
+
+  const brandOptions = new Set(getBrandOptionsForSelectedCategories().map(b => b.toLowerCase()));
+  selectedBrands = selectedBrands.filter(b => brandOptions.has(b.toLowerCase()));
+}
+
+function renderDependentFilterOptions() {
+  const brandQuery = document.getElementById('brandInput').value.trim().toLowerCase();
+  const categoryQuery = document.getElementById('categoryInput').value.trim().toLowerCase();
+  renderBrandDropdown(getBrandOptionsForSelectedCategories().filter(b => b.toLowerCase().includes(brandQuery)));
+  renderCategoryDropdown(getCategoryOptionsForSelectedBrands().filter(c => c.toLowerCase().includes(categoryQuery)));
+}
+
 function renderBrandDropdown(brands) {
   const dropdown = document.getElementById('brandDropdown');
   if (!brands || brands.length === 0) {
@@ -1670,16 +1703,17 @@ function showBrandDropdown() { document.getElementById('brandDropdown').classLis
 function filterBrandOptions() {
   const query = document.getElementById('brandInput').value.trim().toLowerCase();
   document.getElementById('clearBrandBtn').classList.toggle('hidden', !query && !selectedBrands.length);
-  renderBrandDropdown(availableBrands.filter(b => b.toLowerCase().includes(query)));
+  renderBrandDropdown(getBrandOptionsForSelectedCategories().filter(b => b.toLowerCase().includes(query)));
   showBrandDropdown();
 }
 
 function selectBrand(brand) {
   if (selectedBrands.includes(brand)) selectedBrands = selectedBrands.filter(b => b !== brand);
   else selectedBrands.push(brand);
+  reconcileFilterSelections();
   updateBrandSelectionSummary();
-  const query = document.getElementById('brandInput').value.trim().toLowerCase();
-  renderBrandDropdown(availableBrands.filter(b => b.toLowerCase().includes(query)));
+  updateCategorySelectionSummary();
+  renderDependentFilterOptions();
   showBrandDropdown();
   resetAndRender();
 }
@@ -1698,7 +1732,9 @@ function clearBrandSelection() {
   document.getElementById('brandInput').value = '';
   document.getElementById('clearBrandBtn').classList.add('hidden');
   updateBrandSelectionSummary();
-  renderBrandDropdown(availableBrands);
+  reconcileFilterSelections();
+  updateCategorySelectionSummary();
+  renderDependentFilterOptions();
   resetAndRender();
 }
 
@@ -1719,16 +1755,17 @@ function showCategoryDropdown() { document.getElementById('categoryDropdown').cl
 function filterCategoryOptions() {
   const query = document.getElementById('categoryInput').value.trim().toLowerCase();
   document.getElementById('clearCategoryBtn').classList.toggle('hidden', !query && !selectedCategories.length);
-  renderCategoryDropdown(availableCategories.filter(c => c.toLowerCase().includes(query)));
+  renderCategoryDropdown(getCategoryOptionsForSelectedBrands().filter(c => c.toLowerCase().includes(query)));
   showCategoryDropdown();
 }
 
 function selectCategory(category) {
   if (selectedCategories.includes(category)) selectedCategories = selectedCategories.filter(c => c !== category);
   else selectedCategories.push(category);
+  reconcileFilterSelections();
   updateCategorySelectionSummary();
-  const query = document.getElementById('categoryInput').value.trim().toLowerCase();
-  renderCategoryDropdown(availableCategories.filter(c => c.toLowerCase().includes(query)));
+  updateBrandSelectionSummary();
+  renderDependentFilterOptions();
   showCategoryDropdown();
   resetAndRender();
 }
@@ -1747,7 +1784,9 @@ function clearCategorySelection() {
   document.getElementById('categoryInput').value = '';
   document.getElementById('clearCategoryBtn').classList.add('hidden');
   updateCategorySelectionSummary();
-  renderCategoryDropdown(availableCategories);
+  reconcileFilterSelections();
+  updateBrandSelectionSummary();
+  renderDependentFilterOptions();
   resetAndRender();
 }
 
