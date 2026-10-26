@@ -103,7 +103,7 @@ body { font-family: 'Inter', sans-serif; }
 }
 
 .product-img-container:hover .product-img {
-  transform: scale(4.55);
+  transform: scale(5.915);
   z-index: 50;
   position: absolute;
   top: -10px;
