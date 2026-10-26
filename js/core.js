@@ -1,4 +1,4 @@
-console.log("ZIGZAG Catalog v2.54 loaded successfully");
+console.log("ZIGZAG Catalog v2.55 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
@@ -364,8 +364,13 @@ onerror="this.style.display='none'; this.nextElementSibling.style.display='inlin
 }
 
 function markProductImageLoaded(imgElement) {
-  const hasRealDimensions = imgElement && imgElement.naturalWidth >= 160 && imgElement.naturalHeight >= 160;
-  if (imgElement) imgElement.classList.toggle("image-loaded", hasRealDimensions);
+  if (!imgElement) return;
+  const width = Number(imgElement.naturalWidth) || 0;
+  const height = Number(imgElement.naturalHeight) || 0;
+  // Zigzag returns this same 2200x2200 PNG for a missing SKU and the checked sample SKU.
+  const missingPhotoPlaceholder = width === 2200 && height === 2200;
+  const hasRealPhoto = width >= 160 && height >= 160 && !missingPhotoPlaceholder;
+  imgElement.classList.toggle("image-loaded", hasRealPhoto);
 }
 
 function handleImageError(imgElement) {
