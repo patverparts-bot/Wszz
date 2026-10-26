@@ -31,17 +31,23 @@ body { font-family: 'Inter', sans-serif; }
   overflow-wrap: anywhere;
 }
 
-/* Keep the column-heading row compact while allowing two-line labels. */
-#catalogTable thead tr,
-#catalogTable thead th {
-  height: 48px;
+/* Fix the column-heading row height and keep two-line labels centered. */
+#catalogTable {
+  height: auto !important;
 }
 
-#catalogTable thead th {
-  padding-top: 8px;
-  padding-bottom: 8px;
-  vertical-align: middle;
-  line-height: 1.25;
+#catalogTable thead,
+#catalogTable #tableHeaderRow,
+#catalogTable #tableHeaderRow > th {
+  height: 48px !important;
+  max-height: 48px !important;
+}
+
+#catalogTable #tableHeaderRow > th {
+  box-sizing: border-box !important;
+  padding: 6px 8px !important;
+  vertical-align: middle !important;
+  line-height: 1.15 !important;
 }
 
 /* Proportional widths keep each authorized column set inside the available viewport. */
