@@ -6,14 +6,14 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Մեծածախ Ցանկ / Կատալոգ v2.46</title>
+<title>Մեծածախ Ցանկ / Կատալոգ v2.47</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config = { darkMode: 'class' };
 try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.classList.toggle('dark', __t ? __t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches); } catch (e) {}</script>
 <!-- SheetJS (XLSX reader/writer) -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=2.47">
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 min-h-screen flex flex-col relative transition-colors duration-200">
 
@@ -22,7 +22,7 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
   <div class="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/70"></div>
 
   <div class="relative z-10 bg-white/50 dark:bg-gray-900/80 backdrop-blur-md rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 dark:border-gray-800 text-center">
-    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.46</span>
+    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.47</span>
     
     <h2 class="text-2xl font-black text-gray-900 dark:text-white mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 dark:text-gray-300 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
@@ -267,6 +267,14 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 <span id="orderCount" class="text-blue-600 dark:text-blue-400 font-semibold text-sm sm:text-base">0 ապրանք</span> |
 <span class="font-bold text-gray-900 dark:text-white text-sm sm:text-base"> Ընդհանուր՝ </span>
 <span id="orderSum" class="text-green-600 dark:text-green-400 font-bold text-base sm:text-lg">0 ֏</span>
+<div id="adminPriceModeWrap" class="hidden mt-2 flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2">
+  <label for="adminOrderPriceMode" class="text-xs font-bold text-indigo-900 dark:text-indigo-300 uppercase">Հաշվարկել ըստ՝</label>
+  <select id="adminOrderPriceMode" onchange="setAdminOrderPriceMode(this.value)" aria-label="Ընտրել KP կամ WS գին զամբյուղի հաշվարկման համար" class="px-3 py-2 bg-white dark:bg-gray-900 border border-indigo-300 dark:border-indigo-800 rounded-lg text-xs sm:text-sm font-semibold text-indigo-900 dark:text-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+    <option value="WS">WS Price</option>
+    <option value="KP">KP Price</option>
+  </select>
+</div>
+
 </div>
 <div class="flex gap-2 w-full sm:w-auto justify-end">
 <button onclick="clearOrder()" aria-label="Մաքրել զամբյուղը" class="w-1/3 sm:w-auto px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-xs sm:text-sm font-medium transition">
@@ -298,13 +306,6 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 <option value="Բանկային փոխանցումով">🏦 Բանկային փոխանցումով</option>
 <option value="Կանխիկ">💵 Կանխիկ</option>
 </select>
-</div>
-<div id="adminPriceModeWrap" class="hidden flex flex-col sm:flex-row items-start sm:items-center gap-2">
-  <label for="adminOrderPriceMode" class="text-xs font-bold text-indigo-900 dark:text-indigo-300 uppercase">Հաշվարկել ըստ՝</label>
-  <select id="adminOrderPriceMode" onchange="setAdminOrderPriceMode(this.value)" aria-label="Ընտրել KP կամ WS գին զամբյուղի հաշվարկման համար" class="px-3 py-2 bg-white dark:bg-gray-900 border border-indigo-300 dark:border-indigo-800 rounded-lg text-xs sm:text-sm font-semibold text-indigo-900 dark:text-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
-    <option value="WS">WS Price</option>
-    <option value="KP">KP Price</option>
-  </select>
 </div>
 </div>
 
@@ -468,11 +469,11 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 
 <button id="scrollTopBtn" onclick="scrollToTop()" aria-label="Վերև գնալ" class="fixed bottom-20 right-4 sm:right-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-2xl hidden transition transform hover:scale-110" title="Վերև">⬆️</button>
 
-<script src="js/core.js"></script>
-<script src="js/auth-data.js"></script>
-<script src="js/catalog.js"></script>
-<script src="js/order-state.js"></script>
-<script src="js/bulk-add.js"></script>
-<script src="js/order-submit.js"></script>
+<script src="js/core.js?v=2.47"></script>
+<script src="js/auth-data.js?v=2.47"></script>
+<script src="js/catalog.js?v=2.47"></script>
+<script src="js/order-state.js?v=2.47"></script>
+<script src="js/bulk-add.js?v=2.47"></script>
+<script src="js/order-submit.js?v=2.47"></script>
 </body>
 </html>

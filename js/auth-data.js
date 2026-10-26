@@ -164,6 +164,7 @@ function clearUserCartAndFilters(client) {
   selectedBrands = [];
   selectedCategories = [];
   adminOrderPriceMode = 'WS';
+  pendingRestoreToast = false;
 
   const tableBody = document.getElementById('tableBody');
   if (tableBody) tableBody.innerHTML = '';
@@ -380,6 +381,7 @@ try {
   const savedSheet = localStorage.getItem('zigzag_sheet');
   const savedRows = localStorage.getItem('zigzag_client_rows');
   if (savedClient && savedSheet) {
+    clearUserCartAndFilters(savedClient);
     authorizedClient = savedClient;
     userSheetType = savedSheet;
     if (savedRows) {

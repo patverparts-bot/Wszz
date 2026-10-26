@@ -59,8 +59,11 @@ async function copyArticul(articul) {
     temporaryInput.setAttribute('readonly', '');
     temporaryInput.style.position = 'fixed';
     temporaryInput.style.opacity = '0';
+    temporaryInput.style.left = '-9999px';
     document.body.appendChild(temporaryInput);
+    temporaryInput.focus({ preventScroll: true });
     temporaryInput.select();
+    temporaryInput.setSelectionRange(0, temporaryInput.value.length);
     try { copied = document.execCommand('copy'); } catch (e) {}
     temporaryInput.remove();
   }
