@@ -675,6 +675,32 @@ let cart = {};
 let authorizedClient = '';
 let userSheetType = '';
 let passMap = {};
+
+function normalizeAccessBrand(value) {
+  return String(value === null || value === undefined ? '' : value)
+    .toLowerCase()
+    .replace(/[^a-z0-9\u0531-\u058F]/g, '');
+}
+
+function parseAllowedBrands(value) {
+  const raw = String(value === null || value === undefined ? '' : value).trim();
+  const normalized = raw.toLowerCase().replace(/\s+/g, ' ').trim();
+  const allLabels = ['all', 'all brands', 'все', 'все бренды', 'բոլորը', 'բոլոր ապրանքանիշերը', 'բոլոր բրենդները'];
+  if (allLabels.includes(normalized)) return { all: true, brands: [] };
+  return {
+    all: false,
+    brands: raw.split(/[;,|\n\r]+/).map(normalizeAccessBrand).filter(Boolean)
+  };
+}
+
+function getAuthorizedPartnerRecord() {
+  const clientKey = String(authorizedClient || '').trim().toLowerCase();
+  return Object.values(passMap).find(record =>
+    record && record.sheet === 'KP' &&
+    String(record.client || '').trim().toLowerCase() === clientKey
+  ) || null;
+}
+
 const ADDITIONAL_ADMIN_NAME = "Աշոտ Մանուկյան";
 function isAdminUser() {
   return authorizedClient === "Администратор" || authorizedClient === ADDITIONAL_ADMIN_NAME;
@@ -977,6 +1003,7 @@ const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
 let headerIdx = 0;
 let headers = [];
+let brandColIdx = -1;
 if (rows.length > 0) {
   for (let i = 0; i < Math.min(rows.length, 5); i++) {
     let rStr = (rows[i] || []).map(c => String(c || '').toLowerCase()).join(' ');
@@ -992,9 +1019,10 @@ let passColIdx = 0;
 let clientColIdx = 1;
 
 headers.forEach((h, idx) => {
-  let hL = h.toLowerCase();
+  let hL = h.toLowerCase().replace(/\s+/g, ' ').trim();
   if (hL.includes('pass') || hL.includes('пароль') || hL.includes('գաղտնաբառ')) passColIdx = idx;
   if (hL.includes('контрагент') || hL.includes('клиент') || hL.includes('կոնտրագենտ')) clientColIdx = idx;
+  if (hL.includes('марка') && hL.includes('бренд') || hL === 'brand') brandColIdx = idx;
 });
 
 for (let i = headerIdx + 1; i < rows.length; i++) {
@@ -1005,7 +1033,12 @@ for (let i = headerIdx + 1; i < rows.length; i++) {
   let client = r[clientColIdx] !== null && r[clientColIdx] !== undefined ? String(r[clientColIdx]).trim() : '';
   
   if (pHash) {
-    let rowDataObj = { client: client, sheet: sheetName, rowsList: [] };
+    let rowDataObj = {
+      client: client,
+      sheet: sheetName,
+      rowsList: [],
+      allowedBrands: sheetName === 'KP' ? parseAllowedBrands(brandColIdx === -1 ? '' : r[brandColIdx]) : null
+    };
     let orgs = [], addrs = [], contacts = [];
 
     for (let k = 1; k <= 5; k++) {
@@ -1518,16 +1551,19 @@ for (let i = headerRowIdx + 1; i < rows.length; i++) {
 
   const brandVal = r[colMap.brand];
   const brand = (brandVal !== null && brandVal !== undefined) ? String(brandVal).trim() : 'Այլ';
-  const cleanBrandLower = brand.toLowerCase();
-
-  if (authorizedClient === "ՎԵԳԱ ՈՒՈՐԼԴ" || authorizedClient === "ԷԼՄԱՐԿԵՏ ՍՊԸ" || authorizedClient === "ՎԻԷԼՎԻ ՍԵՆԹՐ ՍՊԸ") {
-    if (!["babyliss", "bosch", "delonghi", "elica", "indesit"].includes(cleanBrandLower)) continue;
-  } else if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
-    if (!["indesit", "bosch"].includes(cleanBrandLower)) continue;
-  }
+  const brandKey = normalizeAccessBrand(brand);
 
   const catVal = r[colMap.category];
   const category = (catVal !== null && catVal !== undefined) ? String(catVal).trim() : 'Ընդհանուր';
+
+  if (userSheetType === 'KP' && !isAdminUser()) {
+    const partnerRecord = getAuthorizedPartnerRecord();
+    const brandRule = partnerRecord && partnerRecord.allowedBrands;
+    if (!brandRule || (!brandRule.all && !brandRule.brands.includes(brandKey))) continue;
+
+    if (brandKey === 'miele') continue;
+    if (brandKey === 'sony' && normalizeAccessBrand(category).includes(normalizeAccessBrand('Հեռուստացույց'))) continue;
+  }
 
   let name = '';
   if (r[colMap.name] !== undefined && r[colMap.name] !== null) {
@@ -1557,8 +1593,12 @@ for (let i = headerRowIdx + 1; i < rows.length; i++) {
   }
 
   if (!isAdminUser() && retail > 0 && wholesale > 0) {
-    if (isDomusUser && marginVal < 1.0) continue;
-    if (!isDomusUser && marginVal < 0) continue;
+    if (userSheetType === 'KP') {
+      if (wholesale > retail) continue;
+    } else {
+      if (isDomusUser && marginVal < 1.0) continue;
+      if (!isDomusUser && marginVal < 0) continue;
+    }
   }
 
   let adminStockDetails = [], targetWarehousesStock = 0, otherWarehousesSum = 0, baseSum = 0, otherStockList = [];
