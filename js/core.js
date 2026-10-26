@@ -1,4 +1,4 @@
-console.log("ZIGZAG Catalog v2.53 loaded successfully");
+console.log("ZIGZAG Catalog v2.54 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
@@ -363,6 +363,11 @@ onerror="this.style.display='none'; this.nextElementSibling.style.display='inlin
 `;
 }
 
+function markProductImageLoaded(imgElement) {
+  const hasRealDimensions = imgElement && imgElement.naturalWidth >= 160 && imgElement.naturalHeight >= 160;
+  if (imgElement) imgElement.classList.toggle("image-loaded", hasRealDimensions);
+}
+
 function handleImageError(imgElement) {
   imgElement.classList.remove("image-loaded");
   const container = imgElement.parentElement;
@@ -400,7 +405,7 @@ function getProductImageHtml(articul, productName) {
            alt="${escapeHtml(productName)}" 
            class="product-img dark:border-gray-700 dark:bg-gray-800" 
            loading="lazy"
-           onload="if (this.naturalWidth > 1) this.classList.add('image-loaded')"
+           onload="markProductImageLoaded(this)"
            onerror="handleImageError(this)">
     </div>
   `;
