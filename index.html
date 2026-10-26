@@ -248,7 +248,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 
 <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto flex-wrap justify-end">
 <button onclick="toggleTheme()" aria-label="Թեմա" title="Մութ / լուսավոր թեմա" class="px-2.5 py-1.5 sm:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-semibold border border-gray-200 dark:border-gray-600 transition">🌓</button>
-<button onclick="downloadFullPriceList()" aria-label="Ներբեռնել ամբողջական գնացուցակը" class="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow transition cursor-pointer flex items-center gap-1.5" title="Ներբեռն��լ ամբողջական գնացուցակը Excel ֆայլով">
+<button onclick="downloadFullPriceList()" aria-label="Ներբեռնել ամբողջական գնացուցակը" class="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow transition cursor-pointer flex items-center gap-1.5" title="Ներբեռն����լ ամբողջական գնացուցակը Excel ֆայլով">
   <span>📊 Ներբեռնել գնացուցակը</span>
 </button>
 
@@ -644,6 +644,10 @@ let cart = {};
 let authorizedClient = '';
 let userSheetType = '';
 let passMap = {};
+const ADDITIONAL_ADMIN_NAME = "Աշոտ Մանուկյան";
+function isAdminUser() {
+  return authorizedClient === "Администратор" || authorizedClient === ADDITIONAL_ADMIN_NAME;
+}
 let clientRowsData = [];
 
 let availableBrands = [];
@@ -922,6 +926,11 @@ passMap["d5c33d07c18e87a43d93fc607e4acc15caab0f59048a60bc034fe1737d428964"] = {
   sheet: "Dealers",
   rowsList: [{ organization: "Администрация", address: "Ереван", contact: "Админ" }]
 };
+passMap["4968b9f57008b3923fa706160108da7ab27ddecaf7a5d2b70503c1b3ee0207af"] = {
+  client: ADDITIONAL_ADMIN_NAME,
+  sheet: "Dealers",
+  rowsList: [{ organization: ADDITIONAL_ADMIN_NAME, address: "", contact: "" }]
+};
 
 try {
 const response = await fetch('pass.xlsx', { cache: 'no-cache' });
@@ -1034,7 +1043,7 @@ if (passMap[inputHash]) {
   authorizedClient = passMap[inputHash].client;
   userSheetType = passMap[inputHash].sheet;
   const wholesaleFilterLabel = document.getElementById('wholesaleOnlyFilterLabel');
-  if (wholesaleFilterLabel) wholesaleFilterLabel.classList.toggle('hidden', authorizedClient !== 'Администратор');
+  if (wholesaleFilterLabel) wholesaleFilterLabel.classList.toggle('hidden', !isAdminUser());
   clientRowsData = passMap[inputHash].rowsList || [];
   try {
     localStorage.setItem('zigzag_client', authorizedClient);
@@ -1160,7 +1169,7 @@ function initAppAfterAuth() {
   document.getElementById('welcomeMsg').innerText = `Բարև ձեզ, ${authorizedClient}։`;
 
   const wholesaleFilterLabel = document.getElementById('wholesaleOnlyFilterLabel');
-  if (wholesaleFilterLabel) wholesaleFilterLabel.classList.toggle('hidden', authorizedClient !== 'Администратор');
+  if (wholesaleFilterLabel) wholesaleFilterLabel.classList.toggle('hidden', !isAdminUser());
 
   loadFavorites();
   setupTableHeader();
@@ -1172,7 +1181,7 @@ function setupTableHeader() {
 const headerRow = document.getElementById('tableHeaderRow');
 const catalogTable = document.getElementById('catalogTable');
 catalogTable.classList.remove('layout-standard', 'layout-resale', 'layout-admin');
-catalogTable.classList.add(authorizedClient === 'Администратор' ? 'layout-admin' : (authorizedClient === 'ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ' ? 'layout-resale' : 'layout-standard'));
+catalogTable.classList.add(isAdminUser() ? 'layout-admin' : (authorizedClient === 'ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ' ? 'layout-resale' : 'layout-standard'));
 const thClass = "font-semibold text-gray-700 dark:text-gray-300 tracking-normal break-words border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 whitespace-normal";
 
 let cols = [
@@ -1188,7 +1197,7 @@ if (authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ") {
   cols.push({ name: 'Վերավաճառքի մեծածախ գին', align: 'text-right' });
 }
 
-if (authorizedClient === 'Администратор') {
+if (isAdminUser()) {
   cols.push({ name: 'KP Price', align: 'text-right' });
   cols.push({ name: 'KP Margin', align: 'text-center' });
   cols.push({ name: 'WS Price', align: 'text-right' });
@@ -1434,7 +1443,7 @@ for (let i = headerRowIdx + 1; i < rows.length; i++) {
   const defaultWholesale = Number(r[colMap.wholesale]) || 0;
   let wholesale = 0, isWholesalePromo = false, resaleWholesale = defaultWholesale;
 
-  if (userSheetType === 'KP' && authorizedClient !== "Администратор") {
+  if (userSheetType === 'KP' && !isAdminUser()) {
     const promoVal = colMap.kpPromo !== -1 ? Number(r[colMap.kpPromo]) : 0;
     const normalVal = colMap.kpNormal !== -1 ? Number(r[colMap.kpNormal]) : 0;
     if (promoVal && promoVal > 0) {
@@ -1450,7 +1459,7 @@ for (let i = headerRowIdx + 1; i < rows.length; i++) {
   }
 
   let kpPrice = 0, kpIsPromo = false;
-  if (authorizedClient === 'Администратор') {
+  if (isAdminUser()) {
     const wsCol = colMap.wsAmd !== -1 ? colMap.wsAmd : colMap.wholesale;
     wholesale = Number(r[wsCol]) || 0;
     isWholesalePromo = false;
@@ -1465,7 +1474,7 @@ for (let i = headerRowIdx + 1; i < rows.length; i++) {
   const hasKpPrice = Number.isFinite(kpPrice) && kpPrice > 0;
   const isEligibleWholesale = hasWsPrice || hasKpPrice;
 
-  if (!isEligibleWholesale && authorizedClient !== 'Администратор') continue;
+  if (!isEligibleWholesale && !isAdminUser()) continue;
 
   const brandVal = r[colMap.brand];
   const brand = (brandVal !== null && brandVal !== undefined) ? String(brandVal).trim() : 'Այլ';
@@ -1503,11 +1512,11 @@ for (let i = headerRowIdx + 1; i < rows.length; i++) {
 
   // Отдельная маржа для KP Price у Администратора
   let kpMarginVal = 0;
-  if (authorizedClient === 'Администратор' && retail > 0 && kpPrice > 0) {
+  if (isAdminUser() && retail > 0 && kpPrice > 0) {
     kpMarginVal = isDomusUser ? (retail / kpPrice) : ((1 - (kpPrice / retail)) * 100);
   }
 
-  if (authorizedClient !== "Администратор" && retail > 0 && wholesale > 0) {
+  if (!isAdminUser() && retail > 0 && wholesale > 0) {
     if (isDomusUser && marginVal < 1.0) continue;
     if (!isDomusUser && marginVal < 0) continue;
   }
@@ -1532,7 +1541,7 @@ for (let i = headerRowIdx + 1; i < rows.length; i++) {
   otherStockList.forEach(item => adminStockDetails.push(item));
 
   let stockStatus = '', isValidStock = false;
-  if (authorizedClient === "Администратор") {
+  if (isAdminUser()) {
     if (adminStockDetails.length > 0) {
       isValidStock = true;
       stockStatus = adminStockDetails.map(s => `${s.name}: ${s.qty}`).join(', ');
@@ -1600,7 +1609,7 @@ function downloadFullPriceList() {
       rowObj['Վերավաճառքի մեծածախ գին'] = p.resaleWholesale || 0;
     }
 
-    if (authorizedClient === 'Администратор') {
+    if (isAdminUser()) {
       rowObj['KP Price (AMD)'] = p.kpPrice > 0 ? p.kpPrice : '';
       rowObj['KP Margin'] = p.retail > 0 && p.kpPrice > 0 ? (isDomusUser ? Number(p.kpMarginVal.toFixed(2)) : Number(p.kpMarginVal.toFixed(1))) : 0;
       rowObj['WS Price (AMD)'] = p.wholesale || 0;
@@ -1755,7 +1764,7 @@ const favOnly = document.getElementById('favOnlyFilter').checked;
 const promoOnly = document.getElementById('promoOnlyFilter').checked;
 const stockOnly = document.getElementById('stockOnlyFilter').checked;
 const wholesaleOnlyEl = document.getElementById('wholesaleOnlyFilter');
-const wholesaleOnly = authorizedClient === 'Администратор' && wholesaleOnlyEl && wholesaleOnlyEl.checked;
+const wholesaleOnly = isAdminUser() && wholesaleOnlyEl && wholesaleOnlyEl.checked;
 
 document.getElementById('clearSearchBtn').classList.toggle('hidden', searchQuery.length === 0);
 
@@ -1765,7 +1774,7 @@ filteredProducts = allProducts.filter(p => {
   const matchSearch = !searchQuery || (p.name || '').toLowerCase().includes(searchQuery) || (p.articul || '').toLowerCase().includes(searchQuery);
   const matchFav = !favOnly || favoritesSet.has(p.articul);
   const matchPromo = !promoOnly || (p.isPromo || p.isWholesalePromo);
-  const matchStock = !stockOnly || (authorizedClient === "Администратор" ? true : !p.stockStatus.includes('Ճշտել'));
+  const matchStock = !stockOnly || (isAdminUser() ? true : !p.stockStatus.includes('Ճշտել'));
   
   // Условие для Администратора: проверяет наличие хотя бы одной из оптовых цен (KP price или WS price)
   const matchWholesale = !wholesaleOnly || p.hasWholesale;
@@ -1893,7 +1902,7 @@ tr.dataset.art = p.articul;
 tr.className = 'hover:bg-blue-50/40 dark:hover:bg-gray-700/50 transition-colors border-b border-gray-100 dark:border-gray-700';
 
 const isUtochnit = p.stockStatus.includes('Ճշտել');
-const stockBadgeClass = authorizedClient === "Администратор" ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600 font-mono text-xs' : (isUtochnit ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800');
+const stockBadgeClass = isAdminUser() ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600 font-mono text-xs' : (isUtochnit ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800');
 
 const isDomusUser = authorizedClient.toUpperCase().includes('ԴՈՄՈՒՍ') || authorizedClient.toUpperCase().includes('ДОМУՍ') || authorizedClient.toUpperCase().includes('DOMUS');
 
@@ -1910,7 +1919,7 @@ if (p.retail > 0 && p.wholesale > 0) {
 
 // Отдельная генерация маржинальности для KP и WS у Администратора
 let kpMarginBadge = '—';
-if (authorizedClient === 'Администратор' && p.retail > 0 && p.kpPrice > 0) {
+if (isAdminUser() && p.retail > 0 && p.kpPrice > 0) {
   if (isDomusUser) {
     kpMarginBadge = `<span class="px-2 py-1 rounded-lg text-xs font-bold border bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600 whitespace-nowrap">${p.kpMarginVal.toFixed(2)}</span>`;
   } else {
@@ -1920,7 +1929,7 @@ if (authorizedClient === 'Администратор' && p.retail > 0 && p.kpPri
 }
 
 let wsMarginBadge = '—';
-if (authorizedClient === 'Администратор' && p.retail > 0 && p.wholesale > 0) {
+if (isAdminUser() && p.retail > 0 && p.wholesale > 0) {
   if (isDomusUser) {
     wsMarginBadge = `<span class="px-2 py-1 rounded-lg text-xs font-bold border bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600 whitespace-nowrap">${p.marginVal.toFixed(2)}</span>`;
   } else {
@@ -1933,7 +1942,7 @@ let retailCellHtml = p.retail > 0 ? (p.isPromo ? `<div class="flex flex-col item
 let wholesaleCellHtml = p.wholesale > 0 ? (p.isWholesalePromo ? `<div class="flex flex-col items-end"><span class="text-gray-900 dark:text-white font-semibold whitespace-nowrap">${p.wholesale.toLocaleString('ru-RU')} ֏</span><span class="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded text-[10px] font-bold mt-0.5 border border-emerald-200 dark:border-emerald-800 whitespace-nowrap">PROMO</span></div>` : `<span class="text-gray-900 dark:text-white font-semibold whitespace-nowrap">${p.wholesale.toLocaleString('ru-RU')} ֏</span>`) : '—';
 
 let priceTdsHtml = `<td class="text-center">${marginBadge}</td><td class="text-right">${wholesaleCellHtml}</td>`;
-if (authorizedClient === 'Администратор') {
+if (isAdminUser()) {
   const kpFmt = p.kpPrice > 0 ? p.kpPrice.toLocaleString('ru-RU') + ' ֏' : '';
   const kpHtml = !kpFmt ? '' : (p.kpIsPromo
     ? `<div class="flex flex-col items-end"><span class="text-gray-900 dark:text-white font-semibold whitespace-nowrap">${kpFmt}</span><span class="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded text-[10px] font-bold mt-0.5 border border-emerald-200 dark:border-emerald-800 whitespace-nowrap">PROMO</span></div>`
@@ -1983,7 +1992,7 @@ const div = document.createElement('div');
 div.className = 'bg-white dark:bg-gray-800 rounded-xl p-3.5 border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-between gap-3 relative transition-colors duration-200';
 
 const isUtochnit = p.stockStatus.includes('Ճշտել');
-const stockBadgeClass = authorizedClient === "Администратор" ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600 font-mono text-[11px]' : (isUtochnit ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800');
+const stockBadgeClass = isAdminUser() ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600 font-mono text-[11px]' : (isUtochnit ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800');
 const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
 const cartItem = cart[p.articul];
 
@@ -2000,7 +2009,7 @@ if (p.retail > 0 && p.wholesale > 0) {
 }
 
 let kpMarginBadge = '';
-if (authorizedClient === 'Администратор' && p.retail > 0 && p.kpPrice > 0) {
+if (isAdminUser() && p.retail > 0 && p.kpPrice > 0) {
   if (isDomusUser) {
     kpMarginBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold border bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600">${p.kpMarginVal.toFixed(2)}</span>`;
   } else {
@@ -2032,15 +2041,15 @@ div.innerHTML = `
 
   <div class="flex items-center justify-between pt-2.5 mt-2.5 border-t border-gray-100 dark:border-gray-700 text-xs">
     <span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${escapeHtml(p.stockStatus)}</span>
-    <div class="flex items-center gap-1.5"><span class="text-gray-400 dark:text-gray-500">Եկամտաբերություն:</span>${authorizedClient === 'Администратор' ? marginBadge : marginBadge}</div>
+    <div class="flex items-center gap-1.5"><span class="text-gray-400 dark:text-gray-500">Եկամտաբերություն:</span>${isAdminUser() ? marginBadge : marginBadge}</div>
   </div>
 </div>
 
 <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-700/40 p-2.5 rounded-xl border border-gray-100 dark:border-gray-700 mt-auto">
   <div>
     <div class="text-[11px] text-gray-500 dark:text-gray-400">Մանրածախ: <span class="font-medium text-gray-700 dark:text-gray-300">${p.retail ? p.retail.toLocaleString('ru-RU') + ' ֏' : '—'}</span></div>
-    ${authorizedClient === 'Администратор' ? `<div class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">KP: <span class="font-bold text-gray-800 dark:text-gray-200">${p.kpPrice > 0 ? p.kpPrice.toLocaleString('ru-RU') + ' ֏' : ''}</span> (${kpMarginBadge})${p.kpIsPromo ? ' <span class="px-1 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[9px] font-bold">PROMO</span>' : ''}</div>` : ''}
-    <div class="text-sm font-black text-emerald-600 dark:text-emerald-400 mt-0.5">${authorizedClient === 'Администратор' ? 'WS: ' : ''}${p.wholesale ? p.wholesale.toLocaleString('ru-RU') + ' ֏' : '—'} ${authorizedClient === 'Администратор' ? '(' + marginBadge + ')' : ''}</div>
+    ${isAdminUser() ? `<div class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">KP: <span class="font-bold text-gray-800 dark:text-gray-200">${p.kpPrice > 0 ? p.kpPrice.toLocaleString('ru-RU') + ' ֏' : ''}</span> (${kpMarginBadge})${p.kpIsPromo ? ' <span class="px-1 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[9px] font-bold">PROMO</span>' : ''}</div>` : ''}
+    <div class="text-sm font-black text-emerald-600 dark:text-emerald-400 mt-0.5">${isAdminUser() ? 'WS: ' : ''}${p.wholesale ? p.wholesale.toLocaleString('ru-RU') + ' ֏' : '—'} ${isAdminUser() ? '(' + marginBadge + ')' : ''}</div>
   </div>
   <div class="js-action" data-art="${escapeHtml(p.articul)}">${getActionControlHtml(p.articul, cartItem, true)}</div>
 </div>
@@ -2297,7 +2306,7 @@ function renderModalItems() {
     const prod = getProduct(item.articul);
     const stockStatus = (prod && prod.stockStatus) ? prod.stockStatus : 'Առկա է';
     const isUtochnit = stockStatus.includes('Ճշտել');
-    const stockBadgeClass = authorizedClient === "Администратор" ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600 font-mono text-[10px]' : (isUtochnit ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800');
+    const stockBadgeClass = isAdminUser() ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600 font-mono text-[10px]' : (isUtochnit ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800');
 
     let priceDiffNotice = '';
     if (item.addedPrice && item.addedPrice !== currentPrice && currentPrice > 0) {
