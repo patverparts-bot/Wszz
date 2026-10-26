@@ -149,8 +149,7 @@ function loadAdminOrderPriceMode() {
       adminOrderPriceMode = localStorage.getItem('zigzag_admin_price_mode_' + authorizedClient) === 'KP' ? 'KP' : 'WS';
     } catch (e) {}
   }
-  const select = document.getElementById('adminOrderPriceMode');
-  if (select) select.value = adminOrderPriceMode;
+  document.querySelectorAll('[data-admin-price-mode-select]').forEach(select => { select.value = adminOrderPriceMode; });
   updateOrderPanel();
 }
 
@@ -162,8 +161,7 @@ function setAdminOrderPriceMode(mode) {
     item.addedPriceMode = adminOrderPriceMode;
   });
   try { localStorage.setItem('zigzag_admin_price_mode_' + authorizedClient, adminOrderPriceMode); } catch (e) {}
-  const select = document.getElementById('adminOrderPriceMode');
-  if (select) select.value = adminOrderPriceMode;
+  document.querySelectorAll('[data-admin-price-mode-select]').forEach(select => { select.value = adminOrderPriceMode; });
   saveCartToStorage();
   updateOrderPanel();
   renderModalItems();
@@ -329,8 +327,7 @@ function renderModalItems() {
 }
 
 function openOrderModal() {
-  const priceModeSelect = document.getElementById('adminOrderPriceMode');
-  if (priceModeSelect) priceModeSelect.value = adminOrderPriceMode;
+  document.querySelectorAll('[data-admin-price-mode-select]').forEach(select => { select.value = adminOrderPriceMode; });
   renderModalItems();
   if (!modalFieldsInitialized) {
     populateOrderModalFields();

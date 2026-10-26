@@ -321,8 +321,7 @@ function initAppAfterAuth() {
 
   const wholesaleFilterLabel = document.getElementById('wholesaleOnlyFilterLabel');
   if (wholesaleFilterLabel) wholesaleFilterLabel.classList.toggle('hidden', !isAdminUser());
-  const adminPriceModeWrap = document.getElementById('adminPriceModeWrap');
-  if (adminPriceModeWrap) adminPriceModeWrap.classList.toggle('hidden', !isAdminUser());
+  document.querySelectorAll('.admin-price-mode-wrap').forEach(el => el.classList.toggle('hidden', !isAdminUser()));
   loadAdminOrderPriceMode();
 
   loadFavorites();
