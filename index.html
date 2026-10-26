@@ -17,10 +17,55 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 body { font-family: 'Inter', sans-serif; }
 
-#catalogTable th, #catalogTable td {
-  font-size: clamp(11px, 0.85vw, 13px);
-  padding: clamp(6px, 0.8vh, 12px) clamp(4px, 0.6vw, 12px);
+#catalogTable {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
 }
+
+#catalogTable th, #catalogTable td {
+  min-width: 0;
+  font-size: clamp(11px, 0.85vw, 13px);
+  padding: clamp(5px, 0.65vh, 10px) clamp(3px, 0.4vw, 8px);
+  overflow-wrap: anywhere;
+}
+
+/* Proportional widths keep each authorized column set inside the available viewport. */
+#catalogTable.layout-standard th:nth-child(1) { width: 3%; }
+#catalogTable.layout-standard th:nth-child(2) { width: 12%; }
+#catalogTable.layout-standard th:nth-child(3) { width: 9%; }
+#catalogTable.layout-standard th:nth-child(4) { width: 25%; }
+#catalogTable.layout-standard th:nth-child(5) { width: 12%; }
+#catalogTable.layout-standard th:nth-child(6) { width: 10%; }
+#catalogTable.layout-standard th:nth-child(7) { width: 12%; }
+#catalogTable.layout-standard th:nth-child(8) { width: 17%; }
+
+#catalogTable.layout-resale th:nth-child(1) { width: 3%; }
+#catalogTable.layout-resale th:nth-child(2) { width: 11%; }
+#catalogTable.layout-resale th:nth-child(3) { width: 8%; }
+#catalogTable.layout-resale th:nth-child(4) { width: 22%; }
+#catalogTable.layout-resale th:nth-child(5) { width: 10%; }
+#catalogTable.layout-resale th:nth-child(6) { width: 8%; }
+#catalogTable.layout-resale th:nth-child(7) { width: 9%; }
+#catalogTable.layout-resale th:nth-child(8) { width: 10%; }
+#catalogTable.layout-resale th:nth-child(9) { width: 19%; }
+
+#catalogTable.layout-admin th:nth-child(1) { width: 3%; }
+#catalogTable.layout-admin th:nth-child(2) { width: 10%; }
+#catalogTable.layout-admin th:nth-child(3) { width: 7%; }
+#catalogTable.layout-admin th:nth-child(4) { width: 20%; }
+#catalogTable.layout-admin th:nth-child(5) { width: 10%; }
+#catalogTable.layout-admin th:nth-child(6) { width: 7%; }
+#catalogTable.layout-admin th:nth-child(7) { width: 8%; }
+#catalogTable.layout-admin th:nth-child(8) { width: 8%; }
+#catalogTable.layout-admin th:nth-child(9) { width: 8%; }
+#catalogTable.layout-admin th:nth-child(10) { width: 8%; }
+#catalogTable.layout-admin th:nth-child(11) { width: 11%; }
+
+#catalogTable td:nth-child(4) > div { min-width: 0; }
+#catalogTable td:nth-child(4) .product-img-container { flex: 0 0 32px; width: 32px; height: 32px; }
+#catalogTable td:nth-child(4) .product-img { width: 32px; height: 32px; }
 
 .product-img-container {
   position: relative;
@@ -91,7 +136,7 @@ body { font-family: 'Inter', sans-serif; }
   top: calc(var(--stick-top, 58px) + var(--thead-h, 40px) - 1px);
   z-index: 31;
   padding: 6px 12px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  box-shadow: none;
 }
 
 @keyframes pulse-subtle {
@@ -203,7 +248,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 
 <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto flex-wrap justify-end">
 <button onclick="toggleTheme()" aria-label="Թեմա" title="Մութ / լուսավոր թեմա" class="px-2.5 py-1.5 sm:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-semibold border border-gray-200 dark:border-gray-600 transition">🌓</button>
-<button onclick="downloadFullPriceList()" aria-label="Ներբեռնել ամբողջական գնացուցակը" class="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow transition cursor-pointer flex items-center gap-1.5" title="Ներբեռնել ամբողջական գնացուցակը Excel ֆայլով">
+<button onclick="downloadFullPriceList()" aria-label="Ներբեռնել ամբողջական գնացուցակը" class="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow transition cursor-pointer flex items-center gap-1.5" title="Ներբեռն��լ ամբողջական գնացուցակը Excel ֆայլով">
   <span>📊 Ներբեռնել գնացուցակը</span>
 </button>
 
@@ -927,7 +972,7 @@ for (let i = headerIdx + 1; i < rows.length; i++) {
         let hClean = h.replace(/\s+/g, ' ').trim().toLowerCase();
         let val = r[idx] !== undefined && r[idx] !== null ? String(r[idx]).trim() : '';
         if (!val) return;
-        if (hClean === `կազմակերպություն ${k}` || hClean === `organization ${k}` || (k === 1 && (hClean === 'կազմակերպություն' || hClean === 'контрагент'))) orgVal = val;
+        if (hClean === `կազմակերպություն ${k}` || hClean === `organization ${k}` || (k === 1 && (hClean === 'կազ��ակերպություն' || hClean === 'контрагент'))) orgVal = val;
         if (hClean === `առաքման հացսե ${k}` || hClean === `առաքման հասցե ${k}` || hClean === `address ${k}` || (k === 1 && (hClean === 'առաքման հացսե' || hClean === 'առաքման հասցե'))) addrVal = val;
         if (hClean === `կոնտակտային անձ ${k}` || hClean === `contact ${k}` || (k === 1 && (hClean === 'կոնտակտային անձ' || hClean === 'contact'))) contVal = val;
       });
@@ -1125,6 +1170,9 @@ function initAppAfterAuth() {
 
 function setupTableHeader() {
 const headerRow = document.getElementById('tableHeaderRow');
+const catalogTable = document.getElementById('catalogTable');
+catalogTable.classList.remove('layout-standard', 'layout-resale', 'layout-admin');
+catalogTable.classList.add(authorizedClient === 'Администратор' ? 'layout-admin' : (authorizedClient === 'ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ' ? 'layout-resale' : 'layout-standard'));
 const thClass = "font-semibold text-gray-700 dark:text-gray-300 tracking-normal break-words border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 whitespace-normal";
 
 let cols = [
@@ -1764,11 +1812,7 @@ function updateStickyOffsets() {
   root.setProperty('--thead-h', (thead && thead.offsetHeight ? thead.offsetHeight : 40) + 'px');
 
   const wrap = document.getElementById('tableScrollWrapper');
-  const table = document.getElementById('catalogTable');
-  if (wrap && table && wrap.offsetParent !== null) {
-    wrap.style.overflowX = 'clip';
-    if (table.offsetWidth > wrap.clientWidth + 1) wrap.style.overflowX = 'auto';
-  }
+  if (wrap) wrap.style.overflowX = 'clip';
 }
 window.addEventListener('resize', updateStickyOffsets);
 
@@ -2287,7 +2331,7 @@ function renderModalItems() {
         <div class="flex items-center justify-between gap-2 pt-1 flex-wrap print-hidden">
           <select data-act="pay" data-art="${escapeHtml(articul)}" aria-label="Վճարման եղանակ ապրանքի համար" class="w-full sm:w-auto flex-grow px-2 py-1.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-xs font-semibold text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-xs">
             <option value="Բանկային փոխանցումով" ${item.paymentMethod === 'Բանկային փոխանցումով' ? 'selected' : ''}>🏦 Բանկային փոխանցումով</option>
-            <option value="Կանխիկ" ${item.paymentMethod === 'Կանխիկ' ? 'selected' : ''}>💵 Կանխիկ</option>
+            <option value="Կանխիկ" ${item.paymentMethod === 'Կանխիկ' ? 'selected' : ''}>�� Կանխիկ</option>
           </select>
 
           <div class="inline-flex items-center border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800 shadow-xs flex-shrink-0 ml-auto">
@@ -2700,7 +2744,7 @@ function sendViaEmail() {
   const formattedText = buildEmailFormattedText();
   generateAndDownloadExcel(true); 
   setTimeout(() => {
-    window.location.href = `mailto:${TARGET_EMAILS}?subject=${encodeURIComponent(`Պատվեր կատալոգից - ${authorizedClient}`)}&body=${encodeURIComponent(`Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը:\n\n` + formattedText)}`;
+    window.location.href = `mailto:${TARGET_EMAILS}?subject=${encodeURIComponent(`Պատվեր կատալոգից - ${authorizedClient}`)}&body=${encodeURIComponent(`Բարև ձեզ,\n\nԿից նե��կայացնում եմ պատվերի Excel ֆայլը:\n\n` + formattedText)}`;
   }, 800);
 }
 
