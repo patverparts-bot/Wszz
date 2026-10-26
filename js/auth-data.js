@@ -418,13 +418,14 @@ document.addEventListener('click', (e) => {
 
 function checkScrollPosition() {
   const btn = document.getElementById('scrollTopBtn');
-  let isScrolled = document.body.scrollTop > 300 || document.documentElement.scrollTop > 300;
-
-  if (isScrolled) {
-    btn.classList.remove('hidden');
-  } else {
-    btn.classList.add('hidden');
+  const app = document.getElementById('mainApp');
+  if (!btn || !app || app.classList.contains('hidden')) {
+    if (btn) btn.classList.add('hidden');
+    return;
   }
+
+  const isScrolled = document.body.scrollTop > 300 || document.documentElement.scrollTop > 300;
+  btn.classList.toggle('hidden', !isScrolled);
 }
 
 function setupIntersectionObserver() {
