@@ -333,6 +333,12 @@ function openOrderModal() {
     populateOrderModalFields();
     modalFieldsInitialized = true;
   }
+  const details = document.getElementById('deliveryDetailsContent');
+  const detailsIcon = document.getElementById('deliveryToggleIcon');
+  if (details && window.matchMedia('(min-width: 1024px)').matches) {
+    details.classList.remove('hidden');
+    if (detailsIcon) detailsIcon.style.transform = 'rotate(180deg)';
+  }
   checkDeliveryBadge();
   document.getElementById('orderModal').classList.remove('hidden');
 }

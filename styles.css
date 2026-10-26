@@ -208,3 +208,43 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
   button, .print-hidden { display: none !important; }
   .print-only { display: block !important; }
 }
+
+/* Desktop order modal: keep product review and delivery details side by side. */
+@media (min-width: 1024px) {
+  .order-modal-shell { width: min(96vw, 1440px); }
+  .order-modal-body { overflow: hidden !important; }
+  .order-modal-body-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(340px, 0.9fr);
+    gap: 16px;
+    height: 100%;
+    min-height: 0;
+  }
+  .order-modal-items-column,
+  .order-modal-details-column {
+    min-width: 0;
+    min-height: 0;
+  }
+  .order-modal-items-column {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .order-modal-items-column #modalItemsList {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 6px;
+  }
+  .order-modal-details-column {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 2px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .order-modal-shell { height: 94dvh !important; }
+  .order-modal-body-grid { display: block; }
+}
