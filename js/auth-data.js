@@ -127,6 +127,7 @@ const inputHash = await sha256(inputVal);
 if (passMap[inputHash]) {
   authorizedClient = passMap[inputHash].client;
   userSheetType = passMap[inputHash].sheet;
+  clearUserCartAndFilters(authorizedClient);
   const wholesaleFilterLabel = document.getElementById('wholesaleOnlyFilterLabel');
   if (wholesaleFilterLabel) wholesaleFilterLabel.classList.toggle('hidden', !isAdminUser());
   clientRowsData = passMap[inputHash].rowsList || [];
@@ -142,6 +143,68 @@ if (passMap[inputHash]) {
   errorMsg.innerText = 'Սխալ գաղտնաբառ։ Փորձեք կրկին։';
   errorMsg.classList.remove('hidden');
 }
+}
+
+function clearUserCartAndFilters(client) {
+  if (client) {
+    try {
+      localStorage.removeItem('zigzag_cart_' + client);
+      localStorage.removeItem('zigzag_filters_' + client);
+      localStorage.removeItem('zigzag_filters_open_' + client);
+      localStorage.removeItem('zigzag_admin_price_mode_' + client);
+    } catch (e) {}
+  }
+
+  cart = {};
+  allProducts = [];
+  filteredProducts = [];
+  productIndex = new Map();
+  displayedCount = 0;
+  catalogLoaded = false;
+  selectedBrands = [];
+  selectedCategories = [];
+  adminOrderPriceMode = 'WS';
+
+  const tableBody = document.getElementById('tableBody');
+  if (tableBody) tableBody.innerHTML = '';
+  const cards = document.getElementById('mobileCardsContainer');
+  if (cards) cards.innerHTML = '';
+  const productCount = document.getElementById('productCountInfo');
+  if (productCount) productCount.textContent = 'Գտնվել է 0 ապրանք';
+  const noResults = document.getElementById('noResults');
+  if (noResults) noResults.classList.add('hidden');
+  const bulkModal = document.getElementById('bulkAddModal');
+  if (bulkModal) bulkModal.classList.add('hidden');
+
+  ['brandInput', 'categoryInput', 'searchInput'].forEach(id => {
+    const input = document.getElementById(id);
+    if (input) input.value = '';
+  });
+  ['favOnlyFilter', 'promoOnlyFilter', 'stockOnlyFilter', 'wholesaleOnlyFilter'].forEach(id => {
+    const input = document.getElementById(id);
+    if (input) input.checked = false;
+  });
+  const sortBy = document.getElementById('sortBy');
+  if (sortBy) sortBy.value = 'default';
+  ['clearSearchBtn', 'clearBrandBtn', 'clearCategoryBtn'].forEach(id => {
+    const button = document.getElementById(id);
+    if (button) button.classList.add('hidden');
+  });
+  ['brandDropdown', 'categoryDropdown'].forEach(id => {
+    const dropdown = document.getElementById(id);
+    if (dropdown) dropdown.classList.add('hidden');
+  });
+  ['brandSelectionSummary', 'categorySelectionSummary'].forEach(id => {
+    const summary = document.getElementById(id);
+    if (summary) {
+      summary.textContent = '';
+      summary.classList.add('hidden');
+    }
+  });
+  const priceModeSelect = document.getElementById('adminOrderPriceMode');
+  if (priceModeSelect) priceModeSelect.value = 'WS';
+  updateOrderPanel();
+  updateMobileFilterBadge();
 }
 
 function showPriceUpdatePopupAndStart(isBackgroundUpdate = false) {
@@ -225,12 +288,14 @@ function startBackgroundPricePolling() {
 function logout() {
   if (backgroundPollTimer) clearTimeout(backgroundPollTimer);
   if (authorizedClient) {
+    clearUserCartAndFilters(authorizedClient);
     try {
       localStorage.removeItem('zigzag_client');
       localStorage.removeItem('zigzag_sheet');
       localStorage.removeItem('zigzag_client_rows');
       localStorage.removeItem('zigzag_filters_' + authorizedClient);
       localStorage.removeItem('zigzag_filters_open_' + authorizedClient);
+      localStorage.removeItem('zigzag_admin_price_mode_' + authorizedClient);
     } catch(e) {}
   }
   authorizedClient = '';
@@ -255,6 +320,9 @@ function initAppAfterAuth() {
 
   const wholesaleFilterLabel = document.getElementById('wholesaleOnlyFilterLabel');
   if (wholesaleFilterLabel) wholesaleFilterLabel.classList.toggle('hidden', !isAdminUser());
+  const adminPriceModeWrap = document.getElementById('adminPriceModeWrap');
+  if (adminPriceModeWrap) adminPriceModeWrap.classList.toggle('hidden', !isAdminUser());
+  loadAdminOrderPriceMode();
 
   loadFavorites();
   setupTableHeader();
@@ -664,7 +732,8 @@ for (let i = headerRowIdx + 1; i < rows.length; i++) {
       isWholesalePromo: isWholesalePromo, resaleWholesale: resaleWholesale, 
       hasWholesale: isEligibleWholesale, // Флаг наличия хотя бы одной из двух цен (KP или WS)
       kpPrice: kpPrice, kpIsPromo: kpIsPromo,
-      marginVal: marginVal, kpMarginVal: kpMarginVal, stockStatus: stockStatus
+      marginVal: marginVal, kpMarginVal: kpMarginVal, stockStatus: stockStatus,
+      targetWarehousesStock: targetWarehousesStock
     });
   }
 }

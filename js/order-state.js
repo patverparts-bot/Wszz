@@ -15,6 +15,7 @@ function normalizeCart(raw) {
       articul: articul,
       qty: qty,
       addedPrice: Number(v.addedPrice) || 0,
+      addedPriceMode: v.addedPriceMode === 'KP' ? 'KP' : 'WS',
       paymentMethod: v.paymentMethod === 'Կանխիկ' ? 'Կանխիկ' : 'Բանկային փոխանցումով'
     };
   });
@@ -71,7 +72,8 @@ function addToCart(articul) {
     cart[articul] = { 
       articul: articul, 
       qty: 1, 
-      addedPrice: product.wholesale || 0, 
+      addedPrice: getItemWholesalePrice({ articul: articul }),
+      addedPriceMode: isAdminUser() ? adminOrderPriceMode : 'WS',
       paymentMethod: globalMethod 
     };
   } else {
@@ -89,7 +91,7 @@ function setDirectQty(articul, newQty) {
     if (!cart[articul]) {
       const p = getProduct(articul);
       if (!p) return;
-      cart[articul] = { articul: articul, qty: newQty, addedPrice: p.wholesale || 0, paymentMethod: 'Բանկային փոխանցումով' };
+      cart[articul] = { articul: articul, qty: newQty, addedPrice: getItemWholesalePrice({ articul: articul }), addedPriceMode: isAdminUser() ? adminOrderPriceMode : 'WS', paymentMethod: 'Բանկային փոխանցումով' };
     } else {
       cart[articul].qty = newQty;
     }
@@ -131,7 +133,50 @@ function refreshAllActions() {
 
 function getItemWholesalePrice(item) {
   const p = getProduct(item && item.articul);
-  return p && p.wholesale > 0 ? p.wholesale : 0;
+  if (!p) return 0;
+  const selectedPrice = isAdminUser() && adminOrderPriceMode === 'KP' ? p.kpPrice : p.wholesale;
+  return selectedPrice > 0 ? selectedPrice : 0;
+}
+
+function getOrderPriceLabel() {
+  return isAdminUser() && adminOrderPriceMode === 'KP' ? 'KP Price' : 'WS Price';
+}
+
+function loadAdminOrderPriceMode() {
+  adminOrderPriceMode = 'WS';
+  if (isAdminUser()) {
+    try {
+      adminOrderPriceMode = localStorage.getItem('zigzag_admin_price_mode_' + authorizedClient) === 'KP' ? 'KP' : 'WS';
+    } catch (e) {}
+  }
+  const select = document.getElementById('adminOrderPriceMode');
+  if (select) select.value = adminOrderPriceMode;
+  updateOrderPanel();
+}
+
+function setAdminOrderPriceMode(mode) {
+  if (!isAdminUser()) return;
+  adminOrderPriceMode = mode === 'KP' ? 'KP' : 'WS';
+  Object.values(cart).forEach(item => {
+    item.addedPrice = getItemWholesalePrice(item);
+    item.addedPriceMode = adminOrderPriceMode;
+  });
+  try { localStorage.setItem('zigzag_admin_price_mode_' + authorizedClient, adminOrderPriceMode); } catch (e) {}
+  const select = document.getElementById('adminOrderPriceMode');
+  if (select) select.value = adminOrderPriceMode;
+  saveCartToStorage();
+  updateOrderPanel();
+  renderModalItems();
+}
+
+function validateCartPrices() {
+  if (!isAdminUser()) return true;
+  const missing = Object.keys(cart).filter(articul => getItemWholesalePrice(cart[articul]) <= 0);
+  if (missing.length === 0) return true;
+  const sample = missing.slice(0, 8).join(', ');
+  const extra = missing.length > 8 ? ` և ևս ${missing.length - 8}` : '';
+  alert(`${getOrderPriceLabel()} գին չկա ${missing.length} ապրանքի համար (${sample}${extra})։ Ընտրեք մյուս գինը կամ հանեք այդ ապրանքները զամբյուղից։`);
+  return false;
 }
 
 function getItemName(item) {
@@ -259,7 +304,7 @@ function renderModalItems() {
 
       <div class="flex flex-col gap-2 pt-2 border-t border-gray-200/60 dark:border-gray-700">
         <div class="flex items-center justify-between text-xs flex-wrap gap-1">
-          <span class="text-gray-500 dark:text-gray-400 font-medium">Միավորի գին՝ <span class="text-gray-900 dark:text-gray-200 font-bold">${currentPrice.toLocaleString('ru-RU')} ֏</span></span>
+          <span class="text-gray-500 dark:text-gray-400 font-medium">Միավորի գին${isAdminUser() ? ` (${escapeHtml(getOrderPriceLabel())})` : ''}՝ <span class="text-gray-900 dark:text-gray-200 font-bold">${currentPrice > 0 ? currentPrice.toLocaleString('ru-RU') + ' ֏' : 'Գին չկա'}</span></span>
           <span class="font-black text-green-600 dark:text-green-400 text-sm">${sum.toLocaleString('ru-RU')} ֏</span>
         </div>
 
@@ -284,6 +329,8 @@ function renderModalItems() {
 }
 
 function openOrderModal() {
+  const priceModeSelect = document.getElementById('adminOrderPriceMode');
+  if (priceModeSelect) priceModeSelect.value = adminOrderPriceMode;
   renderModalItems();
   if (!modalFieldsInitialized) {
     populateOrderModalFields();
@@ -323,9 +370,11 @@ function changeQtyFromModal(articul, delta) {
 }
 
 function printOrder() {
+  if (!validateCartPrices()) return;
   const v = id => (document.getElementById(id).value || '').trim();
   const lines = [`Կազմակերպություն՝ ${getSelectedOrganizationName()}`];
   lines.push(`Առաքման եղանակ՝ ${getSelectedDeliveryMethod()}`);
+  if (isAdminUser()) lines.push(`Գնային հաշվարկ՝ ${getOrderPriceLabel()}`);
   if (v('contactPersonInput')) lines.push(`Կոնտակտային անձ՝ ${v('contactPersonInput')}`);
   if (v('deliveryDateInput')) lines.push(`Ցանկալի առաքման ամսաթիվ՝ ${v('deliveryDateInput')}`);
   const deliveryAddress = getDeliveryAddressValue();
@@ -480,7 +529,8 @@ function restoreOrderFromHistory(orderId) {
         restoredCart[art] = {
           articul: art,
           qty: item.qty || 1,
-          addedPrice: prod.wholesale || 0,
+          addedPrice: getItemWholesalePrice({ articul: art }),
+          addedPriceMode: isAdminUser() ? adminOrderPriceMode : 'WS',
           paymentMethod: item.paymentMethod || 'Բանկային փոխանցումով'
         };
         count++;
@@ -523,6 +573,7 @@ function exportFullUserSession() {
     const fullSession = {
       client: authorizedClient,
       sheet: userSheetType,
+      adminPriceMode: adminOrderPriceMode,
       clientRows: clientRowsData,
       cart: cart,
       favorites: favsData,
@@ -572,6 +623,10 @@ function importFullUserSession(event) {
 
       authorizedClient = data.client;
       userSheetType = foundUserRecord ? foundUserRecord.sheet : (data.sheet || 'Dealers');
+      adminOrderPriceMode = isAdminUser() && data.adminPriceMode === 'KP' ? 'KP' : 'WS';
+      if (isAdminUser()) {
+        try { localStorage.setItem('zigzag_admin_price_mode_' + authorizedClient, adminOrderPriceMode); } catch (e) {}
+      }
       
       if (foundUserRecord && foundUserRecord.rowsList && foundUserRecord.rowsList.length > 0) {
         clientRowsData = foundUserRecord.rowsList;

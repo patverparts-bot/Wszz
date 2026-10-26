@@ -7,6 +7,7 @@ function buildEmailFormattedText() {
   const comment = (document.getElementById('orderCommentInput').value || '').trim();
 
   let text = `ՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\nԿազմակերպություն: ${orgName}\nԱռաքման եղանակ: ${deliveryMethod}\n`;
+  if (isAdminUser()) text += `Գնային հաշվարկ: ${getOrderPriceLabel()}\n`;
   if (contactPerson) text += `Կոնտակտային անձ: ${contactPerson}\n`;
   if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
   if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
@@ -37,6 +38,7 @@ function buildViberFormattedText() {
   Object.values(cart).forEach(item => total += getItemWholesalePrice(item) * item.qty);
 
   let text = `Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը:\nԿազմակերպություն: ${orgName}\nԱռաքման եղանակ: ${deliveryMethod}\n`;
+  if (isAdminUser()) text += `Գնային հաշվարկ: ${getOrderPriceLabel()}\n`;
   if (contactPerson) text += `Կոնտակտային անձ: ${contactPerson}\n`;
   if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
   if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
@@ -47,6 +49,7 @@ function buildViberFormattedText() {
 }
 
 function sendViaViber() {
+  if (!validateCartPrices()) return;
   const orgName = getSelectedOrganizationName();
   let totalSum = 0;
   Object.values(cart).forEach(item => totalSum += getItemWholesalePrice(item) * item.qty);
@@ -59,6 +62,7 @@ function sendViaViber() {
 }
 
 function sendViaEmail() {
+  if (!validateCartPrices()) return;
   const orgName = getSelectedOrganizationName();
   let totalSum = 0;
   Object.values(cart).forEach(item => totalSum += getItemWholesalePrice(item) * item.qty);
@@ -72,9 +76,13 @@ function sendViaEmail() {
   }, 800);
 }
 
-function downloadOrderExcel() { generateAndDownloadExcel(false); }
+function downloadOrderExcel() {
+  if (!validateCartPrices()) return;
+  generateAndDownloadExcel(false);
+}
 
 function generateAndDownloadExcel(isFromExternal = false) {
+  if (!validateCartPrices()) return false;
   const orgName = getSelectedOrganizationName();
   const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
   const deliveryMethod = getSelectedDeliveryMethod();
@@ -129,6 +137,7 @@ function generateAndDownloadExcel(isFromExternal = false) {
   excelData.push({ 'Արտիկուլ': 'Կոնտրագենտ:', 'Անվանում': authorizedClient, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
   excelData.push({ 'Արտիկուլ': 'Կազմակերպություն:', 'Անվանում': orgName, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
   excelData.push({ 'Արտիկուլ': 'Առաքման եղանակ:', 'Անվանում': deliveryMethod, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+  if (isAdminUser()) excelData.push({ 'Արտիկուլ': 'Գնային հաշվարկ:', 'Անվանում': getOrderPriceLabel(), 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 
   if (contactPerson) excelData.push({ 'Արտիկուլ': 'Կոնտակտային անձ:', 'Անվանում': contactPerson, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
   if (delivDate) excelData.push({ 'Արտիկուլ': 'Ցանկալի առաքման ամսաթիվ:', 'Անվանում': delivDate, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
@@ -154,11 +163,12 @@ function generateAndDownloadExcel(isFromExternal = false) {
   XLSX.utils.book_append_sheet(workbook, worksheet, "Պատվեր");
 
   const sysData = [
-    ['Articul', 'Qty', 'PaymentMethod']
+    ['Articul', 'Qty', 'PaymentMethod', 'AdminPriceMode']
   ];
   Object.entries(cart).forEach(([artKey, item]) => {
-    sysData.push([getItemArticul(artKey, item), item.qty, item.paymentMethod || 'Բանկային փոխանցումով']);
+    sysData.push([getItemArticul(artKey, item), item.qty, item.paymentMethod || 'Բանկային փոխանցումով', '']);
   });
+  sysData.push(['__ADMIN_PRICE_MODE__', '', '', adminOrderPriceMode]);
   const sysSheet = XLSX.utils.aoa_to_sheet(sysData);
   XLSX.utils.book_append_sheet(workbook, sysSheet, "_data");
   workbook.Workbook = { Sheets: [{ Hidden: 0 }, { Hidden: 1 }] };
@@ -233,6 +243,8 @@ function importPreviousOrder(event) {
 
       if (workbook.SheetNames.includes('_data')) {
         const sysRows = XLSX.utils.sheet_to_json(workbook.Sheets['_data'], { header: 1 });
+        const priceModeRow = sysRows.find(r => r && r[0] === '__ADMIN_PRICE_MODE__');
+        if (isAdminUser() && priceModeRow) setAdminOrderPriceMode(priceModeRow[3] || 'WS');
         sysRows.forEach((r, idx) => {
           if (idx === 0 || !r || r.length < 2) return;
           const articul = String(r[0] || '').trim();
@@ -245,7 +257,8 @@ function importPreviousOrder(event) {
               newCart[articul] = { 
                 articul: articul, 
                 qty: qty, 
-                addedPrice: product.wholesale || 0,
+              addedPrice: getItemWholesalePrice({ articul }),
+              addedPriceMode: isAdminUser() ? adminOrderPriceMode : 'WS',
                 paymentMethod: payMethod 
               };
               loadedCount++;
@@ -284,7 +297,8 @@ function importPreviousOrder(event) {
               newCart[articul] = { 
                 articul: articul, 
                 qty: qty, 
-                addedPrice: product.wholesale || 0,
+              addedPrice: getItemWholesalePrice({ articul }),
+              addedPriceMode: isAdminUser() ? adminOrderPriceMode : 'WS',
                 paymentMethod: payMethod 
               };
               loadedCount++;
@@ -328,6 +342,7 @@ document.addEventListener('click', (e) => {
     case 'restore-org':   restoreOrgDefaults(); break;
     case 'restore-history': restoreOrderFromHistory(el.dataset.id); break;
     case 'ack-price':     if (cart[art]) { cart[art].addedPrice = getItemWholesalePrice(cart[art]); saveCartToStorage(); renderModalItems(); } break;
+    case 'copy-articul':  e.preventDefault(); copyArticul(art); break;
   }
 });
 

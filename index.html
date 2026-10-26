@@ -6,7 +6,7 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Մեծածախ Ցանկ / Կատալոգ v2.44</title>
+<title>Մեծածախ Ցանկ / Կատալոգ v2.45</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config = { darkMode: 'class' };
@@ -22,7 +22,7 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
   <div class="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/70"></div>
 
   <div class="relative z-10 bg-white/50 dark:bg-gray-900/80 backdrop-blur-md rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 dark:border-gray-800 text-center">
-    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.44</span>
+    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.45</span>
     
     <h2 class="text-2xl font-black text-gray-900 dark:text-white mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 dark:text-gray-300 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
@@ -101,14 +101,38 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 </header>
 
 <div id="stickySearchBar" class="sticky top-0 z-40 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-2.5 shadow-sm transition-colors duration-200">
-  <div class="max-w-7xl mx-auto flex items-center gap-2">
-    <div class="relative w-full">
+  <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-stretch gap-2">
+    <div class="relative w-full min-w-0">
       <input type="text" id="searchInput" placeholder="Որոնել ապրանք կամ արտիկուլ..." aria-label="Որոնել ապրանք կամ արտիկուլ"
       class="w-full pl-3 pr-8 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
       <button id="clearSearchBtn" onclick="clearSearch()" aria-label="Մաքրել որոնումը" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 font-bold text-sm">✕</button>
     </div>
+    <button type="button" onclick="openBulkAddModal()" aria-label="Ապրանքներ ավելացնել ըստ կոդերի կամ մոդելների" class="shrink-0 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs sm:text-sm font-semibold shadow transition">
+      📥 Ավելացնել ցանկից
+    </button>
   </div>
 </div>
+
+<div id="bulkAddModal" class="fixed inset-0 bg-black/50 dark:bg-black/70 z-[60] hidden flex items-center justify-center p-3 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="bulkAddTitle">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
+    <div class="flex justify-between items-center gap-3 mb-3">
+      <h3 id="bulkAddTitle" class="text-base sm:text-lg font-bold text-gray-900 dark:text-white">Ավելացնել ապրանքներ ցանկից</h3>
+      <button type="button" onclick="closeBulkAddModal()" aria-label="Փակել" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl font-bold">&times;</button>
+    </div>
+    <p class="text-xs text-gray-600 dark:text-gray-300 mb-2">Մուտքագրեք արտիկուլներ կամ մոդելի անվանումներ։ Արտիկուլը համեմատվում է ամբողջությամբ, մոդելը՝ մասնակի։ Մուտքերը բաժանեք ստորակետով կամ բացատով։</p>
+    <textarea id="bulkAddInput" rows="4" oninput="clearBulkAddPreview()" aria-label="Արտիկուլների կամ մոդելների ցանկ" placeholder="Օրինակ՝ 0146590, Samsung UE100M90HUXPY" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+    <div id="bulkAddPreview" class="hidden mt-3 p-3 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/40 text-xs text-gray-800 dark:text-gray-200">
+      <p id="bulkAddPreviewSummary" class="font-semibold mb-2"></p>
+      <ul id="bulkAddPreviewList" class="max-h-36 overflow-y-auto space-y-1"></ul>
+    </div>
+    <div class="flex justify-end gap-2 mt-4">
+      <button type="button" onclick="closeBulkAddModal()" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-200">Չեղարկել</button>
+      <button type="button" onclick="previewBulkAdd()" class="px-3 py-2 bg-indigo-100 dark:bg-indigo-900/60 hover:bg-indigo-200 dark:hover:bg-indigo-900 rounded-lg text-xs font-semibold text-indigo-800 dark:text-indigo-200">Ստուգել ցանկը</button>
+      <button id="bulkAddConfirmBtn" type="button" onclick="confirmBulkAdd()" disabled class="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-xs font-semibold text-white">Ավելացնել զամբյուղ</button>
+    </div>
+  </div>
+</div>
+<div id="copyToast" role="status" aria-live="polite" class="hidden fixed top-20 right-4 z-[70] px-3 py-2 bg-gray-900 text-white rounded-lg shadow-xl text-xs font-semibold"></div>
 
 <main class="catalog-main max-w-7xl mx-auto px-2 sm:px-4 py-4 lg:px-8 flex-grow w-full">
 
@@ -274,6 +298,13 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 <option value="Բանկային փոխանցումով">🏦 Բանկային փոխանցումով</option>
 <option value="Կանխիկ">💵 Կանխիկ</option>
 </select>
+</div>
+<div id="adminPriceModeWrap" class="hidden flex flex-col sm:flex-row items-start sm:items-center gap-2">
+  <label for="adminOrderPriceMode" class="text-xs font-bold text-indigo-900 dark:text-indigo-300 uppercase">Հաշվարկել ըստ՝</label>
+  <select id="adminOrderPriceMode" onchange="setAdminOrderPriceMode(this.value)" aria-label="Ընտրել KP կամ WS գին զամբյուղի հաշվարկման համար" class="px-3 py-2 bg-white dark:bg-gray-900 border border-indigo-300 dark:border-indigo-800 rounded-lg text-xs sm:text-sm font-semibold text-indigo-900 dark:text-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+    <option value="WS">WS Price</option>
+    <option value="KP">KP Price</option>
+  </select>
 </div>
 </div>
 
@@ -443,6 +474,7 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 <script src="js/auth-data.js"></script>
 <script src="js/catalog.js"></script>
 <script src="js/order-state.js"></script>
+<script src="js/bulk-add.js"></script>
 <script src="js/order-submit.js"></script>
 </body>
 </html>

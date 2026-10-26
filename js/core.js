@@ -1,4 +1,4 @@
-console.log("ZIGZAG Catalog v2.44 loaded successfully");
+console.log("ZIGZAG Catalog v2.45 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
@@ -43,10 +43,42 @@ function getProduct(articul) {
   return productIndex.get(articul) || null;
 }
 
+let copyToastTimer = null;
+async function copyArticul(articul) {
+  let copied = false;
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(String(articul));
+      copied = true;
+    }
+  } catch (e) {}
+
+  if (!copied) {
+    const temporaryInput = document.createElement('textarea');
+    temporaryInput.value = String(articul);
+    temporaryInput.setAttribute('readonly', '');
+    temporaryInput.style.position = 'fixed';
+    temporaryInput.style.opacity = '0';
+    document.body.appendChild(temporaryInput);
+    temporaryInput.select();
+    try { copied = document.execCommand('copy'); } catch (e) {}
+    temporaryInput.remove();
+  }
+
+  const toast = document.getElementById('copyToast');
+  if (toast) {
+    toast.textContent = copied ? `Պատճենվեց՝ ${articul}` : 'Չհաջողվեց պատճենել արտիկուլը';
+    toast.classList.remove('hidden');
+    if (copyToastTimer) clearTimeout(copyToastTimer);
+    copyToastTimer = setTimeout(() => toast.classList.add('hidden'), 1800);
+  }
+}
+
 let cart = {};
 let authorizedClient = '';
 let userSheetType = '';
 let passMap = {};
+let adminOrderPriceMode = 'WS';
 
 function normalizeAccessBrand(value) {
   return String(value === null || value === undefined ? '' : value)

@@ -162,8 +162,8 @@ filteredProducts = allProducts.filter(p => {
   const matchCategory = !selectedCategories.length || selectedCategories.some(c => p.category.toLowerCase() === c.toLowerCase());
   const matchSearch = !searchQuery || (p.name || '').toLowerCase().includes(searchQuery) || (p.articul || '').toLowerCase().includes(searchQuery);
   const matchFav = !favOnly || favoritesSet.has(p.articul);
-  const matchPromo = !promoOnly || (p.isPromo || p.isWholesalePromo);
-  const matchStock = !stockOnly || (isAdminUser() ? true : !p.stockStatus.includes('Ճշտել'));
+  const matchPromo = !promoOnly || (p.isPromo || p.isWholesalePromo || p.kpIsPromo);
+  const matchStock = !stockOnly || p.targetWarehousesStock > 0;
   
   // Условие для Администратора: проверяет наличие хотя бы одной из оптовых цен (KP price или WS price)
   const matchWholesale = !wholesaleOnly || p.hasWholesale;
@@ -354,7 +354,7 @@ tr.innerHTML = `
 </td>
 <td class="font-mono font-medium">
   <div class="flex flex-col gap-1">
-    <span class="text-blue-600 dark:text-blue-400 font-bold text-xs whitespace-nowrap">${escapeHtml(p.articul)}</span>
+    <button type="button" data-act="copy-articul" data-art="${escapeHtml(p.articul)}" title="Պատճենել արտիկուլը" aria-label="Պատճենել արտիկուլը ${escapeHtml(p.articul)}" class="text-left text-blue-600 dark:text-blue-400 font-bold text-xs whitespace-nowrap hover:underline cursor-copy">${escapeHtml(p.articul)}</button>
     <a href="${escapeHtml(searchUrl)}" target="_blank" aria-label="Որոնել կայքում" class="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded border border-blue-200 dark:border-blue-800 text-[10px] font-semibold transition w-fit shadow-xs" title="Որոնել Zigzag.am կայքում">
       <span>🔍 Որոնել կայքում</span>
     </a>
@@ -422,7 +422,7 @@ div.innerHTML = `
           <span>🔍 Որոնել</span>
         </a>
       </div>
-      <div class="font-mono text-xs font-bold text-blue-600 dark:text-blue-400 mb-0.5">${escapeHtml(p.articul)}</div>
+      <button type="button" data-act="copy-articul" data-art="${escapeHtml(p.articul)}" title="Պատճենել արտիկուլը" aria-label="Պատճենել արտիկուլը ${escapeHtml(p.articul)}" class="block font-mono text-xs font-bold text-blue-600 dark:text-blue-400 mb-0.5 hover:underline cursor-copy">${escapeHtml(p.articul)}</button>
       <h4 class="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white leading-snug">${escapeHtml(p.name || '—')}</h4>
     </div>
     <button data-act="toggle-fav" data-art="${escapeHtml(p.articul)}" class="star-btn absolute top-3 right-3 p-1" aria-label="${starTitle}" title="${starTitle}">${starIcon}</button>
