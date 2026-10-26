@@ -487,12 +487,19 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
   </button>
 
   <div id="deliveryDetailsContent" class="hidden p-3 sm:p-4 space-y-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
       <div class="min-w-0">
         <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase mb-1">🏢 Կազմակերպություն՝</label>
         <select id="organizationSelect" aria-label="Կազմակերպություն" class="w-full min-w-0 max-w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold">
         </select>
         <button type="button" data-act="restore-org" class="mt-1.5 text-[11px] sm:text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 hover:underline text-left">↺ Վերականգնել հասցեն և կոնտակտը՝ ըստ կազմակերպության</button>
+      </div>
+      <div class="min-w-0">
+        <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase mb-1">🚚 Առաքման եղանակ՝</label>
+        <select id="deliveryMethodInput" onchange="handleDeliveryMethodChange()" aria-label="Առաքման եղանակ" class="w-full min-w-0 max-w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="Առաքում">Առաքում</option>
+          <option value="Ինքնաառաքում">Ինքնաառաքում</option>
+        </select>
       </div>
       <div class="min-w-0">
         <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase mb-1">📅 Ցանկալի առաքման ամսաթիվ՝</label>
@@ -501,7 +508,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <div class="min-w-0">
+      <div id="deliveryAddressField" class="min-w-0">
         <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase mb-1">📍 Առաքման հասցե (կարող եք փոխել)՝</label>
         <input type="text" id="deliveryAddressInput" oninput="checkDeliveryBadge()" placeholder="Քաղաք, փողոց, շենք..." aria-label="Առաքման հասցե" class="w-full min-w-0 max-w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
@@ -596,13 +603,16 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     <h2 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight mb-2 leading-tight">
       ՄԱՂԹՈՒՄ ԵՆՔ ԲԱԶՈՒՄ ՎԱՃԱՌՔՆԵՐ
     </h2>
-    <p class="text-gray-600 dark:text-gray-300 text-xs sm:text-sm mb-8 max-w-sm leading-relaxed">
-      Ձեր պատվերի ֆայլը հաջողությամբ ներբեռնվել է: Շնորհակալություն համագործակցության համար:
+    <p class="text-gray-600 dark:text-gray-300 text-xs sm:text-sm mb-3 max-w-sm leading-relaxed">
+      Պատվերի ֆայլը ներբեռնվել է։ Ուղարկելուց հետո սպասեք պատվերի հաստատման պատասխան նամակին. միայն դրանից հետո պատվերը համարվում է ընդունված։
+    </p>
+    <p id="successAutoCloseText" class="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mb-6 max-w-sm leading-relaxed">
+      Պատուհանը կփակվի ավտոմատ 60 վայրկյանից։ Կարող եք փակել ավելի շուտ։
     </p>
 
     <div class="flex flex-col sm:flex-row gap-2.5 w-full justify-center">
       <button onclick="keepCartAndCloseSuccess()" aria-label="Վերադառնալ" class="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition text-xs sm:text-sm">
-        🔄 Վերադառնալ (Պահպանել)
+        🔄 Փակել հիմա (պահպանել զամբյուղը)
       </button>
       <button onclick="clearCartAndCloseSuccess()" aria-label="Մաքրել զամբյուղը" class="w-full sm:w-auto px-5 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold rounded-xl border border-gray-200 dark:border-gray-600 transition text-xs sm:text-sm">
         🗑️ Մաքրել զամբյուղը
@@ -825,14 +835,32 @@ function toggleDeliveryDetails() {
   icon.style.transform = content.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
 }
 
+function getSelectedDeliveryMethod() {
+  const methodInput = document.getElementById('deliveryMethodInput');
+  return methodInput && methodInput.value ? methodInput.value : 'Առաքում';
+}
+
+function getDeliveryAddressValue() {
+  return getSelectedDeliveryMethod() === 'Ինքնաառաքում'
+    ? ''
+    : (document.getElementById('deliveryAddressInput').value || '').trim();
+}
+
+function handleDeliveryMethodChange() {
+  const addressField = document.getElementById('deliveryAddressField');
+  if (addressField) addressField.classList.toggle('hidden', getSelectedDeliveryMethod() === 'Ինքնաառաքում');
+  checkDeliveryBadge();
+}
+
 function checkDeliveryBadge() {
   const dateVal = (document.getElementById('deliveryDateInput').value || '').trim();
-  const addrVal = (document.getElementById('deliveryAddressInput').value || '').trim();
+  const addrVal = getDeliveryAddressValue();
   const commVal = (document.getElementById('orderCommentInput').value || '').trim();
   const contactVal = (document.getElementById('contactPersonInput').value || '').trim();
+  const pickupSelected = getSelectedDeliveryMethod() === 'Ինքնաառաքում';
   const badge = document.getElementById('deliveryBadge');
 
-  if (dateVal || addrVal || commVal || contactVal) {
+  if (pickupSelected || dateVal || addrVal || commVal || contactVal) {
     badge.classList.remove('hidden');
   } else {
     badge.classList.add('hidden');
@@ -2361,7 +2389,9 @@ function clearOrder() {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
-  checkDeliveryBadge();
+  const deliveryMethodInput = document.getElementById('deliveryMethodInput');
+  if (deliveryMethodInput) deliveryMethodInput.value = 'Առաքում';
+  handleDeliveryMethodChange();
   saveCartToStorage();
   updateOrderPanel();
   refreshAllActions();
@@ -2390,6 +2420,7 @@ function populateOrderModalFields() {
     document.getElementById('contactPersonInput').value = clientRowsData[0].contact || '';
   }
 
+  handleDeliveryMethodChange();
   orgSelect.onchange = restoreOrgDefaults;
 }
 
@@ -2516,9 +2547,11 @@ function changeQtyFromModal(articul, delta) {
 function printOrder() {
   const v = id => (document.getElementById(id).value || '').trim();
   const lines = [`Կազմակերպություն՝ ${getSelectedOrganizationName()}`];
+  lines.push(`Առաքման եղանակ՝ ${getSelectedDeliveryMethod()}`);
   if (v('contactPersonInput')) lines.push(`Կոնտակտային անձ՝ ${v('contactPersonInput')}`);
   if (v('deliveryDateInput')) lines.push(`Ցանկալի առաքման ամսաթիվ՝ ${v('deliveryDateInput')}`);
-  if (v('deliveryAddressInput')) lines.push(`Առաքման հասցե՝ ${v('deliveryAddressInput')}`);
+  const deliveryAddress = getDeliveryAddressValue();
+  if (deliveryAddress) lines.push(`Առաքման հասցե՝ ${deliveryAddress}`);
   if (v('orderCommentInput')) lines.push(`Մեկնաբանություն՝ ${v('orderCommentInput')}`);
   document.getElementById('printMeta').innerText = lines.join('\n');
   window.print();
@@ -2805,11 +2838,12 @@ function importFullUserSession(event) {
 function buildEmailFormattedText() {
   const orgName = getSelectedOrganizationName();
   const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
-  const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
+  const deliveryMethod = getSelectedDeliveryMethod();
+  const delivAddr = getDeliveryAddressValue();
   const contactPerson = (document.getElementById('contactPersonInput').value || '').trim();
   const comment = (document.getElementById('orderCommentInput').value || '').trim();
 
-  let text = `ՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\nԿազմակերպություն: ${orgName}\n`;
+  let text = `ՊԱՏՎԵՐ ԿԱՏԱԼՈԳԻՑ (${authorizedClient}):\nԿազմակերպություն: ${orgName}\nԱռաքման եղանակ: ${deliveryMethod}\n`;
   if (contactPerson) text += `Կոնտակտային անձ: ${contactPerson}\n`;
   if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
   if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
@@ -2831,14 +2865,15 @@ function buildEmailFormattedText() {
 function buildViberFormattedText() {
   const orgName = getSelectedOrganizationName();
   const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
-  const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
+  const deliveryMethod = getSelectedDeliveryMethod();
+  const delivAddr = getDeliveryAddressValue();
   const contactPerson = (document.getElementById('contactPersonInput').value || '').trim();
   const comment = (document.getElementById('orderCommentInput').value || '').trim();
 
   let total = 0;
   Object.values(cart).forEach(item => total += getItemWholesalePrice(item) * item.qty);
 
-  let text = `Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը:\nԿազմակերպություն: ${orgName}\n`;
+  let text = `Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը:\nԿազմակերպություն: ${orgName}\nԱռաքման եղանակ: ${deliveryMethod}\n`;
   if (contactPerson) text += `Կոնտակտային անձ: ${contactPerson}\n`;
   if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
   if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
@@ -2879,7 +2914,8 @@ function downloadOrderExcel() { generateAndDownloadExcel(false); }
 function generateAndDownloadExcel(isFromExternal = false) {
   const orgName = getSelectedOrganizationName();
   const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
-  const delivAddr = (document.getElementById('deliveryAddressInput').value || '').trim();
+  const deliveryMethod = getSelectedDeliveryMethod();
+  const delivAddr = getDeliveryAddressValue();
   const contactPerson = (document.getElementById('contactPersonInput').value || '').trim();
   const comment = (document.getElementById('orderCommentInput').value || '').trim();
 
@@ -2929,6 +2965,7 @@ function generateAndDownloadExcel(isFromExternal = false) {
   excelData.push({ 'Արտիկուլ': 'ՏԵՂԵԿՈՒԹՅՈՒՆՆԵՐ ՊԱՏՎԻՐԱՏՈՒԻ ԵՎ ԱՌԱՔՄԱՆ ՄԱՍԻՆ', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
   excelData.push({ 'Արտիկուլ': 'Կոնտրագենտ:', 'Անվանում': authorizedClient, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
   excelData.push({ 'Արտիկուլ': 'Կազմակերպություն:', 'Անվանում': orgName, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+  excelData.push({ 'Արտիկուլ': 'Առաքման եղանակ:', 'Անվանում': deliveryMethod, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
 
   if (contactPerson) excelData.push({ 'Արտիկուլ': 'Կոնտակտային անձ:', 'Անվանում': contactPerson, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
   if (delivDate) excelData.push({ 'Արտիկուլ': 'Ցանկալի առաքման ամսաթիվ:', 'Անվանում': delivDate, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
@@ -2971,14 +3008,48 @@ function generateAndDownloadExcel(isFromExternal = false) {
   closeOrderModal();
   document.getElementById('successOverlay').classList.remove('hidden');
   document.getElementById('successOverlay').classList.add('flex');
+  startSuccessOverlayCountdown();
+}
+
+let successOverlayCountdownTimer = null;
+
+function stopSuccessOverlayCountdown() {
+  if (successOverlayCountdownTimer !== null) {
+    clearInterval(successOverlayCountdownTimer);
+    successOverlayCountdownTimer = null;
+  }
+}
+
+function startSuccessOverlayCountdown() {
+  stopSuccessOverlayCountdown();
+  let remainingSeconds = 60;
+  const message = document.getElementById('successAutoCloseText');
+
+  const updateCountdown = () => {
+    if (message) {
+      message.innerText = remainingSeconds > 0
+        ? `Պատուհանը կփակվի ավտոմատ ${remainingSeconds} վայրկյանից։ Կարող եք փակել ավելի շուտ։`
+        : 'Պատուհանը փակվում է…';
+    }
+    if (remainingSeconds <= 0) {
+      keepCartAndCloseSuccess();
+      return;
+    }
+    remainingSeconds--;
+  };
+
+  updateCountdown();
+  successOverlayCountdownTimer = setInterval(updateCountdown, 1000);
 }
 
 function keepCartAndCloseSuccess() {
+  stopSuccessOverlayCountdown();
   document.getElementById('successOverlay').classList.add('hidden');
   document.getElementById('successOverlay').classList.remove('flex');
 }
 
 function clearCartAndCloseSuccess() {
+  stopSuccessOverlayCountdown();
   clearOrder();
   document.getElementById('successOverlay').classList.add('hidden');
   document.getElementById('successOverlay').classList.remove('flex');
