@@ -4,6 +4,7 @@ function sessionLoadFailed(message){document.documentElement.setAttribute('data-
 let draft = null, userDraft = null, users = [];
 let catalogPairs=[],userAccessEditor=null,groupEditors={},groupRevision=null;
 let editingUserId=null,auditEntries=[],categoryByGroup={KP:'KP',Dealers:'Dealers'};
+let pricingByGroup={Dealers:{sources:['ws'],mode:'first'},KP:{sources:['kpPromo','kp','ws'],mode:'first'}};
 function status(message, error = false) { el('status').textContent = message; el('status').className = error ? 'error' : ''; }
 async function api(path, options = {}) {
   try { return await ZZWS.json(path, options); }
@@ -132,7 +133,12 @@ function userPayload(){
   for(let i=1;i<=3;i++)for(const key of ['organization','address','contact'])delete p[key+(i===1?'':String(i))];
   return p;
 }
-function updateClientCategory(){const f=el('userForm');el('clientCategory').value=f.elements.role.value==='admin'?'—':(categoryByGroup[f.elements.sheet.value]||f.elements.sheet.value);}
+function updateClientCategory(){
+  const f=el('userForm'),pricing=pricingByGroup[f.elements.sheet.value],labels={ws:'Մեծածախ',kpPromo:'KP ակցիոն',kp:'KP',retail:'Զեղչված մանրածախ',base:'Հիմնական մանրածախ'};
+  el('clientPricingFields').hidden=f.elements.role.value==='admin';
+  el('clientPriceSequence').value=pricing.sources.map(source=>labels[source]).join(' → ');
+  el('clientPriceSelection').textContent=({first:'Ընտրվում է առաջին հասանելի դրական գինը։ Դատարկ և զրոյական գները բաց են թողնվում։',min:'Ընտրվում է նշված աղբյուրների նվազագույն դրական գինը։',max:'Ընտրվում է նշված աղբյուրների առավելագույն դրական գինը։'}[pricing.mode]||'');
+}
 el('userForm').elements.role.addEventListener('change',updateClientCategory);
 el('userForm').elements.sheet.onchange=()=>{
   updateClientCategory();
@@ -173,6 +179,7 @@ function renderAudit(){
 el('refreshAudit').onclick=()=>run(loadAudit);el('auditSearch').oninput=renderAudit;el('auditGroup').onchange=renderAudit;
 async function loadGroupRules(){
   const data=await api('admin/rules');groupRevision=data.revision;groupEditors={};
+  pricingByGroup=Object.fromEntries(['KP','Dealers'].map(group=>[group,data.rules[group].pricing]));updateClientCategory();
   const container=el('groupRulesEditors');container.replaceChildren();el('groupRulesPreview').replaceChildren();
   for(const group of ['KP','Dealers']){
     const card=document.createElement('fieldset');card.dataset.groupRules=group;
@@ -198,7 +205,7 @@ el('reloadGroupRules').onclick=()=>run(loadGroupRules);
 el('groupRulesForm').onsubmit=e=>{e.preventDefault();run(async()=>{
   const submit=e.target.querySelector('[type=submit]');submit.disabled=true;
   try {
-    const data=await api('admin/rules',{method:'POST',body:JSON.stringify({rules:groupPayload(),revision:groupRevision})});groupRevision=data.revision;
+    const next=groupPayload(),data=await api('admin/rules',{method:'POST',body:JSON.stringify({rules:next,revision:groupRevision})});groupRevision=data.revision;pricingByGroup=Object.fromEntries(['KP','Dealers'].map(group=>[group,next[group].pricing]));updateClientCategory();
     status('Խմբերի կանոնները պահպանված են։ Նոր հարցումներն արդեն օգտագործում են դրանք, իսկ բաց կատալոգները կթարմացվեն հաջորդ ստուգման ժամանակ։');
   } finally { submit.disabled=false; }
 });};
