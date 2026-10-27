@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ZZWS — управление каталогом</title><link rel="stylesheet" href="/admin/style.css">
+<body><header><a href="/">ZZWS</a><span>Управление каталогом</span><button id="logout" hidden>Выйти</button></header>
+<main><section id="login"><h1>Вход администратора</h1><p>Для входа нужна учётная запись с правами администратора.</p>
+<form id="loginForm"><label>Логин<input name="login" autocomplete="username" required></label><label>Пароль<input name="password" type="password" autocomplete="current-password" required></label><button>Войти</button></form></section>
+<p id="status" role="status" aria-live="polite"></p>
+<div id="workspace" hidden><nav><button data-tab="price">Прайс</button><button data-tab="users">Пользователи</button><button data-tab="audit">Журнал</button></nav>
+<section id="price"><h1>Обновление прайса</h1><p>Загрузите XLSX. После проверки вы сможете опубликовать новую версию. До публикации действует прежний прайс.</p>
+<form id="priceForm"><label>Файл прайса<input name="file" type="file" accept=".xlsx" required></label><button>Проверить файл</button></form>
+<div id="preview" hidden><h2>Результат проверки</h2><p id="summary"></p><div id="sample"></div><button id="publish">Опубликовать проверенный прайс</button></div>
+<h2>История версий</h2><div id="versions"></div></section>
+<section id="users" hidden><h1>Пользователи</h1><button id="newUser">Добавить пользователя</button>
+<details><summary>Массовое обновление через Excel</summary><p><a href="/api/admin/users/template">Скачать шаблон XLSX</a>. Новые пользователи создаются с выключенным доступом: после импорта задайте каждому новый пароль и включите доступ. Существующие пароли и статус сохраняются. Отсутствующие в файле пользователи не удаляются.</p>
+<form id="usersImportForm"><label>Файл пользователей<input name="file" type="file" accept=".xlsx" required></label><button>Проверить изменения</button></form>
+<div id="usersPreview" hidden><div id="usersChanges"></div><button id="importUsers">Применить проверенные изменения</button></div></details>
+<div id="userList"></div>
+<form id="userForm" hidden><h2 id="userTitle">Пользователь</h2><input name="id" type="hidden">
+<label>Логин<input name="login" required maxlength="150" autocomplete="off"></label><label>Клиент<input name="client" required maxlength="200"></label>
+<label>Роль<select name="role"><option value="client">Клиент</option><option value="admin">Администратор</option></select></label>
+<label>Группа цен<select name="sheet"><option>Dealers</option><option>KP</option></select></label>
+<label><input type="checkbox" name="active" checked>Доступ включён</label>
+<label><input type="checkbox" name="allBrands">Все разрешённые для KP бренды</label>
+<label>Бренды KP через запятую<input name="brands" placeholder="Samsung, LG"></label>
+<label><input type="checkbox" name="allowResale">Показывать дополнительную цену перепродажи</label>
+<label>Организация<input name="organization" maxlength="300"></label><label>Адрес<input name="address" maxlength="300"></label><label>Контакт<input name="contact" maxlength="300"></label>
+<label>Новый пароль (минимум 12 символов)<input name="password" type="password" minlength="12" maxlength="256" autocomplete="new-password" placeholder="Оставьте пустым, чтобы сохранить текущий"></label>
+<p>Сохранение отзывает все сессии этого пользователя. Для смены пароля задайте новый и передайте получателю отдельным каналом.</p><button>Сохранить</button><button type="button" id="cancelUser">Отмена</button></form></section>
+<section id="audit" hidden><h1>Журнал действий</h1><p>Последние 200 событий.</p><div id="events"></div></section></div></main><script src="/admin/app.js"></script></body></html>

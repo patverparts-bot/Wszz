@@ -149,7 +149,8 @@ function loadAdminOrderPriceMode() {
       adminOrderPriceMode = localStorage.getItem('zigzag_admin_price_mode_' + authorizedClient) === 'KP' ? 'KP' : 'WS';
     } catch (e) {}
   }
-  document.querySelectorAll('[data-admin-price-mode-select]').forEach(select => { select.value = adminOrderPriceMode; });
+  const select = document.getElementById('adminOrderPriceMode');
+  if (select) select.value = adminOrderPriceMode;
   updateOrderPanel();
 }
 
@@ -161,7 +162,8 @@ function setAdminOrderPriceMode(mode) {
     item.addedPriceMode = adminOrderPriceMode;
   });
   try { localStorage.setItem('zigzag_admin_price_mode_' + authorizedClient, adminOrderPriceMode); } catch (e) {}
-  document.querySelectorAll('[data-admin-price-mode-select]').forEach(select => { select.value = adminOrderPriceMode; });
+  const select = document.getElementById('adminOrderPriceMode');
+  if (select) select.value = adminOrderPriceMode;
   saveCartToStorage();
   updateOrderPanel();
   renderModalItems();
@@ -327,17 +329,12 @@ function renderModalItems() {
 }
 
 function openOrderModal() {
-  document.querySelectorAll('[data-admin-price-mode-select]').forEach(select => { select.value = adminOrderPriceMode; });
+  const priceModeSelect = document.getElementById('adminOrderPriceMode');
+  if (priceModeSelect) priceModeSelect.value = adminOrderPriceMode;
   renderModalItems();
   if (!modalFieldsInitialized) {
     populateOrderModalFields();
     modalFieldsInitialized = true;
-  }
-  const details = document.getElementById('deliveryDetailsContent');
-  const detailsIcon = document.getElementById('deliveryToggleIcon');
-  if (details && window.matchMedia('(min-width: 1024px)').matches) {
-    details.classList.remove('hidden');
-    if (detailsIcon) detailsIcon.style.transform = 'rotate(180deg)';
   }
   checkDeliveryBadge();
   document.getElementById('orderModal').classList.remove('hidden');
@@ -611,31 +608,10 @@ function importFullUserSession(event) {
         throw new Error('Ֆայլի սխալ ձևաչափ։');
       }
 
-      if (authorizedClient && data.client.toLowerCase() !== authorizedClient.toLowerCase()) {
-        alert(`❌ Սխալ: Այս ֆայլը պատկանում է "${data.client}" օգտատիրոջը, իսկ դուք մուտք եք գործել որպես "${authorizedClient}":\nՏվյալների ներմուծումն արգելված է.`);
-        event.target.value = '';
-        return;
+      if (!serverIdentity || data.client !== serverIdentity.client) {
+        throw new Error('Մուտք գործեք նույն օգտատիրոջ հաշվով։');
       }
-
-      let foundUserRecord = null;
-      Object.values(passMap).forEach(record => {
-        if (record.client.toLowerCase() === data.client.toLowerCase()) {
-          foundUserRecord = record;
-        }
-      });
-
-      authorizedClient = data.client;
-      userSheetType = foundUserRecord ? foundUserRecord.sheet : (data.sheet || 'Dealers');
       adminOrderPriceMode = isAdminUser() && data.adminPriceMode === 'KP' ? 'KP' : 'WS';
-      if (isAdminUser()) {
-        try { localStorage.setItem('zigzag_admin_price_mode_' + authorizedClient, adminOrderPriceMode); } catch (e) {}
-      }
-      
-      if (foundUserRecord && foundUserRecord.rowsList && foundUserRecord.rowsList.length > 0) {
-        clientRowsData = foundUserRecord.rowsList;
-      } else {
-        clientRowsData = data.clientRows || [{ organization: authorizedClient, address: '', contact: '' }];
-      }
 
       cart = normalizeCart(data.cart);
 

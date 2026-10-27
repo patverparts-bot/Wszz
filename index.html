@@ -13,22 +13,7 @@
 try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.classList.toggle('dark', __t ? __t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches); } catch (e) {}</script>
 <!-- SheetJS (XLSX reader/writer) -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="styles.css?v=2.65">
-<style>
-.auth-entry-card {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  transition: opacity 360ms ease, transform 360ms ease;
-}
-#authScreen.auth-screen-idle .auth-entry-card {
-  opacity: 0;
-  transform: translateY(8px) scale(0.98);
-  pointer-events: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  .auth-entry-card { transition-duration: 0.01ms; }
-}
-</style>
+<link rel="stylesheet" href="styles.css?v=3.0-secure">
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 min-h-screen flex flex-col relative transition-colors duration-200">
 
@@ -36,14 +21,15 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 <div id="authScreen" class="fixed inset-0 bg-cover bg-center bg-no-repeat z-50 flex items-center justify-center p-4" style="background-image: url('bg-warehouse-login.webp');">
   <div class="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/70"></div>
 
-  <div class="relative z-10 bg-white/50 dark:bg-gray-900/80 backdrop-blur-md rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 dark:border-gray-800 text-center auth-entry-card">
-    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.65</span>
+  <div class="relative z-10 bg-white/50 dark:bg-gray-900/80 backdrop-blur-md rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 dark:border-gray-800 text-center">
+    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.45</span>
     
     <h2 class="text-2xl font-black text-gray-900 dark:text-white mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 dark:text-gray-300 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
 
     <div class="space-y-4">
-      <input type="password" id="passwordInput" inputmode="numeric" pattern="[0-9]*" placeholder="Գաղտնաբառ..." aria-label="Գաղտնաբառ"
+      <input id="loginInput" autocomplete="username" placeholder="Լոգին" aria-label="Լոգին" class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white text-gray-900">
+      <input type="password" id="passwordInput" autocomplete="current-password" placeholder="Գաղտնաբառ..." aria-label="Գաղտնաբառ"
       class="w-full px-4 py-3 border border-gray-300/80 dark:border-gray-700 rounded-xl text-center text-lg tracking-widest bg-white/80 dark:bg-gray-800 dark:text-white focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent shadow-inner font-bold">
       
       <button onclick="checkPassword()" aria-label="Մուտք գործել" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition transform hover:scale-[1.01] active:scale-[0.99]">
@@ -55,10 +41,11 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
       <summary>Ինչպե՞ս մուտք գործել</summary>
       <ol>
         <li>Գաղտնաբառը տրամադրում է ZIGZAG-ի մենեջերը։</li>
-        <li>Մուտքագրեք ձեր թվային գաղտնաբառը և սեղմեք «Մուտք գործել»։</li>
+        <li>Մուտքագրեք ձեր լոգինը և գաղտնաբառը և սեղմեք «Մուտք գործել»։</li>
         <li>Եթե մուտքի պատուհանը թաքնվել է, շարժեք մկնիկը կամ դիպչեք էկրանին։</li>
       </ol>
     </details>
+    <a href="/admin" class="block text-sm underline mt-4">Մուտք ադմինիստրատորի համար</a>
 
     </div>
   </div>
@@ -295,14 +282,6 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 <span id="orderCount" class="text-blue-600 dark:text-blue-400 font-semibold text-sm sm:text-base">0 ապրանք</span> |
 <span class="font-bold text-gray-900 dark:text-white text-sm sm:text-base"> Ընդհանուր՝ </span>
 <span id="orderSum" class="text-green-600 dark:text-green-400 font-bold text-base sm:text-lg">0 ֏</span>
-<div id="adminPriceModePanelWrap" class="admin-price-mode-wrap hidden mt-2 flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2">
-  <label for="adminOrderPriceModePanel" class="text-xs font-bold text-indigo-900 dark:text-indigo-300 uppercase">Հաշվարկել ըստ՝</label>
-  <select id="adminOrderPriceModePanel" onchange="setAdminOrderPriceMode(this.value)" aria-label="Ընտրել KP կամ WS գին զամբյուղի հաշվարկման համար" data-admin-price-mode-select class="px-3 py-2 bg-white dark:bg-gray-900 border border-indigo-300 dark:border-indigo-800 rounded-lg text-xs sm:text-sm font-semibold text-indigo-900 dark:text-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
-    <option value="WS">WS Price</option>
-    <option value="KP">KP Price</option>
-  </select>
-</div>
-
 </div>
 <div class="flex gap-2 w-full sm:w-auto justify-end">
 <button onclick="clearOrder()" aria-label="Մաքրել զամբյուղը" class="w-1/3 sm:w-auto px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-xs sm:text-sm font-medium transition">
@@ -317,16 +296,14 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 
 <!-- MODALNOYE OKNO ZAKAZA -->
 <div id="orderModal" class="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 hidden flex items-center justify-center p-2 sm:p-4">
-<div class="bg-white dark:bg-gray-800 rounded-2xl max-w-6xl w-full p-3 sm:p-5 shadow-2xl flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700 order-modal-shell" style="height:94vh;height:94dvh;">
+<div class="bg-white dark:bg-gray-800 rounded-2xl max-w-4xl w-full p-3 sm:p-6 shadow-2xl flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700" style="max-height:94vh;max-height:94dvh;">
 <div class="flex justify-between items-center mb-3 border-b dark:border-gray-700 pb-3 flex-shrink-0">
 <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white">Պատվերի պարունակությունը</h3>
 <button onclick="closeOrderModal()" aria-label="Փակել պատվերի պատուհանը" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl font-bold">&times;</button>
 </div>
 
-<div id="modalBody" class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden order-modal-body">
+<div id="modalBody" class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
 
-<div class="order-modal-body-grid">
-<section class="order-modal-items-column" aria-label="Պատվերի ապրանքներ">
 <div class="bg-blue-50 dark:bg-blue-950/50 p-3 sm:p-4 rounded-xl border border-blue-200 dark:border-blue-900 mb-3 flex flex-col sm:flex-row justify-between items-center gap-2 flex-shrink-0">
 <div>
 <span class="text-xs font-bold text-blue-900 dark:text-blue-300 uppercase">Ընդհանուր վճարման եղանակ․</span>
@@ -337,25 +314,19 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 <option value="Կանխիկ">💵 Կանխիկ</option>
 </select>
 </div>
-</div>
-<div id="adminPriceModeModalWrap" class="admin-price-mode-wrap hidden flex flex-col sm:flex-row items-start sm:items-center gap-2">
-  <label for="adminOrderPriceModeModal" class="text-xs font-bold text-indigo-900 dark:text-indigo-300 uppercase">Հաշվարկել ըստ՝</label>
-  <select id="adminOrderPriceModeModal" onchange="setAdminOrderPriceMode(this.value)" aria-label="Ընտրել KP կամ WS գին զամբյուղի հաշվարկման համար" data-admin-price-mode-select class="px-3 py-2 bg-white dark:bg-gray-900 border border-indigo-300 dark:border-indigo-800 rounded-lg text-xs sm:text-sm font-semibold text-indigo-900 dark:text-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+<div id="adminPriceModeWrap" class="hidden flex flex-col sm:flex-row items-start sm:items-center gap-2">
+  <label for="adminOrderPriceMode" class="text-xs font-bold text-indigo-900 dark:text-indigo-300 uppercase">Հաշվարկել ըստ՝</label>
+  <select id="adminOrderPriceMode" onchange="setAdminOrderPriceMode(this.value)" aria-label="Ընտրել KP կամ WS գին զամբյուղի հաշվարկման համար" class="px-3 py-2 bg-white dark:bg-gray-900 border border-indigo-300 dark:border-indigo-800 rounded-lg text-xs sm:text-sm font-semibold text-indigo-900 dark:text-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
     <option value="WS">WS Price</option>
     <option value="KP">KP Price</option>
   </select>
 </div>
-
-<div class="flex items-center justify-between gap-2 px-1 py-2 text-xs">
-  <h4 class="font-bold text-gray-700 dark:text-gray-200">Ապրանքներ զամբյուղում</h4>
-  <span class="text-gray-500 dark:text-gray-400">Փոփոխեք քանակը կամ հեռացրեք ապրանքը</span>
 </div>
+
 <div id="modalItemsList" class="divide-y divide-gray-100 dark:divide-gray-700 mb-3 min-h-[60px] text-sm space-y-3 sm:space-y-0">
 </div>
 <div id="printMeta" class="print-only whitespace-pre-line text-xs mb-3"></div>
-</section>
 
-<section class="order-modal-details-column" aria-label="Պատվերի առաքում և տվյալներ">
 <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 mb-3 overflow-hidden transition-all flex-shrink-0 print-hidden">
   <button onclick="toggleDeliveryDetails()" aria-label="Կազմակերպություն և հասցե" class="w-full p-3 bg-gray-100 dark:bg-gray-700/60 hover:bg-gray-200/80 dark:hover:bg-gray-700 flex items-center justify-between text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-200 transition">
     <span class="flex items-center gap-2 min-w-0 text-left">
@@ -366,8 +337,8 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
   </button>
 
   <div id="deliveryDetailsContent" class="hidden p-3 sm:p-4 space-y-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <div class="min-w-0 sm:col-span-2">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div class="min-w-0">
         <label class="block text-[11px] sm:text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase mb-1">🏢 Կազմակերպություն՝</label>
         <select id="organizationSelect" aria-label="Կազմակերպություն" class="w-full min-w-0 max-w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold">
         </select>
@@ -402,8 +373,6 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
       <textarea id="orderCommentInput" oninput="checkDeliveryBadge()" placeholder="Այլ նշումներ կամ ցանկություններ..." aria-label="Լրացուցիչ մեկնաբանություն" class="w-full min-w-0 max-w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none h-14"></textarea>
     </div>
   </div>
-</div>
-</section>
 </div>
 
 </div>
@@ -510,9 +479,11 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
   <button onclick="closeCartToast()" aria-label="Փակել ծանուցումը" class="text-gray-400 hover:text-white font-bold text-lg">&times;</button>
 </div>
 
-</div>
+<button id="scrollTopBtn" onclick="scrollToTop()" aria-label="Վերև գնալ" class="fixed bottom-20 right-4 sm:right-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-2xl z-30 hidden transition transform hover:scale-110" title="Վերև">
+⬆️
+</button>
 
-<button id="scrollTopBtn" onclick="scrollToTop()" aria-label="Վերև գնալ" class="fixed bottom-20 right-4 sm:right-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-2xl hidden transition transform hover:scale-110" title="Վերև">⬆️</button>
+</div>
 
 <dialog id="userGuideDialog" class="zzws-guide-dialog" aria-labelledby="userGuideTitle">
   <header class="zzws-guide-header">
@@ -528,44 +499,14 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
   </div>
 </dialog>
 
-<script src="js/product-photos.js?v=2.65"></script>
-<script src="js/core.js?v=2.65"></script>
-<script src="js/photo-preview.js?v=2.65"></script>
-<script src="js/auth-data.js?v=2.65"></script>
-<script src="js/catalog.js?v=2.65"></script>
-<script src="js/order-state.js?v=2.65"></script>
-<script src="js/bulk-add.js?v=2.65"></script>
-<script src="js/order-submit.js?v=2.65"></script>
-<script src="js/user-guide.js?v=2.65"></script>
-<script>
-(() => {
-  const screen = document.getElementById('authScreen');
-  const card = screen && screen.querySelector('.auth-entry-card');
-  if (!screen || !card) return;
-
-  let idleTimer;
-  function showAuthCard() {
-    clearTimeout(idleTimer);
-    screen.classList.remove('auth-screen-idle');
-    card.removeAttribute('aria-hidden');
-    card.removeAttribute('inert');
-    idleTimer = setTimeout(hideAuthCard, 5000);
-  }
-  function hideAuthCard() {
-    if (screen.classList.contains('hidden') || screen.querySelector('#loginHelp[open]')) return;
-    screen.classList.add('auth-screen-idle');
-    card.setAttribute('aria-hidden', 'true');
-    card.setAttribute('inert', '');
-  }
-
-  screen.addEventListener('mousemove', showAuthCard, { passive: true });
-  screen.addEventListener('pointerdown', showAuthCard, { passive: true });
-  screen.addEventListener('touchstart', showAuthCard, { passive: true });
-  screen.addEventListener('keydown', showAuthCard);
-  screen.addEventListener('input', showAuthCard);
-  screen.querySelector('#loginHelp')?.addEventListener('toggle', showAuthCard);
-  showAuthCard();
-})();
-</script>
+<script src="js/product-photos.js?v=3.0-secure"></script>
+<script src="js/core.js?v=3.0-secure"></script>
+<script src="js/photo-preview.js?v=3.0-secure"></script>
+<script src="js/auth-data.js?v=3.0-secure"></script>
+<script src="js/catalog.js?v=3.0-secure"></script>
+<script src="js/order-state.js?v=3.0-secure"></script>
+<script src="js/bulk-add.js?v=3.0-secure"></script>
+<script src="js/order-submit.js?v=3.0-secure"></script>
+<script src="js/user-guide.js?v=3.0-secure"></script>
 </body>
 </html>

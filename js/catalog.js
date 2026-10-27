@@ -342,7 +342,7 @@ if (isAdminUser()) {
 const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
 const cartItem = cart[p.articul];
 const actionCellHtml = getActionControlHtml(p.articul, cartItem);
-const resaleColHtml = authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ" ? `<td class="text-right text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap">${p.resaleWholesale ? p.resaleWholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</td>` : '';
+const resaleColHtml = serverIdentity?.allowResale ? `<td class="text-right text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap">${p.resaleWholesale ? p.resaleWholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</td>` : '';
 
 const isFav = favoritesSet.has(p.articul);
 const starIcon = isFav ? '⭐' : '☆';

@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: zzws-secure
+    runtime: docker
+    plan: starter
+    autoDeployTrigger: 'off'
+    healthCheckPath: /
+    envVars:
+      - key: ZZWS_ORIGIN
+        sync: false
+      - key: ZZWS_DATA_DIR
+        value: /var/data
+    disk:
+      name: zzws-private-data
+      mountPath: /var/data
+      sizeGB: 1

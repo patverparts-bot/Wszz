@@ -1,0 +1,11 @@
+work/
+backups/
+outputs/
+.zzws-guide-work/
+.codex-remote-attachments/
+__pycache__/
+.venv/
+.env
+private-data/
+*.xlsx
+*.zip
