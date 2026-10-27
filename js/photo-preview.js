@@ -33,6 +33,12 @@
     preview.style.top = top + 'px';
     preview.firstElementChild.src = image.currentSrc || image.src;
     preview.firstElementChild.alt = image.alt;
+    preview.style.setProperty('--preview-shift-x', (rect.left - left) + 'px');
+    preview.style.setProperty('--preview-shift-y', (rect.top - top) + 'px');
+    preview.style.setProperty('--preview-start-scale', String(rect.width / size));
+    preview.classList.remove('is-visible');
+    // Commit the thumbnail-sized starting state before opening the preview.
+    void preview.offsetWidth;
     frame = requestAnimationFrame(() => preview.classList.add('is-visible'));
   });
 
