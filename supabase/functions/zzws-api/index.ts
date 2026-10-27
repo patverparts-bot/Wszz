@@ -2,6 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2.95.0';
 import XLSX from './vendor/xlsx.mjs';
 import { parsePrice, project, validateProfile, parseUsers } from './catalog.mjs';
 import { defaultRules, effectiveRules, validateRules, validPassword } from './rules.mjs';
+import { validateMemory } from './memory.mjs';
 
 const PROJECT_URL = Deno.env.get('SUPABASE_URL')!;
 const envKey=(name:string,legacy:string)=>JSON.parse(Deno.env.get(name)||'{}').default||Deno.env.get(legacy)!;
@@ -51,17 +52,17 @@ async function uploadRows(req:Request){
   return rowsFromBuffer(await file.arrayBuffer());
 }
 const workbook=(rows:any[][])=>{const book=XLSX.utils.book_new();XLSX.utils.book_append_sheet(book,XLSX.utils.aoa_to_sheet(rows.map(r=>r.map(v=>typeof v==='string'&&/^[=+@-]/.test(v)?"'"+v:v))),'ZZWS');return XLSX.write(book,{type:'array',bookType:'xlsx'});};
-const cleanUser=(row:any)=>({...row.profile,id:row.id,login:row.login,active:row.active});
+const cleanUser=(row:any)=>({...row.profile,id:row.id,login:row.login,active:row.active,needsPasswordSetup:row.needs_password_setup===true});
 
 async function identity(req:Request){
   const token=(req.headers.get('authorization')||'').replace(/^Bearer /,'');
   if(!/^[a-f0-9]{64}$/.test(token))fail(401,'Войдите в систему');
   const hash=await digest(token);
-  const session=await query(table('sessions').select('user_id,expires').eq('hash',hash).gt('expires',new Date().toISOString()).maybeSingle());
+  const session=await query(table('sessions').select('user_id,expires,setup_only').eq('hash',hash).gt('expires',new Date().toISOString()).maybeSingle());
   if(!session)fail(401,'Войдите в систему');
   const user=await query(table('users').select('*').eq('id',session.user_id).eq('active',true).maybeSingle());
   if(!user)fail(401,'Доступ отключён');
-  return {user:cleanUser(user),hash};
+  return {user:cleanUser(user),hash,setupOnly:session.setup_only};
 }
 
 async function body(req:Request){const b=await req.json().catch(()=>null);if(!b||Array.isArray(b)||typeof b!=='object')fail(400,'Ожидается JSON-объект');return b;}
@@ -86,7 +87,7 @@ async function saveUser(p:any,actor:string){
   if(old&&!Object.hasOwn(p,'rowsList'))profile.rowsList=old.profile.rowsList;
   if(p.id&&!old)fail(404,'Пользователь не найден');
   if(old?.id===actor&&(!p.active||profile.role!=='admin'))fail(400,'Нельзя заблокировать себя или снять собственные права');
-  if((!old||p.password)&&!goodPassword(p.password))fail(400,'Пароль должен содержать от 6 до 256 цифр; буквы, пробелы и другие символы запрещены');
+  if(p.password&&!goodPassword(p.password))fail(400,'Пароль должен содержать от 6 до 256 цифр; буквы, пробелы и другие символы запрещены');
   const duplicate=await query(table('users').select('id').eq('login',login).maybeSingle());
   if(duplicate&&duplicate.id!==old?.id)fail(400,'Логин уже используется');
   let uid=old?.id,newAuth=false;
@@ -96,7 +97,7 @@ async function saveUser(p:any,actor:string){
     const changes:any={email:email(login),email_confirm:true};if(p.password)changes.password=p.password;
     const result=await service.auth.admin.updateUserById(uid,changes);if(result.error)fail(400,'Не удалось обновить учётную запись');
   }else{
-    const result=await service.auth.admin.createUser({email:email(login),password:p.password,email_confirm:true});
+    const result=await service.auth.admin.createUser({email:email(login),password:randomPassword(),email_confirm:true});
     if(result.error)fail(400,'Не удалось создать пользователя');uid=result.data.user.id;newAuth=true;
   }
   try{await query(service.rpc('zzws_save_user',{p_id:uid,p_login:login,p_profile:profile,p_active:p.active!==false,p_actor:actor}));}
@@ -124,7 +125,7 @@ export async function handle(req:Request){
       if(!consumed)fail(403,'Код настройки недействителен или уже использован');
       const auth=await service.auth.admin.createUser({email:email(login),password:p.password,email_confirm:true});
       if(auth.error)fail(400,'Не удалось создать администратора. Потребуется новый код настройки');
-      const inserted=await table('users').insert({id:auth.data.user.id,login,profile,active:true});
+      const inserted=await table('users').insert({id:auth.data.user.id,login,profile,active:true,needs_password_setup:false});
       if(inserted.error){await service.auth.admin.deleteUser(auth.data.user.id);fail(500,'Не удалось завершить настройку');}
       await audit(auth.data.user.id,'bootstrap');return json({ok:true});
     }
@@ -133,6 +134,12 @@ export async function handle(req:Request){
       if(!/^[a-z0-9][a-z0-9._-]{0,79}$/.test(login)||password.length>256)fail(401,'Неверный логин или пароль');
       const ip=await digest((req.headers.get('x-forwarded-for')||'unknown').split(',')[0].trim());
       const attempt=await query(service.rpc('zzws_login_gate',{p_login:login,p_ip:ip}));if(!attempt)fail(429,'Слишком много попыток. Повторите через 15 минут');
+      const candidate=await query(table('users').select('*').eq('login',login).eq('active',true).maybeSingle());
+      if(candidate?.needs_password_setup){
+        const token=random();await query(table('sessions').insert({hash:await digest(token),user_id:candidate.id,setup_only:true,expires:new Date(Date.now()+10*60000).toISOString()}));
+        await query(table('attempts').delete().eq('id',attempt));
+        return json({id:candidate.id,login:candidate.login,role:candidate.profile.role,needsPasswordSetup:true,sessionToken:token});
+      }
       const client=authClient();const auth=await client.auth.signInWithPassword({email:email(login),password});
       if(auth.error||!auth.data.user){await audit(null,'login_failed');fail(401,'Неверный логин или пароль');}
       // Immediately discard the Auth session. All subsequent access uses independently revocable opaque tokens.
@@ -143,9 +150,43 @@ export async function handle(req:Request){
       await query(table('attempts').delete().eq('id',attempt));await audit(row.id,'login');
       return json({...cleanUser(row),sessionToken:token});
     }
-    const {user,hash}=await identity(req);
+    const {user,hash,setupOnly}=await identity(req);
     if(req.method==='GET'&&path==='me')return json(user);
     if(req.method==='POST'&&path==='logout'){await query(table('sessions').delete().eq('hash',hash));await audit(user.id,'logout');return json({ok:true});}
+    if(req.method==='POST'&&path==='account/password'){
+      if(!user.needsPasswordSetup||!setupOnly)fail(403,'Настройка пароля недоступна. Войдите заново');
+      const p=await body(req);if(!goodPassword(p.password))fail(400,'Пароль должен содержать минимум 6 цифр и только цифры');
+      const claimed=await query(table('users').update({password_setup_claim:hash}).eq('id',user.id).eq('needs_password_setup',true).is('password_setup_claim',null).select('id'));
+      if(!claimed.length)fail(409,'Пароль уже устанавливается в другом окне. Войдите заново');
+      const result=await service.auth.admin.updateUserById(user.id,{password:p.password});
+      if(result.error){await query(table('users').update({password_setup_claim:null}).eq('id',user.id).eq('password_setup_claim',hash));fail(400,'Не удалось установить пароль. Повторите попытку');}
+      await query(table('sessions').delete().eq('user_id',user.id));
+      await query(table('users').update({needs_password_setup:false,password_setup_claim:null}).eq('id',user.id).eq('password_setup_claim',hash));
+      const token=random();await query(table('sessions').insert({hash:await digest(token),user_id:user.id,expires:new Date(Date.now()+8*3600000).toISOString()}));
+      await audit(user.id,'password_setup');return json({...user,needsPasswordSetup:false,sessionToken:token});
+    }
+    if(user.needsPasswordSetup||setupOnly)fail(403,'Сначала установите новый пароль');
+    if(req.method==='GET'&&path==='me/state'){
+      const row=await query(table('user_memory').select('data,versions').eq('user_id',user.id).maybeSingle());return json(row||{data:{},versions:{}});
+    }
+    if(req.method==='POST'&&path==='me/state'){
+      const p=await body(req),value=validateMemory(p.section,p.value);
+      if(!Number.isInteger(p.version)||p.version<0)fail(400,'Неверная версия данных');
+      const result=await query(service.rpc('zzws_save_memory',{p_user:user.id,p_section:p.section,p_value:value,p_version:p.version}));
+      return json(result,result.conflict?409:200);
+    }
+    if(req.method==='GET'&&path==='me/carts')return json({carts:await query(table('saved_carts').select('*').eq('user_id',user.id).order('saved_at',{ascending:false}))});
+    if(req.method==='POST'&&path==='me/carts'){
+      const p=await body(req),cart=validateMemory('cart',p.cart),draft=validateMemory('draft',p.draft||{});
+      if(typeof p.title!=='string'||!p.title.trim()||p.title.trim().length>80)fail(400,'Укажите название до 80 символов');
+      if(!Object.keys(cart).length)fail(400,'Корзина пуста');
+      if(!/^[a-f0-9-]{36}$/.test(p.requestId))fail(400,'Неверный код сохранения');
+      const result=await query(service.rpc('zzws_save_cart',{p_user:user.id,p_title:p.title.trim(),p_cart:cart,p_draft:draft,p_request:p.requestId,p_replace:p.replace||null}));
+      return json(result,result.limit?409:200);
+    }
+    if(req.method==='POST'&&path==='me/carts/delete'){
+      const p=await body(req);await query(table('saved_carts').delete().eq('user_id',user.id).eq('id',p.id));return json({ok:true});
+    }
     if(req.method==='GET'&&['catalog','catalog/version','catalog/export'].includes(path)){
       const v=await current(),updated=new Date(v.created).toLocaleDateString('en-GB',{timeZone:'Asia/Yerevan'});
       const version=v.id+':'+v.rulesRevision;
@@ -189,6 +230,16 @@ export async function handle(req:Request){
     }
     if(req.method==='GET'&&path==='admin/users'){const rows=await query(table('users').select('*').order('login'));return json({users:rows.map(cleanUser)});}
     if(req.method==='POST'&&path==='admin/users')return json(await saveUser(await body(req),user.id));
+    if(req.method==='POST'&&path==='admin/users/reset-password'){
+      const p=await body(req),target=await query(table('users').select('*').eq('id',p.id).maybeSingle());
+      if(!target)fail(404,'Пользователь не найден');
+      if(target.id===user.id)fail(400,'Нельзя сбросить собственный пароль из этой формы');
+      await query(table('sessions').delete().eq('user_id',target.id));
+      const result=await service.auth.admin.updateUserById(target.id,{password:randomPassword()});
+      if(result.error)fail(400,'Не удалось сбросить пароль');
+      await query(table('users').update({needs_password_setup:true,password_setup_claim:null}).eq('id',target.id));
+      await audit(user.id,'password_setup_reset',JSON.stringify({target:{id:target.id,login:target.login,client:target.profile.client}}));return json({ok:true});
+    }
     if(req.method==='POST'&&path==='admin/users/delete'){
       const p=await body(req),target=await query(table('users').select('id,login,profile').eq('id',p.id).maybeSingle());
       if(!target)fail(404,'Пользователь не найден');

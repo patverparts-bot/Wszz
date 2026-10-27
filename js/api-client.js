@@ -14,8 +14,8 @@
   }
   async function json(path,options={}){
     const response=await request(path,options),data=await response.json();
-    if(!response.ok){const error=new Error(data.error||'Ошибка запроса');error.status=response.status;throw error;}
-    if(path==='login'&&data.sessionToken){sessionStorage.setItem(key,data.sessionToken);delete data.sessionToken;}
+    if(!response.ok){const error=new Error(data.error||'Ошибка запроса');error.status=response.status;error.data=data;throw error;}
+    if(['login','account/password'].includes(path)&&data.sessionToken){sessionStorage.setItem(key,data.sessionToken);delete data.sessionToken;}
     if(path==='logout')sessionStorage.removeItem(key);
     return data;
   }

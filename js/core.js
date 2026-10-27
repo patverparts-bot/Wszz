@@ -1,3 +1,4 @@
+function userStorageId(){return serverIdentity?.id||authorizedClient;}
 console.log("ZIGZAG Catalog v2.55 loaded successfully");
 
 let allProducts = [];
@@ -120,7 +121,7 @@ function hideVersionBadge() {
 function loadFavorites() {
   if (!authorizedClient) return;
   try {
-    const saved = localStorage.getItem('zigzag_favs_' + authorizedClient);
+    const saved = localStorage.getItem('zigzag_favs_' + userStorageId());
     favoritesSet = saved ? new Set(JSON.parse(saved)) : new Set();
   } catch(e) {
     favoritesSet = new Set();
@@ -130,7 +131,7 @@ function loadFavorites() {
 function saveFavorites() {
   if (!authorizedClient) return;
   try {
-    localStorage.setItem('zigzag_favs_' + authorizedClient, JSON.stringify([...favoritesSet]));
+    localStorage.setItem('zigzag_favs_' + userStorageId(), JSON.stringify([...favoritesSet]));
   } catch(e) {}
 }
 
@@ -189,7 +190,7 @@ function toggleMobileFilters(forcedState) {
   }
 
   if (authorizedClient) {
-    try { localStorage.setItem('zigzag_filters_open_' + authorizedClient, shouldHide ? '0' : '1'); } catch(e) {}
+    try { localStorage.setItem('zigzag_filters_open_' + userStorageId(), shouldHide ? '0' : '1'); } catch(e) {}
   }
 }
 
@@ -242,12 +243,13 @@ function saveFiltersToStorage() {
       category: selectedCategories[0] || '', 
       search: document.getElementById('searchInput').value || '',
       sortBy: document.getElementById('sortBy').value || 'default',
+      sortPrice: document.getElementById('sortPrice').value || 'wholesale',
       favOnly: document.getElementById('favOnlyFilter').checked || false,
       promoOnly: document.getElementById('promoOnlyFilter').checked || false,
       stockOnly: document.getElementById('stockOnlyFilter').checked || false,
       wholesaleOnly: document.getElementById('wholesaleOnlyFilter')?.checked || false
     };
-    localStorage.setItem('zigzag_filters_' + authorizedClient, JSON.stringify(filtersState));
+    localStorage.setItem('zigzag_filters_' + userStorageId(), JSON.stringify(filtersState));
   } catch(e) {}
   updateMobileFilterBadge();
 }
@@ -255,7 +257,7 @@ function saveFiltersToStorage() {
 function loadSavedFilters() {
   if (!authorizedClient) return;
   try {
-    const saved = localStorage.getItem('zigzag_filters_' + authorizedClient);
+    const saved = localStorage.getItem('zigzag_filters_' + userStorageId());
     if (saved) {
       const f = JSON.parse(saved);
       selectedBrands = Array.isArray(f.brands) ? f.brands : (f.brand ? [f.brand] : []);
@@ -270,6 +272,8 @@ function loadSavedFilters() {
         document.getElementById('searchInput').value = f.search;
         document.getElementById('clearSearchBtn').classList.remove('hidden');
       }
+      const priceSelect=document.getElementById('sortPrice');
+      priceSelect.value=[...priceSelect.options].some(o=>o.value===f.sortPrice)?f.sortPrice:'wholesale';
       if (f.sortBy) {
         document.getElementById('sortBy').value = f.sortBy;
       }
@@ -287,7 +291,7 @@ function loadSavedFilters() {
       }
     }
 
-    const openState = localStorage.getItem('zigzag_filters_open_' + authorizedClient);
+    const openState = localStorage.getItem('zigzag_filters_open_' + userStorageId());
     if (openState === '1') {
       toggleMobileFilters(true);
     }
@@ -307,7 +311,7 @@ function clearAllFilters() {
   document.getElementById('clearSearchBtn').classList.add('hidden');
   
   if (authorizedClient) {
-    try { localStorage.removeItem('zigzag_filters_' + authorizedClient); } catch(e) {}
+    try { localStorage.removeItem('zigzag_filters_' + userStorageId()); } catch(e) {}
   }
   resetAndRender();
 }

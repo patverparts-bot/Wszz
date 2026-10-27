@@ -1,6 +1,6 @@
 function saveCartToStorage() {
   if (!authorizedClient) return;
-  try { localStorage.setItem('zigzag_cart_' + authorizedClient, JSON.stringify(cart)); } catch(e) {}
+  try { localStorage.setItem('zigzag_cart_' + userStorageId(), JSON.stringify(cart)); } catch(e) {}
 }
 
 function normalizeCart(raw) {
@@ -26,7 +26,7 @@ function loadCartFromStorage(showToast = false) {
   if (!authorizedClient) return;
   pendingRestoreToast = showToast;
   try {
-    const saved = localStorage.getItem('zigzag_cart_' + authorizedClient);
+    const saved = localStorage.getItem('zigzag_cart_' + userStorageId());
     cart = saved ? normalizeCart(JSON.parse(saved)) : {};
   } catch(e) {
     cart = {};
@@ -146,7 +146,7 @@ function loadAdminOrderPriceMode() {
   adminOrderPriceMode = 'WS';
   if (isAdminUser()) {
     try {
-      adminOrderPriceMode = localStorage.getItem('zigzag_admin_price_mode_' + authorizedClient) === 'KP' ? 'KP' : 'WS';
+      adminOrderPriceMode = localStorage.getItem('zigzag_admin_price_mode_' + userStorageId()) === 'KP' ? 'KP' : 'WS';
     } catch (e) {}
   }
   document.querySelectorAll('[data-admin-price-mode-select]').forEach(select => { select.value = adminOrderPriceMode; });
@@ -160,7 +160,7 @@ function setAdminOrderPriceMode(mode) {
     item.addedPrice = getItemWholesalePrice(item);
     item.addedPriceMode = adminOrderPriceMode;
   });
-  try { localStorage.setItem('zigzag_admin_price_mode_' + authorizedClient, adminOrderPriceMode); } catch (e) {}
+  try { localStorage.setItem('zigzag_admin_price_mode_' + userStorageId(), adminOrderPriceMode); } catch (e) {}
   document.querySelectorAll('[data-admin-price-mode-select]').forEach(select => { select.value = adminOrderPriceMode; });
   saveCartToStorage();
   updateOrderPanel();
@@ -412,7 +412,7 @@ function buildHistorySnapshot(cartItems) {
 function saveOrderToHistory(cartItems, orgName, totalSum, actionType = 'Excel') {
   if (!authorizedClient) return;
   try {
-    const historyKey = 'zigzag_history_' + authorizedClient;
+    const historyKey = 'zigzag_history_' + userStorageId();
     let history = JSON.parse(localStorage.getItem(historyKey) || '[]');
 
     const newOrder = {
@@ -439,6 +439,7 @@ function openPersonalCabinet() {
   }
   document.getElementById('cabinetUserSubtitle').innerText = `Օգտատեր: ${authorizedClient} (${userSheetType})`;
   renderOrderHistoryList();
+  ZZWS_MEMORY.savedList();
   document.getElementById('cabinetModal').classList.remove('hidden');
 }
 
@@ -450,7 +451,7 @@ function renderOrderHistoryList() {
   const container = document.getElementById('cabinetHistoryList');
   if (!authorizedClient) return;
 
-  const historyKey = 'zigzag_history_' + authorizedClient;
+  const historyKey = 'zigzag_history_' + userStorageId();
   let history = [];
   try {
     history = JSON.parse(localStorage.getItem(historyKey) || '[]');
@@ -516,7 +517,7 @@ function renderOrderHistoryList() {
 }
 
 function restoreOrderFromHistory(orderId) {
-  const historyKey = 'zigzag_history_' + authorizedClient;
+  const historyKey = 'zigzag_history_' + userStorageId();
   try {
     const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
     const order = history.find(o => o.id === orderId);
@@ -557,7 +558,7 @@ function restoreOrderFromHistory(orderId) {
 function clearOrderHistory() {
   if (!confirm('Հաստատու՞մ եք, որ ցանկանում եք մաքրել պատվերների ամբողջ պատմությունը։')) return;
   try {
-    localStorage.removeItem('zigzag_history_' + authorizedClient);
+    localStorage.removeItem('zigzag_history_' + userStorageId());
     renderOrderHistoryList();
   } catch (e) {}
 }
@@ -569,10 +570,10 @@ function exportFullUserSession() {
   }
 
   try {
-    const historyKey = 'zigzag_history_' + authorizedClient;
+    const historyKey = 'zigzag_history_' + userStorageId();
     const historyData = JSON.parse(localStorage.getItem(historyKey) || '[]');
-    const filtersData = JSON.parse(localStorage.getItem('zigzag_filters_' + authorizedClient) || '{}');
-    const favsData = JSON.parse(localStorage.getItem('zigzag_favs_' + authorizedClient) || '[]');
+    const filtersData = JSON.parse(localStorage.getItem('zigzag_filters_' + userStorageId()) || '{}');
+    const favsData = JSON.parse(localStorage.getItem('zigzag_favs_' + userStorageId()) || '[]');
 
     const fullSession = {
       client: authorizedClient,
@@ -625,16 +626,16 @@ function importFullUserSession(event) {
       saveCartToStorage();
 
       if (Array.isArray(data.favorites)) {
-        localStorage.setItem('zigzag_favs_' + authorizedClient, JSON.stringify(data.favorites));
+        localStorage.setItem('zigzag_favs_' + userStorageId(), JSON.stringify(data.favorites));
         favoritesSet = new Set(data.favorites);
       }
 
       if (Array.isArray(data.history)) {
-        localStorage.setItem('zigzag_history_' + authorizedClient, JSON.stringify(data.history));
+        localStorage.setItem('zigzag_history_' + userStorageId(), JSON.stringify(data.history));
       }
 
       if (data.filters) {
-        localStorage.setItem('zigzag_filters_' + authorizedClient, JSON.stringify(data.filters));
+        localStorage.setItem('zigzag_filters_' + userStorageId(), JSON.stringify(data.filters));
       }
 
       closePersonalCabinet();

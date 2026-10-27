@@ -171,8 +171,8 @@ filteredProducts = allProducts.filter(p => {
   return matchBrand && matchCategory && matchSearch && matchFav && matchPromo && matchStock && matchWholesale;
 });
 
-if (sortBy === 'priceAsc') filteredProducts.sort((a, b) => a.wholesale - b.wholesale);
-else if (sortBy === 'priceDesc') filteredProducts.sort((a, b) => b.wholesale - a.wholesale);
+const priceField=document.getElementById('sortPrice').value||'wholesale';
+if (sortBy === 'priceAsc' || sortBy === 'priceDesc') filteredProducts.sort((a,b)=>compareProductPrices(a,b,priceField,sortBy==='priceAsc'?1:-1));
 else if (sortBy === 'marginDesc') filteredProducts.sort((a, b) => b.marginVal - a.marginVal);
 else {
   const order = new Map();

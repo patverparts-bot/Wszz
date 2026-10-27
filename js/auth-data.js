@@ -5,6 +5,7 @@ async function secureApi(path, options = {}) {
   catch(e) { if (e.status === 401) lockCatalog(); throw e; }
 }
 function lockCatalog() {
+  window.ZZWS_MEMORY?.capture();window.ZZWS_MEMORY?.stop();
   serverIdentity = null;
   authorizedClient = ''; userSheetType = ''; clientRowsData = []; allProducts = []; filteredProducts = [];
   productIndex = new Map(); catalogLoaded = false; cart = {}; favoritesSet.clear();
@@ -15,8 +16,11 @@ function lockCatalog() {
   document.getElementById('mobileCardsContainer').replaceChildren();
   for (const id of ['orderModal','cabinetModal','bulkAddModal']) document.getElementById(id)?.classList.add('hidden');
 }
-function acceptIdentity(user) {
+async function acceptIdentity(user) {
+  if(user.needsPasswordSetup){user=await requirePasswordSetup(user);if(!user)return;}
   serverIdentity = user; authorizedClient = user.client; userSheetType = user.sheet; clientRowsData = user.rowsList;
+  configureSortPrices();
+  await ZZWS_MEMORY.start(user);
   document.getElementById('authScreen').classList.add('hidden');
   document.getElementById('passwordInput').value = '';
   showPriceUpdatePopupAndStart();
@@ -27,7 +31,7 @@ async function checkPassword() {
   try {
     const user = await secureApi('login', {method:'POST',body:JSON.stringify({
       login:document.getElementById('loginInput').value.trim(),password:document.getElementById('passwordInput').value})});
-    acceptIdentity(user);
+    await acceptIdentity(user);
   } catch(e) { errorMsg.textContent = e.message; errorMsg.classList.remove('hidden'); }
 }
 
@@ -110,7 +114,7 @@ function showPriceUpdatePopupAndStart(isBackgroundUpdate = false) {
 
 function notifyIfPriceChanged() {
   if (!cachedPriceDateText || !authorizedClient) return;
-  const key = 'zigzag_seen_price_' + authorizedClient;
+  const key = 'zigzag_seen_price_' + userStorageId();
   let prev = null;
   try { prev = localStorage.getItem(key); localStorage.setItem(key, cachedPriceDateText); } catch (e) {}
   if (prev && prev !== cachedPriceDateText) showPriceUpdatePopupAndStart(true);
@@ -139,7 +143,7 @@ async function reloadIfPriceChanged() {
   loadedPriceFingerprint = fp;
   applyPriceDate(result.dateText);
   parseExcelRows(result.rows, true);
-  try { localStorage.setItem('zigzag_seen_price_' + authorizedClient, cachedPriceDateText); } catch (e) {}
+  try { localStorage.setItem('zigzag_seen_price_' + userStorageId(), cachedPriceDateText); } catch (e) {}
   showPriceUpdatePopupAndStart(true);
   return true;
 }
@@ -168,6 +172,7 @@ function startBackgroundPricePolling() {
 }
 
 async function logout() {
+  await window.ZZWS_MEMORY?.flush();
   try { await secureApi("logout", {method:"POST"}); } catch(e) { lockCatalog(); return; }
   lockCatalog();
   if (backgroundPollTimer) clearTimeout(backgroundPollTimer);
@@ -177,9 +182,9 @@ async function logout() {
       localStorage.removeItem('zigzag_client');
       localStorage.removeItem('zigzag_sheet');
       localStorage.removeItem('zigzag_client_rows');
-      localStorage.removeItem('zigzag_filters_' + authorizedClient);
-      localStorage.removeItem('zigzag_filters_open_' + authorizedClient);
-      localStorage.removeItem('zigzag_admin_price_mode_' + authorizedClient);
+      localStorage.removeItem('zigzag_filters_' + userStorageId());
+      localStorage.removeItem('zigzag_filters_open_' + userStorageId());
+      localStorage.removeItem('zigzag_admin_price_mode_' + userStorageId());
     } catch(e) {}
   }
   authorizedClient = '';
@@ -257,7 +262,7 @@ updateStickyOffsets();
 
 document.addEventListener('DOMContentLoaded', async () => {
 hideVersionBadge();
-try { acceptIdentity(await secureApi('me')); } catch(e) {
+try { await acceptIdentity(await secureApi('me')); } catch(e) {
   if (!e.message.includes('Войдите')) document.getElementById('auth-status').textContent = 'Սերվերը հասանելի չէ։';
 }
 

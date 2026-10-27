@@ -23,7 +23,8 @@ function table(headers, rows) {
 function button(label, callback) { const b = document.createElement('button'); b.type='button'; b.textContent = label; b.onclick = () => run(callback); return b; }
 async function run(fn) { try { await fn(); } catch(e) { status(e.message, true); } }
 async function enter() {
-  const user = await api('me');
+  let user = await api('me');
+  if(user.needsPasswordSetup){user=await requirePasswordSetup(user);if(!user){showLogin();return;}}
   if (user.role !== 'admin') { showLogin();throw new Error('Нужна учётная запись администратора'); }
   el('login').hidden = true; el('workspace').hidden = false; el('logout').hidden = false;
   catalogPairs=(await api('admin/catalog-options')).pairs;
@@ -67,8 +68,20 @@ function editUser(user = {}) {
     const row=(user.rowsList||[])[i-1]||{},suffix=i===1?'':String(i);
     for(const key of ['organization','address','contact'])f.elements[key+suffix].value=row[key]||'';
   }
-  f.elements.password.required = !user.id; f.scrollIntoView({behavior:'smooth'});
+  f.elements.password.required = false;
+  f.elements.password.disabled=!user.id||user.needsPasswordSetup;
+  f.elements.password.placeholder=!user.id||user.needsPasswordSetup?'Пользователь задаст пароль при первом входе':'Оставьте пустым, чтобы сохранить текущий';
+  el('resetUserPassword').hidden=!user.id;
+  el('passwordSetupState').textContent=!user.id||user.needsPasswordSetup?'Первый вход: только логин, затем установка своего пароля.':'Пароль уже установлен пользователем.';
+  f.scrollIntoView({behavior:'smooth'});
 }
+el('resetUserPassword').onclick=()=>run(async()=>{
+  if(!editingUserId)return;
+  const target=users.find(u=>u.id===editingUserId);
+  if(!confirm('Сбросить пароль '+target.login+'? Все его сессии завершатся. Следующий вход — только по логину с обязательной установкой нового пароля. До настройки любой знающий логин сможет задать пароль.'))return;
+  await api('admin/users/reset-password',{method:'POST',body:JSON.stringify({id:editingUserId})});
+  await loadUsers();editUser(users.find(u=>u.id===editingUserId));status('Пароль сброшен. Пользователь должен сразу войти по логину и установить новый пароль.');
+});
 el('newUser').onclick = () => editUser(); el('cancelUser').onclick = () => { el('userForm').hidden = true; };
 el('usersImportForm').onsubmit = e => { e.preventDefault(); run(async () => {
   userDraft = null; el('usersPreview').hidden = true;
@@ -79,7 +92,7 @@ el('usersImportForm').onsubmit = e => { e.preventDefault(); run(async () => {
 }); };
 el('importUsers').onclick = () => run(async () => { if (!userDraft) return; el('importUsers').disabled=true; try {
   await api('admin/users/import',{method:'POST',body:JSON.stringify({draft:userDraft})}); userDraft=null;
-  el('usersPreview').hidden=true; await loadUsers(); status('Импорт завершён. Для новых пользователей задайте пароли и включите доступ.');
+  el('usersPreview').hidden=true; await loadUsers(); status('Импорт завершён. Включите доступ новым пользователям: первый вход по логину с установкой своего пароля.');
 } finally { el('importUsers').disabled=false; } });
 function userPayload(){
   const f = el('userForm'), p = Object.fromEntries(new FormData(f));

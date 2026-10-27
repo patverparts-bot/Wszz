@@ -1,5 +1,5 @@
 (() => {
-  const labels={bootstrap:['Создан первый администратор','users'],login:['Вошёл в кабинет или каталог','auth'],logout:['Вышел из системы','auth'],login_failed:['Неудачная попытка входа','auth'],user_update:['Изменён пользователь','users'],user_delete:['Удалён пользователь','users'],password_reset:['Сменён пароль','users'],users_import:['Импортированы пользователи','users'],price_preview:['Проверен файл прайса','price'],price_publish:['Опубликован новый прайс','price'],price_rollback:['Восстановлена версия прайса','price'],export:['Скачан персональный прайс','price'],rules_update:['Изменены правила групп','rules']};
+  const labels={password_setup:['Установлен пароль','auth'],password_setup_reset:['Возвращён первый вход','users'],bootstrap:['Создан первый администратор','users'],login:['Вошёл в кабинет или каталог','auth'],logout:['Вышел из системы','auth'],login_failed:['Неудачная попытка входа','auth'],user_update:['Изменён пользователь','users'],user_delete:['Удалён пользователь','users'],password_reset:['Сменён пароль','users'],users_import:['Импортированы пользователи','users'],price_preview:['Проверен файл прайса','price'],price_publish:['Опубликован новый прайс','price'],price_rollback:['Восстановлена версия прайса','price'],export:['Скачан персональный прайс','price'],rules_update:['Изменены правила групп','rules']};
   const date=value=>new Intl.DateTimeFormat('ru-RU',{timeZone:'Asia/Yerevan',dateStyle:'short',timeStyle:'medium'}).format(new Date(value));
   const name=user=>user?(user.client&&user.client!==user.login?`${user.client} (${user.login})`:user.login):'Учётная запись, которой больше нет';
   function describe(rows,users,versions){
@@ -19,6 +19,8 @@
         case 'user_update':
           action=info.created?(info.target?.role==='admin'?'Создан администратор':'Создан пользователь'):'Изменён пользователь';
           description=name(target)+(info.created?' · '+(target.active?'Доступ включён':'Доступ выключен'):info.changes?.length?' · '+info.changes.join('; '):' · сохранены настройки учётной записи.');break;
+        case 'password_setup':description='Пользователь установил свой пароль. Вход только по логину закрыт.';break;
+        case 'password_setup_reset':description=name(target)+' · пароль сброшен; следующий вход по логину с обязательной настройкой пароля.';break;
         case 'user_delete':case 'password_reset':description=name(target);break;
         case 'users_import':description='Обработано пользователей: '+(Number.isFinite(Number(row.detail))?Number(row.detail):'см. подробности');break;
         case 'price_preview':description='Файл проверен. Товаров: '+(Number.isFinite(Number(row.detail))?Number(row.detail):'см. подробности')+'. Публикация выполняется отдельно.';break;
