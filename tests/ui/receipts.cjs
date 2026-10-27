@@ -27,7 +27,7 @@ const path=require('path');
     if(p==='admin/orders/detail')data=orders.find(o=>o.id===post().id);
     if(p==='orders/receipt'){
      receiptPosts++;const o=orders.find(o=>o.id===post().id);assert.equal(post().intact,true);assert.equal(post().revision,o.revision);o.status='received';o.received_at='2026-10-28T10:00:00Z';o.receipt={statement,intact:true};o.revision++;
-     notices.push({id:uuid(50+o.number),order_id:o.id,number:o.number,customer,received_at:o.received_at});data={order:o,state:state()};
+     notices.push({id:uuid(50+o.number),order_id:o.id,number:o.number,customer,received_at:o.received_at});data={order:o,state:state()};await new Promise(resolve=>setTimeout(resolve,150));
     }
     if(p==='admin/orders/receipt-notifications')data={events:notices,unreadCount:notices.length};
     if(p==='admin/orders/receipt-notifications/read'){notices=notices.filter(n=>n.id!==post().id);data={ok:true};}
@@ -58,8 +58,11 @@ const path=require('path');
   }
   orders[0].status='new';await page.evaluate(()=>ZZWS_ORDERS.load());
   await page.getByRole('button',{name:'Հաստատել ապրանքների ստացումը',exact:true}).click();await page.locator('#receiptConfirmationDialog').waitFor();
-  await page.locator('#receiptConfirmationDialog button[type=submit]').click();assert.equal(receiptPosts,0);await shot(page,'03-receipt-confirmation');
-  await page.locator('#receiptConfirmationDialog input[type=checkbox]').check();await page.locator('#receiptConfirmationDialog button[type=submit]').click();
+  assert.equal(receiptPosts,0);assert.ok((await page.locator('#receiptConfirmationDialog').innerText()).includes('Վստա՞հ եք'));await page.locator('#receiptConfirmationDialog button[type=button]').evaluate(button=>{if(document.activeElement!==button)throw Error('Cancel must receive initial focus');});
+  await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.getElementById('receiptConfirmationDialog'));assert.equal(receiptPosts,0);
+  await page.getByRole('button',{name:'Հաստատել ապրանքների ստացումը',exact:true}).click();await page.locator('#receiptConfirmationDialog').waitFor();await page.getByRole('button',{name:'Ոչ, չեղարկել',exact:true}).click();await page.waitForFunction(()=>!document.getElementById('receiptConfirmationDialog'));assert.equal(receiptPosts,0);
+  await page.getByRole('button',{name:'Հաստատել ապրանքների ստացումը',exact:true}).click();await page.locator('#receiptConfirmationDialog').waitFor();await shot(page,'03-receipt-confirmation');
+  await page.getByRole('button',{name:'Այո, հաստատում եմ',exact:true}).click();await page.locator('#receiptConfirmationDialog form').evaluate(form=>{form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));});
   await page.locator('#receiptResultNotice').waitFor({state:'visible'});assert.equal(receiptPosts,1);assert.equal(state().pendingCount,2);assert.equal(state().blocked,true);await page.locator('.receipt-proof strong').filter({hasText:'Ստացումն արդեն հաստատված է'}).waitFor();await shot(page,'04-order-received');
   const admin=await setup('admin');await admin.page.locator('#adminReceiptNotices').waitFor({state:'visible'});await shot(admin.page,'05-admin-dashboard');
   await admin.page.locator('#adminReceiptNoticeList button').first().click();await admin.page.locator('#selectedOrderReceipt').waitFor({state:'visible'});assert.equal(await admin.page.locator('#manualOrderSave').isVisible(),false);assert.equal(await admin.page.locator('#manualOrderLines input').first().isDisabled(),true);assert.equal(await admin.page.locator('#manualOrderLines button').count(),0);await admin.page.waitForFunction(()=>document.getElementById('adminReceiptNotices').hidden);await shot(admin.page,'06-admin-order');
@@ -72,12 +75,12 @@ const path=require('path');
   // Complete the remaining cycle in the mock, and ensure the UI unlocks only at zero.
   globalSetting={mode:'on',revision:uuid(90)};clientSetting={mode:'inherit',revision:null};
   for(let i=1;i<3;i++){
-   await page.locator('.server-order-card summary').nth(i).click();await page.locator('.server-order-card').nth(i).getByRole('button',{name:'Հաստատել ապրանքների ստացումը',exact:true}).click();await page.locator('#receiptConfirmationDialog input').check();await page.locator('#receiptConfirmationDialog button[type=submit]').click();await page.waitForFunction(()=>!document.getElementById('receiptConfirmationDialog'));assert.equal(state().blocked,i===1);
+   await page.locator('.server-order-card summary').nth(i).click();await page.locator('.server-order-card').nth(i).getByRole('button',{name:'Հաստատել ապրանքների ստացումը',exact:true}).click();await page.getByRole('button',{name:'Այո, հաստատում եմ',exact:true}).click();await page.waitForFunction(()=>!document.getElementById('receiptConfirmationDialog'));assert.equal(state().blocked,i===1);
   }
   await page.waitForFunction(()=>!document.getElementById('submitServerOrder').disabled);assert.equal(receiptPosts,3);
   const viewer=await setup('admin','viewer');assert.equal(await viewer.page.locator('#receiptGlobalPanel').isVisible(),false);assert.equal(await viewer.page.locator('[data-tab=users]').isVisible(),false);
   const mobile=await setup('client','owner',390);await shot(mobile.page,'08-mobile-catalogue');assert.ok(await mobile.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
   for(const context of [client,admin,viewer,mobile]){assert.deepEqual(context.errors,[]);assert.deepEqual(context.csp,[]);}
-  console.log('PASS: receipt from all administrator statuses, acknowledgement, closed proof, three-order latch, cycle unlock, client category, timed/indefinite/global controls, own notice read, viewer rights, mobile layout and CSP');
+  console.log('PASS: receipt button with explicit Yes/No dialog, cancellation and Escape without mutations, all administrator statuses, acknowledgement, closed proof, three-order latch, cycle unlock, client category, timed/indefinite/global controls, own notice read, viewer rights, mobile layout and CSP');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1);});

@@ -16,7 +16,7 @@
     content.textContent = 'Ուղեցույցը բեռնվում է…';
     loading = (async () => {
       try {
-        const response = await fetch('help/user-guide.html?v=5.4-receipt-status');
+        const response = await fetch('help/user-guide.html?v=5.5-receipt-dialog');
         if (!response.ok) throw new Error('Guide unavailable');
         const html = await response.text();
         content.innerHTML = html;

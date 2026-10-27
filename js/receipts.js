@@ -17,13 +17,14 @@
   const button=node('button','Հաստատել ապրանքների ստացումը','confirm-receipt-button');button.type='button';button.onclick=()=>confirmReceipt(order).catch(e=>alert(ZZWS.message(e)));root.append(button);
  }
  async function confirmReceipt(order){
-  const who=owner;if(!who||el('receiptConfirmationDialog'))return;const current=await refresh();if(owner!==who||!current||el('receiptConfirmationDialog'))return;
-  const dialog=node('dialog'),form=node('form'),title=node('h2','Հաստատել ստացումը · պատվեր №'+order.number),statement=node('p',current.statement),label=node('label'),check=node('input'),submit=node('button','Հաստատում եմ ստացումը'),cancel=node('button','Չեղարկել'),error=node('p');
-  dialog.id='receiptConfirmationDialog';check.type='checkbox';check.required=true;label.append(check,document.createTextNode(' Ապրանքները ստացել եմ ամբողջությամբ և առանց վնասվածքների։'));submit.type='submit';cancel.type='button';error.setAttribute('role','alert');
-  form.append(title,statement,node('p','Վնասվածքի կամ պակասի դեպքում մի հաստատեք․ կապվեք ձեր մենեջերի հետ։'),label,error,submit,cancel);dialog.append(form);document.body.append(dialog);dialog.showModal();cancel.onclick=()=>{dialog.close();dialog.remove();};dialog.oncancel=e=>{if(submit.disabled)e.preventDefault();};dialog.onclose=()=>dialog.remove();
-  form.onsubmit=async e=>{e.preventDefault();if(!check.checked)return;submit.disabled=true;cancel.disabled=true;
+  const who=owner,opener=document.activeElement;if(!who||el('receiptConfirmationDialog'))return;const current=await refresh()||state;if(owner!==who||!current||el('receiptConfirmationDialog'))return;
+  let confirming=false;
+  const dialog=node('dialog'),form=node('form'),title=node('h2','Հաստատո՞ւմ եք ստացումը · պատվեր №'+order.number),question=node('p','Վստա՞հ եք, որ այս պատվերի բոլոր ապրանքները ստացել եք ամբողջությամբ և առանց վնասվածքների։'),statement=node('p',current.statement,'receipt-confirmation-statement'),actions=node('div',null,'receipt-confirmation-actions'),submit=node('button','Այո, հաստատում եմ'),cancel=node('button','Ոչ, չեղարկել'),error=node('p');
+  dialog.id='receiptConfirmationDialog';title.id='receiptConfirmationTitle';question.id='receiptConfirmationQuestion';statement.id='receiptConfirmationStatement';dialog.setAttribute('aria-labelledby',title.id);dialog.setAttribute('aria-describedby',question.id+' '+statement.id);submit.type='submit';cancel.type='button';cancel.autofocus=true;error.setAttribute('role','alert');
+  actions.append(cancel,submit);form.append(title,question,statement,node('p','Վնասվածքի կամ պակասի դեպքում մի հաստատեք․ կապվեք ձեր մենեջերի հետ։'),error,actions);dialog.append(form);document.body.append(dialog);dialog.showModal();cancel.focus();cancel.onclick=()=>dialog.close();dialog.oncancel=e=>{if(confirming)e.preventDefault();};dialog.onclose=()=>{dialog.remove();if(opener?.isConnected)opener.focus();};
+  form.onsubmit=async e=>{e.preventDefault();if(confirming||owner!==who)return;confirming=true;submit.disabled=true;cancel.disabled=true;submit.textContent='Հաստատվում է…';
    try{const result=await ZZWS.json('orders/receipt',{method:'POST',body:JSON.stringify({id:order.id,revision:order.revision,intact:true})});dialog.close();dialog.remove();if(owner!==who)return;state=result.state;update();const notice=el('receiptResultNotice');notice.hidden=false;notice.textContent='Դուք հաստատել եք, որ պատվեր №'+result.order.number+'-ի ապրանքներն ամբողջությամբ և առանց վնասվածքների ստացել եք։ Պատվերը փակված է։';await ZZWS_ORDERS.load();}
-   catch(e){error.textContent=ZZWS.message(e);refresh().catch(()=>{});}finally{submit.disabled=false;cancel.disabled=false;}
+   catch(e){error.textContent=ZZWS.message(e);refresh().catch(()=>{});}finally{confirming=false;submit.disabled=false;cancel.disabled=false;submit.textContent='Այո, հաստատում եմ';}
   };
  }
  window.ZZWS_RECEIPTS={start,stop,refresh,render,showPending,pendingRequest,update,setSubmitting:value=>{submitting=value;update();},blocked:()=>!!state?.blocked};
