@@ -97,9 +97,15 @@
   async function savedList(){
     const root=document.getElementById('savedCartsList');if(!root)return;
     try{const data=await ZZWS.json('me/carts');root.replaceChildren();
-      document.getElementById('savedCartsCount').textContent=`Сохранённые корзины: ${data.carts.length}/10`;
-      for(const row of data.carts){const box=document.createElement('div'),title=document.createElement('span');title.textContent=row.title+' · '+new Date(row.saved_at).toLocaleString('ru-RU')+' · '+Object.keys(row.cart).length+' поз.';box.append(title);
-        for(const [text,action] of [['Загрузить',async()=>{if(Object.keys(cart).length&&!confirm('Заменить текущую корзину сохранённой?'))return;apply('cart',row.cart);apply('draft',row.draft);capture();await flush();closePersonalCabinet();}],['Удалить',async()=>{if(!confirm('Удалить корзину «'+row.title+'»?'))return;await ZZWS.json('me/carts/delete',{method:'POST',body:JSON.stringify({id:row.id})});await savedList();}]]){const b=document.createElement('button');b.type='button';b.textContent=text;b.style.margin='6px';b.onclick=()=>action().catch(e=>alert(e.message));box.append(b);}root.append(box);}
+      document.getElementById('savedCartsCount').textContent=`${data.carts.length} / 10`;
+      if(!data.carts.length){const empty=document.createElement('p');empty.className='saved-empty';empty.textContent='Сохранённых корзин пока нет. Добавьте товары и сохраните свой первый вариант.';root.append(empty);}
+      for(const row of data.carts){
+        const box=document.createElement('article'),info=document.createElement('div'),title=document.createElement('h5'),meta=document.createElement('p'),actions=document.createElement('div');
+        box.className='saved-cart-card';info.className='saved-cart-info';actions.className='saved-cart-actions';title.textContent=row.title;
+        const count=Object.values(row.cart).reduce((n,item)=>n+(Number(item.qty)||0),0);
+        meta.textContent=new Intl.DateTimeFormat('ru-RU',{timeZone:'Asia/Yerevan',dateStyle:'medium',timeStyle:'short'}).format(new Date(row.saved_at))+' · '+Object.keys(row.cart).length+' поз. · '+count+' шт.';
+        info.append(title,meta);box.append(info,actions);
+        for(const [text,action] of [['Загрузить',async()=>{if(Object.keys(cart).length&&!confirm('Заменить текущую корзину сохранённой?'))return;apply('cart',row.cart);apply('draft',row.draft);capture();await flush();renderModalItems();document.getElementById('savedCartsPanel').open=false;}],['Удалить',async()=>{if(!confirm('Удалить корзину «'+row.title+'»?'))return;await ZZWS.json('me/carts/delete',{method:'POST',body:JSON.stringify({id:row.id})});await savedList();}]]){const b=document.createElement('button');b.type='button';b.textContent=text;b.className=text==='Удалить'?'saved-delete':'saved-secondary';b.setAttribute('aria-label',text+' корзину «'+row.title+'»');b.onclick=()=>action().catch(e=>alert(e.message));actions.append(b);}root.append(box);}
     }catch(e){root.textContent=e.message;}
   }
   async function saveNamed(){

@@ -327,6 +327,7 @@ function renderModalItems() {
 }
 
 function openOrderModal() {
+  ZZWS_MEMORY.savedList();
   document.querySelectorAll('[data-admin-price-mode-select]').forEach(select => { select.value = adminOrderPriceMode; });
   renderModalItems();
   if (!modalFieldsInitialized) {
@@ -439,7 +440,6 @@ function openPersonalCabinet() {
   }
   document.getElementById('cabinetUserSubtitle').innerText = `Օգտատեր: ${authorizedClient} (${userSheetType})`;
   renderOrderHistoryList();
-  ZZWS_MEMORY.savedList();
   document.getElementById('cabinetModal').classList.remove('hidden');
 }
 
@@ -460,7 +460,7 @@ function renderOrderHistoryList() {
   if (history.length === 0) {
     container.innerHTML = `
       <div class="p-8 text-center text-gray-400 dark:text-gray-500 text-xs sm:text-sm">
-        Դուք դեռևս չունեք պահպանված պատվերների պատմություն:
+        <div class="history-empty-icon">📋</div><strong>Оформленных заказов пока нет</strong><p>После выгрузки заказа в Excel или подготовки отправки он появится здесь с датой, суммой и составом.</p>
       </div>`;
     return;
   }
@@ -502,9 +502,7 @@ function renderOrderHistoryList() {
           </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 p-2 rounded-lg border border-gray-100 dark:border-gray-700 max-h-32 overflow-y-auto space-y-1">
-          ${itemsHtml}
-        </div>
+        <details class="history-order-items"><summary>Состав заказа · ${Number(ord.itemsCount) || 0} поз.</summary><div class="history-items-scroll">${itemsHtml}</div></details>
 
         <div class="flex justify-end pt-1">
           <button data-act="restore-history" data-id="${escapeHtml(ord.id)}" aria-label="Կրկնել պատվերը" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition whitespace-nowrap">

@@ -13,7 +13,7 @@
 try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.classList.toggle('dark', __t ? __t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches); } catch (e) {}</script>
 <!-- SheetJS (XLSX reader/writer) -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="styles.css?v=3.5-state">
+<link rel="stylesheet" href="styles.css?v=3.6-cart-ui">
 <style>
 .auth-entry-card {
   opacity: 1;
@@ -122,7 +122,7 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
   <input type="file" id="loadOrderFile" accept=".xlsx, .xls" class="hidden" onchange="importPreviousOrder(event)">
 </label>
 
-<button onclick="openOrderModal()" aria-label="Բացել զամբյուղը" class="hidden sm:flex relative p-2 px-3 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-200 dark:border-blue-800 font-semibold text-xs items-center gap-1.5 transition">
+<button onclick="openOrderModal()" aria-label="Բացել զամբյուղը" class="flex relative p-2 px-3 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-200 dark:border-blue-800 font-semibold text-xs items-center gap-1.5 transition">
   <span>🛒 Զամբյուղ</span>
   <span id="headerCartBadgeDesktop" class="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
 </button>
@@ -328,6 +328,12 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 
 <div id="modalBody" class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden order-modal-body">
 
+<details id="savedCartsPanel" class="saved-carts-panel">
+<summary><span>Сохранённые корзины</span><span id="savedCartsCount" class="saved-count">0 / 10</span></summary>
+<div class="saved-carts-content"><p class="saved-help">Текущая корзина сохраняется автоматически. Сохраните отдельный вариант, чтобы вернуться к нему позже.</p>
+<form id="saveCartForm" class="saved-cart-form" onsubmit="event.preventDefault();ZZWS_MEMORY.saveNamed()"><label for="savedCartTitle">Название корзины<input id="savedCartTitle" maxlength="80" required placeholder="Например: закупка на ноябрь" autocomplete="off"></label><button type="submit" class="saved-primary">Сохранить текущую</button><button type="button" onclick="ZZWS_MEMORY.savedList()" class="saved-secondary">Обновить</button></form>
+<div id="savedCartsList" aria-live="polite"></div></div></details>
+
 <div class="order-modal-body-grid">
 <section class="order-modal-items-column" aria-label="Պատվերի ապրանքներ">
 <div class="bg-blue-50 dark:bg-blue-950/50 p-3 sm:p-4 rounded-xl border border-blue-200 dark:border-blue-900 mb-3 flex flex-col sm:flex-row justify-between items-center gap-2 flex-shrink-0">
@@ -449,8 +455,8 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 
   <div class="bg-indigo-50 dark:bg-indigo-950/40 p-3 rounded-xl border border-indigo-200 dark:border-indigo-900 mb-3 flex flex-col sm:flex-row justify-between items-center gap-2.5 flex-shrink-0">
     <div class="text-xs text-indigo-900 dark:text-indigo-300">
-      <p class="font-bold">🔄 Данные доступны с любого устройства</p>
-      <p class="text-[11px] text-indigo-700 dark:text-indigo-400">Корзина, избранное, история и настройки сохраняются на сервере. Файл — дополнительная резервная копия.</p>
+      <p class="font-bold">История заказов доступна с любого устройства</p>
+      <p class="text-[11px] text-indigo-700 dark:text-indigo-400">Здесь отображаются заказы, которые вы выгрузили или подготовили к отправке. Подтверждение приёма заказа приходит отдельно.</p>
     </div>
     <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
       <button onclick="exportFullUserSession()" aria-label="Արտահանել տվյալները" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow transition whitespace-nowrap">
@@ -463,8 +469,8 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
     </div>
   </div>
 
-  <div class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Պատվերների պատմություն և մանրամասներ․</div>
-  <section class="mb-3 border rounded-lg p-3"><p id="savedCartsCount">Сохранённые корзины: 0/10</p><p class="text-xs">Текущая корзина сохраняется автоматически. Здесь можно сохранить до 10 отдельных вариантов.</p><input id="savedCartTitle" maxlength="80" placeholder="Название корзины" class="border rounded p-2 dark:bg-gray-900"><button type="button" onclick="ZZWS_MEMORY.saveNamed()" class="p-2">Сохранить корзину</button><button type="button" onclick="ZZWS_MEMORY.savedList()" class="p-2">Обновить</button><div id="savedCartsList" style="max-height:160px;overflow:auto"></div></section><div id="cabinetHistoryList" class="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1"></div>
+  <div class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Оформленные заказы и их состав</div>
+  <div id="cabinetHistoryList" class="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1"></div>
 
   <div class="border-t dark:border-gray-700 pt-3 mt-3 flex justify-between items-center flex-shrink-0">
     <button onclick="clearOrderHistory()" aria-label="Մաքրել պատմությունը" class="px-3.5 py-2 bg-red-50 dark:bg-red-950/50 hover:bg-red-100 text-red-600 dark:text-red-400 rounded-lg text-xs font-semibold transition">
@@ -531,20 +537,20 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
   </div>
 </dialog>
 
-<script src="js/product-photos.js?v=3.5-state"></script>
-<script src="js/api-config.js?v=3.5-state"></script>
-<script src="js/api-client.js?v=3.5-state"></script>
-<script src="js/core.js?v=3.5-state"></script>
-<script src="js/photo-preview.js?v=3.5-state"></script>
-<script src="js/password-setup.js?v=3.5-state"></script>
-<script src="js/price-sort.js?v=3.5-state"></script>
-<script src="js/auth-data.js?v=3.5-state"></script>
-<script src="js/catalog.js?v=3.5-state"></script>
-<script src="js/order-state.js?v=3.5-state"></script>
-<script src="js/bulk-add.js?v=3.5-state"></script>
-<script src="js/order-submit.js?v=3.5-state"></script>
-<script src="js/user-memory.js?v=3.5-state"></script>
-<script src="js/user-guide.js?v=3.5-state"></script>
+<script src="js/product-photos.js?v=3.6-cart-ui"></script>
+<script src="js/api-config.js?v=3.6-cart-ui"></script>
+<script src="js/api-client.js?v=3.6-cart-ui"></script>
+<script src="js/core.js?v=3.6-cart-ui"></script>
+<script src="js/photo-preview.js?v=3.6-cart-ui"></script>
+<script src="js/password-setup.js?v=3.6-cart-ui"></script>
+<script src="js/price-sort.js?v=3.6-cart-ui"></script>
+<script src="js/auth-data.js?v=3.6-cart-ui"></script>
+<script src="js/catalog.js?v=3.6-cart-ui"></script>
+<script src="js/order-state.js?v=3.6-cart-ui"></script>
+<script src="js/bulk-add.js?v=3.6-cart-ui"></script>
+<script src="js/order-submit.js?v=3.6-cart-ui"></script>
+<script src="js/user-memory.js?v=3.6-cart-ui"></script>
+<script src="js/user-guide.js?v=3.6-cart-ui"></script>
 <script>
 (() => {
   const screen = document.getElementById('authScreen');
