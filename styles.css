@@ -257,3 +257,47 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
   .order-modal-body-grid { display: block; }
 }
 
+
+/* Desktop photo previews escape table clipping and stay inside the viewport. */
+.desktop-photo-preview {
+  position: fixed;
+  z-index: 10050;
+  pointer-events: none;
+  box-sizing: border-box;
+  padding: 2px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, .25), 0 8px 10px -6px rgba(0, 0, 0, .2);
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(.92);
+  transition: opacity .25s ease-in-out, transform .25s ease-in-out, visibility .25s;
+}
+.desktop-photo-preview.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+}
+.desktop-photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 6px;
+}
+@media (min-width: 768px) and (hover: hover) {
+  .product-img-container:hover .product-img.image-loaded {
+    transform: none;
+    position: static;
+    top: auto;
+    left: auto;
+    z-index: auto;
+    box-shadow: none;
+  }
+}
+@media (max-width: 767px), (hover: none) {
+  .desktop-photo-preview { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .desktop-photo-preview { transition: none; }
+}
