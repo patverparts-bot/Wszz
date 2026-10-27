@@ -56,6 +56,7 @@ function clearUserCartAndFilters(client) {
   selectedBrands = [];
   selectedCategories = [];
   adminOrderPriceMode = 'WS';
+  pendingRestoreToast = false;
 
   const tableBody = document.getElementById('tableBody');
   if (tableBody) tableBody.innerHTML = '';
@@ -209,8 +210,7 @@ function initAppAfterAuth() {
 
   const wholesaleFilterLabel = document.getElementById('wholesaleOnlyFilterLabel');
   if (wholesaleFilterLabel) wholesaleFilterLabel.classList.toggle('hidden', !isAdminUser());
-  const adminPriceModeWrap = document.getElementById('adminPriceModeWrap');
-  if (adminPriceModeWrap) adminPriceModeWrap.classList.toggle('hidden', !isAdminUser());
+  document.querySelectorAll('.admin-price-mode-wrap').forEach(el => el.classList.toggle('hidden', !isAdminUser()));
   loadAdminOrderPriceMode();
 
   loadFavorites();
@@ -292,13 +292,14 @@ document.addEventListener('click', (e) => {
 
 function checkScrollPosition() {
   const btn = document.getElementById('scrollTopBtn');
-  let isScrolled = document.body.scrollTop > 300 || document.documentElement.scrollTop > 300;
-
-  if (isScrolled) {
-    btn.classList.remove('hidden');
-  } else {
-    btn.classList.add('hidden');
+  const app = document.getElementById('mainApp');
+  if (!btn || !app || app.classList.contains('hidden')) {
+    if (btn) btn.classList.add('hidden');
+    return;
   }
+
+  const isScrolled = document.body.scrollTop > 300 || document.documentElement.scrollTop > 300;
+  btn.classList.toggle('hidden', !isScrolled);
 }
 
 function setupIntersectionObserver() {

@@ -1,4 +1,4 @@
-console.log("ZIGZAG Catalog v2.45 loaded successfully");
+console.log("ZIGZAG Catalog v2.55 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
@@ -59,8 +59,11 @@ async function copyArticul(articul) {
     temporaryInput.setAttribute('readonly', '');
     temporaryInput.style.position = 'fixed';
     temporaryInput.style.opacity = '0';
+    temporaryInput.style.left = '-9999px';
     document.body.appendChild(temporaryInput);
+    temporaryInput.focus({ preventScroll: true });
     temporaryInput.select();
+    temporaryInput.setSelectionRange(0, temporaryInput.value.length);
     try { copied = document.execCommand('copy'); } catch (e) {}
     temporaryInput.remove();
   }
@@ -328,7 +331,18 @@ onerror="this.style.display='none'; this.nextElementSibling.style.display='inlin
 `;
 }
 
+function markProductImageLoaded(imgElement) {
+  if (!imgElement) return;
+  const width = Number(imgElement.naturalWidth) || 0;
+  const height = Number(imgElement.naturalHeight) || 0;
+  // Zigzag returns this same 2200x2200 PNG for a missing SKU and the checked sample SKU.
+  const missingPhotoPlaceholder = width === 2200 && height === 2200;
+  const hasRealPhoto = width >= 160 && height >= 160 && !missingPhotoPlaceholder;
+  imgElement.classList.toggle("image-loaded", hasRealPhoto);
+}
+
 function handleImageError(imgElement) {
+  imgElement.classList.remove("image-loaded");
   const container = imgElement.parentElement;
   if (!container) return;
   
@@ -352,7 +366,6 @@ function handleImageError(imgElement) {
       </div>`;
   }
 }
-
 function getProductImageHtml(articul, productName) {
   const cleanArt = String(articul).trim();
   const a1 = cleanArt.charAt(0) || '0';
@@ -370,6 +383,7 @@ function getProductImageHtml(articul, productName) {
            alt="${escapeHtml(productName)}" 
            class="product-img dark:border-gray-700 dark:bg-gray-800" 
            loading="lazy"
+           onload="markProductImageLoaded(this)"
            onerror="handleImageError(this)">
     </div>
   `;
