@@ -381,7 +381,10 @@ function handleImageError(imgElement) {
   const step = Number(imgElement.dataset.step || 1);
   const cleanArt = imgElement.dataset.articul || '';
   
-  if (step === 1) {
+  if (step === 0) {
+    imgElement.dataset.step = "1";
+    imgElement.src = imgElement.dataset.fallbackUrl || `https://www.zigzag.am/media/catalog/product/${cleanArt.charAt(0)}/${cleanArt.charAt(1)}/${cleanArt}.jpg`;
+  } else if (step === 1) {
     imgElement.dataset.step = "2";
     imgElement.src = `https://www.zigzag.am/pub/media/catalog/product/${cleanArt.charAt(0)}/${cleanArt.charAt(1)}/${cleanArt}.jpg`;
   } else if (step === 2) {
@@ -395,18 +398,20 @@ function handleImageError(imgElement) {
       </div>`;
   }
 }
-
 function getProductImageHtml(articul, productName) {
   const cleanArt = String(articul).trim();
   const a1 = cleanArt.charAt(0) || '0';
   const a2 = cleanArt.charAt(1) || '0';
   const initialUrl = `https://www.zigzag.am/media/catalog/product/${encodeURIComponent(a1)}/${encodeURIComponent(a2)}/${encodeURIComponent(cleanArt)}.jpg`;
+  const photoSuffix = window.ZZWS_PRODUCT_PHOTO_PATHS?.[cleanArt];
+  const photoUrl = photoSuffix ? `https://www.zigzag.am${window.ZZWS_PRODUCT_PHOTO_PREFIX}${photoSuffix}` : '';
 
   return `
     <div class="product-img-container">
-      <img src="${escapeHtml(initialUrl)}" 
+      <img src="${escapeHtml(photoUrl || initialUrl)}" 
            data-articul="${escapeHtml(cleanArt)}"
-           data-step="1"
+           data-step="${photoUrl ? '0' : '1'}"
+           data-fallback-url="${escapeHtml(initialUrl)}"
            alt="${escapeHtml(productName)}" 
            class="product-img dark:border-gray-700 dark:bg-gray-800" 
            loading="lazy"
@@ -415,5 +420,3 @@ function getProductImageHtml(articul, productName) {
     </div>
   `;
 }
-
-
