@@ -12,8 +12,8 @@
 <script>tailwind.config = { darkMode: 'class' };
 try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.classList.toggle('dark', __t ? __t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches); } catch (e) {}</script>
 <!-- SheetJS (XLSX reader/writer) -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="styles.css?v=3.0-secure">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="styles.css?v=3.1-supabase">
 <style>
 .auth-entry-card {
   opacity: 1;
@@ -60,7 +60,7 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
         <li>Եթե մուտքի պատուհանը թաքնվել է, շարժեք մկնիկը կամ դիպչեք էկրանին։</li>
       </ol>
     </details>
-    <a href="/admin" class="block text-sm underline mt-4">Մուտք ադմինիստրատորի համար</a>
+    <a href="admin/" class="block text-sm underline mt-4">Մուտք ադմինիստրատորի համար</a>
 
     </div>
   </div>
@@ -530,15 +530,17 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
   </div>
 </dialog>
 
-<script src="js/product-photos.js?v=3.0-secure"></script>
-<script src="js/core.js?v=3.0-secure"></script>
-<script src="js/photo-preview.js?v=3.0-secure"></script>
-<script src="js/auth-data.js?v=3.0-secure"></script>
-<script src="js/catalog.js?v=3.0-secure"></script>
-<script src="js/order-state.js?v=3.0-secure"></script>
-<script src="js/bulk-add.js?v=3.0-secure"></script>
-<script src="js/order-submit.js?v=3.0-secure"></script>
-<script src="js/user-guide.js?v=3.0-secure"></script>
+<script src="js/product-photos.js?v=3.1-supabase"></script>
+<script src="js/api-config.js?v=3.1-supabase"></script>
+<script src="js/api-client.js?v=3.1-supabase"></script>
+<script src="js/core.js?v=3.1-supabase"></script>
+<script src="js/photo-preview.js?v=3.1-supabase"></script>
+<script src="js/auth-data.js?v=3.1-supabase"></script>
+<script src="js/catalog.js?v=3.1-supabase"></script>
+<script src="js/order-state.js?v=3.1-supabase"></script>
+<script src="js/bulk-add.js?v=3.1-supabase"></script>
+<script src="js/order-submit.js?v=3.1-supabase"></script>
+<script src="js/user-guide.js?v=3.1-supabase"></script>
 <script>
 (() => {
   const screen = document.getElementById('authScreen');

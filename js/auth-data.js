@@ -1,14 +1,8 @@
 // Authentication and permissions are issued by the server, never restored from localStorage.
 let serverIdentity = null;
 async function secureApi(path, options = {}) {
-  const response = await fetch('/api/' + path, {credentials:'same-origin', cache:'no-store', ...options,
-    headers:{'X-ZZWS-Request':'1', ...(options.body ? {'Content-Type':'application/json'} : {}), ...options.headers}});
-  const data = await response.json();
-  if (!response.ok) {
-    if (response.status === 401) lockCatalog();
-    throw new Error(data.error || 'Չհաջողվեց կատարել հարցումը');
-  }
-  return data;
+  try { return await ZZWS.json(path, options); }
+  catch(e) { if (e.status === 401) lockCatalog(); throw e; }
 }
 function lockCatalog() {
   serverIdentity = null;
@@ -414,7 +408,7 @@ function parseExcelRows(products, isSilent = false) {
 
 async function downloadFullPriceList() {
   try {
-    const response = await fetch('/api/catalog/export', {credentials:'same-origin',cache:'no-store'});
+    const response = await ZZWS.request('catalog/export');
     if (!response.ok) { if (response.status === 401) lockCatalog(); throw new Error('Չհաջողվեց արտահանել գնացուցակը'); }
     const url = URL.createObjectURL(await response.blob());
     const a = document.createElement('a'); a.href=url; a.download='PriceList.xlsx'; a.click();

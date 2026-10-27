@@ -2,11 +2,8 @@ const el = id => document.getElementById(id);
 let draft = null, userDraft = null, users = [];
 function status(message, error = false) { el('status').textContent = message; el('status').className = error ? 'error' : ''; }
 async function api(path, options = {}) {
-  const response = await fetch('/api/' + path, { credentials: 'same-origin', cache: 'no-store', ...options,
-    headers: { 'X-ZZWS-Request': '1', ...(options.body && !(options.body instanceof FormData) ? {'Content-Type':'application/json'} : {}), ...options.headers } });
-  const data = await response.json();
-  if (!response.ok) { if (response.status === 401) showLogin(); throw new Error(data.error || 'Ошибка запроса'); }
-  return data;
+  try { return await ZZWS.json(path, options); }
+  catch(e) { if(e.status === 401) showLogin(); throw e; }
 }
 function showLogin() { el('workspace').hidden = true; el('login').hidden = false; el('logout').hidden = true; draft = null; userDraft = null; el('preview').hidden = true; el('usersPreview').hidden = true; el('userForm').reset(); }
 function table(headers, rows) {
@@ -82,4 +79,22 @@ el('userForm').onsubmit = e => { e.preventDefault(); run(async () => {
   await api('admin/users',{method:'POST',body:JSON.stringify(p)}); f.reset(); f.hidden = true;
   await loadUsers(); status('Пользователь сохранён. Его прежние сессии отозваны.');
 }); };
-run(async () => { try { await enter(); } catch(e) { showLogin(); if (!e.message.includes('Войдите')) status(e.message,true); } });
+const setupToken = new URLSearchParams(location.hash.slice(1)).get('setup');
+if (setupToken) {
+  history.replaceState(null, '', location.pathname);
+  el('login').hidden = true; el('setup').hidden = false;
+} else {
+  run(async () => { try { await enter(); } catch(e) { showLogin(); if (!e.message.includes('Войдите')) status(e.message,true); } });
+}
+el('setupForm').onsubmit = e => { e.preventDefault(); run(async () => {
+  const p = Object.fromEntries(new FormData(e.target));
+  if(p.password !== p.confirm) throw new Error('Пароли не совпадают');
+  const button=e.target.querySelector('button'); button.disabled=true;
+  try { await api('bootstrap',{method:'POST',body:JSON.stringify({...p,setupToken})});
+    e.target.reset(); el('setup').hidden=true; showLogin(); status('Администратор создан. Войдите с выбранными логином и паролем.');
+  } finally { button.disabled=false; }
+}); };
+el('userTemplate').onclick = () => run(async () => {
+  const response=await ZZWS.request('admin/users/template'); if(!response.ok)throw new Error('Войдите как администратор');
+  const url=URL.createObjectURL(await response.blob());const a=document.createElement('a');a.href=url;a.download='Users-template.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+});

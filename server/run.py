@@ -1,7 +1,0 @@
-import os
-from waitress import serve
-from server.app import create_app
-
-if __name__ == '__main__':
-    serve(create_app(), host='0.0.0.0', port=int(os.environ.get('PORT', '8080')), threads=4,
-          max_request_body_size=10_000_000, channel_timeout=30)

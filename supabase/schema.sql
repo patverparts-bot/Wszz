@@ -1,0 +1,129 @@
+-- Closed application tables. The browser has no direct table or RPC privileges.
+create table public.zzws_users (
+ id uuid primary key references auth.users(id) on delete cascade,
+ login text unique not null check (length(login) between 1 and 150),
+ profile jsonb not null, active boolean not null default false
+);
+create table public.zzws_sessions (
+ hash text primary key check (length(hash)=64),
+ user_id uuid not null references public.zzws_users(id) on delete cascade,
+ expires timestamptz not null
+);
+create index zzws_sessions_user on public.zzws_sessions(user_id);
+create index zzws_sessions_expiry on public.zzws_sessions(expires);
+create table public.zzws_versions (
+ id uuid primary key default gen_random_uuid(), products jsonb not null,
+ created timestamptz not null default now(), actor uuid references public.zzws_users(id)
+);
+create index zzws_versions_created on public.zzws_versions(created desc);
+create table public.zzws_state (
+ id boolean primary key default true check(id),
+ version uuid references public.zzws_versions(id)
+);
+insert into public.zzws_state(id) values(true);
+create table public.zzws_drafts (
+ id uuid primary key default gen_random_uuid(), actor uuid not null references public.zzws_users(id),
+ kind text not null check(kind in ('price','users')), payload jsonb not null,
+ expires timestamptz not null default now()+interval '30 minutes'
+);
+create index zzws_drafts_actor on public.zzws_drafts(actor);
+create index zzws_drafts_expiry on public.zzws_drafts(expires);
+create table public.zzws_audit (
+ id bigint generated always as identity primary key, created timestamptz not null default now(),
+ actor uuid, action text not null, detail text not null default ''
+);
+create table public.zzws_attempts (
+ id uuid primary key default gen_random_uuid(), login text not null, ip text not null,
+ created timestamptz not null default now()
+);
+create index zzws_attempts_login on public.zzws_attempts(login, created);
+create index zzws_attempts_ip on public.zzws_attempts(ip, created);
+create table public.zzws_setup (
+ id boolean primary key default true check(id), hash text not null, expires timestamptz not null
+);
+
+do $$ declare t text; begin
+ foreach t in array array['zzws_users','zzws_sessions','zzws_versions','zzws_state','zzws_drafts','zzws_audit','zzws_attempts','zzws_setup'] loop
+  execute format('alter table public.%I enable row level security',t);
+  execute format('revoke all on table public.%I from public, anon, authenticated',t);
+  execute format('grant all on table public.%I to service_role',t);
+  execute format('create policy service_only on public.%I for all to service_role using (true) with check (true)',t);
+ end loop;
+end $$;
+revoke all on sequence public.zzws_audit_id_seq from public, anon, authenticated;
+grant usage, select on sequence public.zzws_audit_id_seq to service_role;
+
+-- All functions are invokers. Only the Edge Function's service client can execute them.
+create function public.zzws_login_gate(p_login text, p_ip text) returns uuid
+language plpgsql security invoker set search_path='' as $$
+declare result uuid;
+begin
+ perform pg_advisory_xact_lock(877521);
+ delete from public.zzws_attempts where created < now()-interval '15 minutes';
+ delete from public.zzws_sessions where expires < now();
+ delete from public.zzws_drafts where expires < now();
+ if (select count(*) from public.zzws_attempts where login=p_login or ip=p_ip)>=10 then return null; end if;
+ insert into public.zzws_attempts(login,ip) values(p_login,p_ip) returning id into result;
+ return result;
+end $$;
+
+create function public.zzws_consume_setup(p_hash text) returns boolean
+language plpgsql security invoker set search_path='' as $$
+declare consumed boolean;
+begin
+ if exists(select 1 from public.zzws_users where profile->>'role'='admin') then return false; end if;
+ delete from public.zzws_setup where id and hash=p_hash and expires>now() returning true into consumed;
+ return coalesce(consumed,false);
+end $$;
+
+create function public.zzws_publish(p_draft uuid,p_actor uuid) returns uuid
+language plpgsql security invoker set search_path='' as $$
+declare draft public.zzws_drafts; v_version uuid;
+begin
+ select * into draft from public.zzws_drafts where id=p_draft and actor=p_actor and kind='price' and expires>now() for update;
+ if not found then raise exception 'Draft expired'; end if;
+ insert into public.zzws_versions(products,actor) values(draft.payload,p_actor) returning id into v_version;
+ update public.zzws_state set version=v_version where id;
+ delete from public.zzws_drafts where id=p_draft;
+ insert into public.zzws_audit(actor,action,detail) values(p_actor,'price_publish',v_version::text);
+ return v_version;
+end $$;
+
+create function public.zzws_save_user(p_id uuid,p_login text,p_profile jsonb,p_active boolean,p_actor uuid) returns void
+language plpgsql security invoker set search_path='' as $$
+begin
+ insert into public.zzws_users(id,login,profile,active) values(p_id,p_login,p_profile,p_active)
+ on conflict(id) do update set login=excluded.login,profile=excluded.profile,active=excluded.active;
+ delete from public.zzws_sessions where user_id=p_id;
+ insert into public.zzws_audit(actor,action,detail) values(p_actor,'user_update',p_id::text);
+end $$;
+
+revoke all on function public.zzws_login_gate(text,text) from public, anon, authenticated;
+revoke all on function public.zzws_consume_setup(text) from public, anon, authenticated;
+revoke all on function public.zzws_publish(uuid,uuid) from public, anon, authenticated;
+revoke all on function public.zzws_save_user(uuid,text,jsonb,boolean,uuid) from public, anon, authenticated;
+grant execute on function public.zzws_login_gate(text,text),public.zzws_consume_setup(text),public.zzws_publish(uuid,uuid),public.zzws_save_user(uuid,text,jsonb,boolean,uuid) to service_role;
+
+create function public.zzws_import_users(p_draft uuid,p_actor uuid,p_users jsonb) returns void
+language plpgsql security invoker set search_path='' as $$
+declare item jsonb; old public.zzws_users; v_profile jsonb;
+begin
+ perform 1 from public.zzws_drafts where id=p_draft and actor=p_actor and kind='users' and expires>now() for update;
+ if not found then raise exception 'Draft expired'; end if;
+ for item in select * from jsonb_array_elements(p_users) loop
+  select * into old from public.zzws_users where login=item->>'login' for update;
+  if found then
+   if old.profile->>'role'='admin' then raise exception 'Cannot import administrator'; end if;
+   v_profile=old.profile || jsonb_build_object('client',item->'profile'->'client','sheet',item->'profile'->'sheet',
+      'brands',item->'profile'->'brands','allBrands',item->'profile'->'allBrands','rowsList',item->'profile'->'rowsList');
+   update public.zzws_users set profile=v_profile where id=old.id;
+   delete from public.zzws_sessions where user_id=old.id;
+  else
+   insert into public.zzws_users(id,login,profile,active) values((item->>'id')::uuid,item->>'login',item->'profile',false);
+  end if;
+ end loop;
+ delete from public.zzws_drafts where id=p_draft;
+ insert into public.zzws_audit(actor,action,detail) values(p_actor,'users_import',jsonb_array_length(p_users)::text);
+end $$;
+revoke all on function public.zzws_import_users(uuid,uuid,jsonb) from public, anon, authenticated;
+grant execute on function public.zzws_import_users(uuid,uuid,jsonb) to service_role;

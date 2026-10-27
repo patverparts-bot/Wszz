@@ -1,0 +1,4 @@
+[functions.zzws-api]
+# The handler validates opaque, hashed, immediately revocable application sessions.
+# This endpoint also serves login and the one-time bootstrap operation.
+verify_jwt = false
