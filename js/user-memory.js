@@ -6,7 +6,7 @@
   const copy=v=>JSON.parse(JSON.stringify(v));
   const key=()=>`zzws_pending_${owner}`;
   const cache=(section,fallback)=>{try{return JSON.parse(localStorage.getItem('zigzag_'+suffix[section]+'_'+userStorageId())||JSON.stringify(fallback));}catch{return fallback;}};
-  const banner=(message,error=false)=>{let box=document.getElementById('memoryStatus');if(!box){box=document.createElement('p');box.id='memoryStatus';box.setAttribute('role','status');document.getElementById('welcomeMsg').after(box);}box.textContent=message;box.style.color=error?'#b91c1c':'#64748b';box.style.fontSize='12px';};
+  const banner=(message,error=false)=>{let box=document.getElementById('memoryStatus');if(!box){box=document.createElement('p');box.id='memoryStatus';box.setAttribute('role','status');document.getElementById('welcomeMsg').after(box);}box.textContent=message;box.classList.toggle('sync-error',error);};
   const persist=()=>{if(!owner)return;try{localStorage.setItem(key(),JSON.stringify(pending));}catch{banner('Не удалось сохранить локальную копию. Не закрывайте страницу до синхронизации.',true);}};
   function read(){
     const draft={};for(const id of fields)draft[id]=document.getElementById(id)?.value||'';

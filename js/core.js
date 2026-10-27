@@ -244,6 +244,7 @@ function saveFiltersToStorage() {
       search: document.getElementById('searchInput').value || '',
       sortBy: document.getElementById('sortBy').value || 'default',
       sortPrice: document.getElementById('sortPrice').value || 'wholesale',
+      sortColumn: document.getElementById('sortColumn').value || 'wholesale',
       favOnly: document.getElementById('favOnlyFilter').checked || false,
       promoOnly: document.getElementById('promoOnlyFilter').checked || false,
       stockOnly: document.getElementById('stockOnlyFilter').checked || false,
@@ -272,6 +273,7 @@ function loadSavedFilters() {
         document.getElementById('searchInput').value = f.search;
         document.getElementById('clearSearchBtn').classList.remove('hidden');
       }
+      document.getElementById('sortColumn').value=allowedSortColumns().includes(f.sortColumn)?f.sortColumn:'wholesale';
       const priceSelect=document.getElementById('sortPrice');
       priceSelect.value=[...priceSelect.options].some(o=>o.value===f.sortPrice)?f.sortPrice:'wholesale';
       if (f.sortBy) {

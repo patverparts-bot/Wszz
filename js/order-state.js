@@ -286,38 +286,24 @@ function renderModalItems() {
     }
 
     const div = document.createElement('div');
-    div.className = 'p-3 bg-gray-50 dark:bg-gray-900/50 hover:bg-blue-50/30 dark:hover:bg-gray-700/40 rounded-xl border border-gray-200/80 dark:border-gray-700 flex flex-col gap-2.5 transition overflow-hidden';
+    div.className = 'basket-item';
     div.innerHTML = `
-      <div class="flex items-start justify-between gap-2">
-        <div class="flex-grow min-w-0">
-          <div class="flex items-center gap-2 mb-1 flex-wrap">
-            <span class="font-mono text-xs text-blue-600 dark:text-blue-400 font-bold">${escapeHtml(articul)}</span>
-            <span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${escapeHtml(stockStatus)}</span>
-            ${priceDiffNotice}
-          </div>
-          <div class="text-gray-900 dark:text-white font-semibold text-xs sm:text-sm leading-snug break-words">${escapeHtml(name)}</div>
-          <div class="print-only text-xs">Քանակ՝ ${item.qty} հատ | Վճարում՝ ${escapeHtml(item.paymentMethod)}</div>
-        </div>
+      <div class="basket-item-heading">
+        <div><h4>${escapeHtml(name)}</h4><div class="basket-item-meta"><span>Արտիկուլ՝ <strong>${escapeHtml(articul)}</strong></span><span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${escapeHtml(stockStatus)}</span></div></div>
+        ${priceDiffNotice ? `<div class="basket-price-notice">${priceDiffNotice}</div>` : ''}
       </div>
-
-      <div class="flex flex-col gap-2 pt-2 border-t border-gray-200/60 dark:border-gray-700">
-        <div class="flex items-center justify-between text-xs flex-wrap gap-1">
-          <span class="text-gray-500 dark:text-gray-400 font-medium">Միավորի գին${isAdminUser() ? ` (${escapeHtml(getOrderPriceLabel())})` : ''}՝ <span class="text-gray-900 dark:text-gray-200 font-bold">${currentPrice > 0 ? currentPrice.toLocaleString('ru-RU') + ' ֏' : 'Գին չկա'}</span></span>
-          <span class="font-black text-green-600 dark:text-green-400 text-sm">${sum.toLocaleString('ru-RU')} ֏</span>
-        </div>
-
-        <div class="flex items-center justify-between gap-2 pt-1 flex-wrap print-hidden">
-          <select data-act="pay" data-art="${escapeHtml(articul)}" aria-label="Վճարման եղանակ ապրանքի համար" class="w-full sm:w-auto flex-grow px-2 py-1.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-xs font-semibold text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-xs">
-            <option value="Բանկային փոխանցումով" ${item.paymentMethod === 'Բանկային փոխանցումով' ? 'selected' : ''}>🏦 Բանկային փոխանցումով</option>
-            <option value="Կանխիկ" ${item.paymentMethod === 'Կանխիկ' ? 'selected' : ''}>�� Կանխիկ</option>
-          </select>
-
-          <div class="inline-flex items-center border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800 shadow-xs flex-shrink-0 ml-auto">
-            <button data-act="mqty" data-delta="-1" data-art="${escapeHtml(articul)}" aria-label="Նվազեցնել քանակը" class="px-2.5 sm:px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-xs text-gray-700 dark:text-gray-200">-</button>
-            <input type="number" data-act="mqty-input" data-art="${escapeHtml(articul)}" value="${item.qty}" min="1" max="9999" aria-label="Ապրանքի քանակ" class="w-10 sm:w-12 text-center text-xs font-bold text-blue-900 dark:text-blue-200 bg-transparent focus:outline-none focus:bg-white dark:focus:bg-gray-900 focus:ring-1 focus:ring-blue-500 py-1.5">
-            <button data-act="mqty" data-delta="1" data-art="${escapeHtml(articul)}" aria-label="Ավելացնել քանակը" class="px-2.5 sm:px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-xs text-gray-700 dark:text-gray-200">+</button>
-          </div>
-        </div>
+      <div class="basket-item-details">
+        <div class="basket-unit-price"><span class="basket-field-label">Միավորի գին${isAdminUser() ? ` (${escapeHtml(getOrderPriceLabel())})` : ''}</span><strong>${currentPrice > 0 ? currentPrice.toLocaleString('ru-RU') + ' ֏' : 'Գին չկա'}</strong></div>
+        <div class="basket-quantity"><span class="basket-field-label">Քանակ (հատ)</span><div class="basket-quantity-control print-hidden">
+          <button type="button" data-act="mqty" data-delta="-1" data-art="${escapeHtml(articul)}" aria-label="Նվազեցնել քանակը">−</button>
+          <input type="number" data-act="mqty-input" data-art="${escapeHtml(articul)}" value="${item.qty}" min="1" max="9999" aria-label="Ապրանքի քանակ">
+          <button type="button" data-act="mqty" data-delta="1" data-art="${escapeHtml(articul)}" aria-label="Ավելացնել քանակը">+</button>
+        </div><span class="print-only">${item.qty}</span></div>
+        <div class="basket-line-total"><span class="basket-field-label">Ընդհանուր գումար</span><strong>${sum.toLocaleString('ru-RU')} ֏</strong></div>
+        <label class="basket-payment print-hidden"><span class="basket-field-label">Վճարման եղանակ</span><select data-act="pay" data-art="${escapeHtml(articul)}" aria-label="Վճարման եղանակ ապրանքի համար">
+          <option value="Բանկային փոխանցումով" ${item.paymentMethod === 'Բանկային փոխանցումով' ? 'selected' : ''}>Բանկային փոխանցումով</option>
+          <option value="Կանխիկ" ${item.paymentMethod === 'Կանխիկ' ? 'selected' : ''}>Կանխիկ</option>
+        </select></label><div class="print-only">Վճարում՝ ${escapeHtml(item.paymentMethod)}</div>
       </div>`;
     listContainer.appendChild(div);
   });

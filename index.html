@@ -13,7 +13,7 @@
 try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.classList.toggle('dark', __t ? __t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches); } catch (e) {}</script>
 <!-- SheetJS (XLSX reader/writer) -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="styles.css?v=3.7-auto-sync">
+<link rel="stylesheet" href="styles.css?v=3.8-layout">
 <style>
 .auth-entry-card {
   opacity: 1;
@@ -84,43 +84,20 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 
 <!-- OSNOVNOY KATALOG -->
 <div id="mainApp" class="hidden flex-col min-h-screen pb-24">
-<header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-200">
-<div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-3">
-<div class="flex items-center justify-between w-full sm:w-auto">
-<div class="flex items-center gap-3">
-<img src="logo.svg" alt="ZIGZAG" width="198" height="46" class="h-8 sm:h-9 w-auto object-contain flex-shrink-0 dark:hidden" onerror="this.onerror=null; this.src='logo.png';"><img src="logo-dark.svg" alt="" aria-hidden="true" width="198" height="46" class="h-8 sm:h-9 w-auto object-contain flex-shrink-0 hidden dark:block" onerror="this.onerror=null; this.src='logo-dark.png';">
-<div class="border-l border-gray-200 dark:border-gray-700 pl-3">
-<h1 class="text-sm sm:text-base font-bold text-gray-900 dark:text-white leading-tight">Մեծածախ ապրանքների կատալոգ</h1>
-<div class="flex items-center gap-2 mt-0.5 flex-wrap">
-  <p class="text-[11px] sm:text-xs text-blue-600 dark:text-blue-400 font-medium" id="welcomeMsg">Բարև ձեզ...</p>
-  
-  <button onclick="openPersonalCabinet()" aria-label="Անձնական հաշիվ" class="text-[10px] sm:text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 px-2 py-0.5 rounded transition flex items-center gap-1">
-    <span>👤 Անձնական հաշիվ</span>
-  </button>
-  <button type="button" data-open-user-guide class="text-[10px] sm:text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 px-2 py-0.5 rounded transition flex items-center gap-1">
-    <span>❓ Օգտագործողի ուղեցույց</span>
-  </button>
-
-
-  <span id="priceDateBadge" class="text-[10px] sm:text-[11px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded border border-gray-200 dark:border-gray-600">Թարմացում...</span>
-  <button onclick="logout()" aria-label="Դուրս գալ համակարգից" class="text-[10px] sm:text-[11px] font-semibold text-red-600 dark:text-red-400 hover:text-red-800 bg-red-50 dark:bg-red-950/50 hover:bg-red-100 px-2 py-0.5 rounded transition">
-    🚪 Դուրս գալ
-  </button>
+<header class="catalog-header">
+<div class="catalog-header-inner">
+<div class="catalog-header-main">
+ <div class="catalog-brand"><img src="logo.svg" alt="ZIGZAG" width="198" height="46" class="dark:hidden"><img src="logo-dark.svg" alt="" aria-hidden="true" width="198" height="46" class="hidden dark:block"><h1>Մեծածախ ապրանքների կատալոգ</h1></div>
+ <nav class="catalog-header-actions" aria-label="Կատալոգի գործողություններ">
+  <button type="button" onclick="toggleTheme()" class="header-icon" aria-label="Թեմա" title="Մութ / լուսավոր թեմա">◐</button>
+  <button type="button" onclick="openPersonalCabinet()" class="header-secondary">Անձնական հաշիվ</button>
+  <button type="button" onclick="downloadFullPriceList()" class="header-secondary">Ներբեռնել գնացուցակը</button>
+  <button type="button" onclick="openOrderModal()" class="header-primary">Զամբյուղ <span id="headerCartBadgeDesktop" class="header-cart-count hidden">0</span></button>
+ </nav>
 </div>
-</div>
-</div>
-</div>
-
-<div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto flex-wrap justify-end">
-<button onclick="toggleTheme()" aria-label="Թեմա" title="Մութ / լուսավոր թեմա" class="px-2.5 py-1.5 sm:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-semibold border border-gray-200 dark:border-gray-600 transition">🌓</button>
-<button onclick="downloadFullPriceList()" aria-label="Ներբեռնել ամբողջական գնացուցակը" class="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow transition cursor-pointer flex items-center gap-1.5" title="Ներբեռն����լ ամբողջական գնացուցակը Excel ֆայլով">
-  <span>📊 Ներբեռնել գնացուցակը</span>
-</button>
-
-<button onclick="openOrderModal()" aria-label="Բացել զամբյուղը" class="flex relative p-2 px-3 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-200 dark:border-blue-800 font-semibold text-xs items-center gap-1.5 transition">
-  <span>🛒 Զամբյուղ</span>
-  <span id="headerCartBadgeDesktop" class="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
-</button>
+<div class="catalog-header-meta">
+ <div class="catalog-account-meta"><p id="welcomeMsg">Բարև ձեզ...</p><span id="priceDateBadge">Թարմացում...</span><p id="memoryStatus" role="status" class="header-sync"></p></div>
+ <div class="catalog-header-utilities"><button type="button" data-open-user-guide>Օգտագործողի ուղեցույց</button><button type="button" onclick="logout()" class="header-logout" aria-label="Դուրս գալ համակարգից">Դուրս գալ</button></div>
 </div>
 </div>
 </header>
@@ -168,7 +145,7 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
   </button>
   
   <div id="filtersContainer" class="p-4 space-y-3 hidden md:block">
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       
       <div class="relative">
         <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Բրենդ</label>
@@ -196,16 +173,7 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
         </div>
       </div>
 
-      <div>
-        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Սորտավորում</label>
-        <label for="sortPrice">Цена для сортировки</label><select id="sortPrice" onchange="resetAndRender()" class="w-full px-3 py-1.5 border rounded-lg text-sm bg-white dark:bg-gray-900"><option value="wholesale">Ваша цена</option></select>
-        <select id="sortBy" onchange="resetAndRender()" aria-label="Սորտավորում" class="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="default">Ստանդարտ</option>
-          <option value="priceAsc">Գին՝ էժանից թանկ</option>
-          <option value="priceDesc">Գին՝ թանկից էժան</option>
-          <option value="marginDesc">Եկամտաբերություն՝ բարձրից ցածր</option>
-        </select>
-      </div>
+      <div hidden><input id="sortColumn" value="wholesale"><select id="sortPrice"><option value="wholesale">Ձեր գինը</option></select><select id="sortBy"><option value="default">Ստանդարտ</option><option value="priceAsc">priceAsc</option><option value="priceDesc">priceDesc</option><option value="marginDesc">marginDesc</option><option value="columnAsc">columnAsc</option><option value="columnDesc">columnDesc</option></select></div>
     </div>
 
     <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
@@ -258,6 +226,7 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 </div>
 
 <div id="catalogContent">
+<div id="mobileColumnSort" class="mobile-column-sort" aria-label="Սորտավորում"></div>
   <div class="hidden md:block bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-clip transition-colors duration-200">
   <div class="table-scroll-wrapper" id="tableScrollWrapper">
   <table class="w-full text-left border-collapse table-auto" id="catalogTable">
@@ -524,20 +493,20 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
   </div>
 </dialog>
 
-<script src="js/product-photos.js?v=3.7-auto-sync"></script>
-<script src="js/api-config.js?v=3.7-auto-sync"></script>
-<script src="js/api-client.js?v=3.7-auto-sync"></script>
-<script src="js/core.js?v=3.7-auto-sync"></script>
-<script src="js/photo-preview.js?v=3.7-auto-sync"></script>
-<script src="js/password-setup.js?v=3.7-auto-sync"></script>
-<script src="js/price-sort.js?v=3.7-auto-sync"></script>
-<script src="js/auth-data.js?v=3.7-auto-sync"></script>
-<script src="js/catalog.js?v=3.7-auto-sync"></script>
-<script src="js/order-state.js?v=3.7-auto-sync"></script>
-<script src="js/bulk-add.js?v=3.7-auto-sync"></script>
-<script src="js/order-submit.js?v=3.7-auto-sync"></script>
-<script src="js/user-memory.js?v=3.7-auto-sync"></script>
-<script src="js/user-guide.js?v=3.7-auto-sync"></script>
+<script src="js/product-photos.js?v=3.8-layout"></script>
+<script src="js/api-config.js?v=3.8-layout"></script>
+<script src="js/api-client.js?v=3.8-layout"></script>
+<script src="js/core.js?v=3.8-layout"></script>
+<script src="js/photo-preview.js?v=3.8-layout"></script>
+<script src="js/password-setup.js?v=3.8-layout"></script>
+<script src="js/price-sort.js?v=3.8-layout"></script>
+<script src="js/auth-data.js?v=3.8-layout"></script>
+<script src="js/catalog.js?v=3.8-layout"></script>
+<script src="js/order-state.js?v=3.8-layout"></script>
+<script src="js/bulk-add.js?v=3.8-layout"></script>
+<script src="js/order-submit.js?v=3.8-layout"></script>
+<script src="js/user-memory.js?v=3.8-layout"></script>
+<script src="js/user-guide.js?v=3.8-layout"></script>
 <script>
 (() => {
   const screen = document.getElementById('authScreen');

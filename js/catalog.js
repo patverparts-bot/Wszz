@@ -172,7 +172,8 @@ filteredProducts = allProducts.filter(p => {
 });
 
 const priceField=document.getElementById('sortPrice').value||'wholesale';
-if (sortBy === 'priceAsc' || sortBy === 'priceDesc') filteredProducts.sort((a,b)=>compareProductPrices(a,b,priceField,sortBy==='priceAsc'?1:-1));
+if (sortBy === 'columnAsc' || sortBy === 'columnDesc'){const selection=activeColumnSort();if(allowedSortColumns().includes(selection.key))filteredProducts.sort((a,b)=>compareByColumn(a,b,selection.key,selection.direction));}
+else if (sortBy === 'priceAsc' || sortBy === 'priceDesc') filteredProducts.sort((a,b)=>compareProductPrices(a,b,priceField,sortBy==='priceAsc'?1:-1));
 else if (sortBy === 'marginDesc') filteredProducts.sort((a, b) => b.marginVal - a.marginVal);
 else {
   const order = new Map();
@@ -183,6 +184,7 @@ groupByCategory = sortBy === 'default';
 categoryCounts = new Map();
 filteredProducts.forEach(p => categoryCounts.set(p.category, (categoryCounts.get(p.category) || 0) + 1));
 
+updateColumnSortIndicators();
 saveFiltersToStorage();
 document.getElementById('productCountInfo').innerText = `Գտնվել է ${filteredProducts.length} ապրանք`;
 }
