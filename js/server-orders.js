@@ -1,11 +1,12 @@
 (() => {
- const labels={new:'Նոր',confirmed:'Հաստատված',in_progress:'Ընթացքում',completed:'Ավարտված',rejected:'Մերժված'};
- let owner=null,timer=null,events=[],orders=[],busy=false,noticeSeen=new Set();
+ const labels={new:'Նոր',confirmed:'Հաստատված',in_progress:'Ընթացքում',completed:'Առաքված է',rejected:'Մերժված',received:'Ստացված է'};
+ let owner=null,timer=null,events=[],orders=[],busy=false,loadTicket=0,noticeSeen=new Set();
  const el=id=>document.getElementById(id),money=v=>Number(v||0).toLocaleString('hy-AM')+' ֏';
  const date=v=>new Date(v).toLocaleString('hy-AM',{timeZone:'Asia/Yerevan'});
  const node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
  function setNotice(text){const box=el('orderNotificationNotice');box.textContent=text;box.hidden=!text;}
  async function poll(){
+  window.ZZWS_RECEIPTS?.refresh().catch(()=>{});
   if(!owner||document.hidden)return;
   const activeOwner=owner;
   try{const result=await ZZWS.json('orders/notifications');if(owner!==activeOwner)return;events=result.events;
@@ -16,13 +17,14 @@
    if(fresh.length&&!el('cabinetModal').classList.contains('hidden'))await load();
   }catch(e){if(e.status===401)lockCatalog();}
  }
- function start(user){stop();owner=user.id;poll();timer=setInterval(poll,15000);}
- function stop(){if(timer)clearInterval(timer);timer=null;owner=null;events=[];orders=[];noticeSeen=new Set();el('orderNotificationsCount')?.setAttribute('hidden','');if(el('serverOrdersList'))el('serverOrdersList').replaceChildren();if(el('orderNotificationNotice'))setNotice('');}
+ function start(user){stop();owner=user.id;window.ZZWS_RECEIPTS?.start(user);poll();timer=setInterval(poll,15000);}
+ function stop(){++loadTicket;window.ZZWS_RECEIPTS?.stop();if(timer)clearInterval(timer);timer=null;owner=null;events=[];orders=[];noticeSeen=new Set();el('orderNotificationsCount')?.setAttribute('hidden','');if(el('serverOrdersList'))el('serverOrdersList').replaceChildren();if(el('orderNotificationNotice'))setNotice('');}
  async function load(more=false){
   if(!owner)return;const root=el('serverOrdersList');
   const activeOwner=owner;
-  try{const data=await ZZWS.json('orders'+(more&&orders.length?'?before='+orders.at(-1).number:''));if(owner!==activeOwner)return;orders=more?[...orders,...data.orders]:data.orders;render();el('moreServerOrders').hidden=data.orders.length<50;}
-  catch(e){root.textContent=e.message;}
+  const ticket=++loadTicket,params=new URLSearchParams(),pending=el('pendingReceiptOnly').checked;if(pending)params.set('receiptPending','true');if(more&&orders.length)params.set('before',orders.at(-1).number);
+  try{const data=await ZZWS.json('orders'+(params.size?'?'+params:''));if(owner!==activeOwner||ticket!==loadTicket||pending!==el('pendingReceiptOnly').checked)return;orders=more?[...orders,...data.orders]:data.orders;render();el('moreServerOrders').hidden=data.orders.length<50;}
+  catch(e){if(owner===activeOwner&&ticket===loadTicket)root.textContent=ZZWS.message(e);}
  }
  function render(){
   const root=el('serverOrdersList'),opened=new Set([...root.querySelectorAll('details[open][data-order-id]')].map(n=>n.dataset.orderId));root.replaceChildren();
@@ -51,6 +53,7 @@
    saveCartToStorage();updateOrderPanel();resetAndRender();window.ZZWS_MEMORY?.capture();closePersonalCabinet();openOrderModal();};root.append(repeat);
   for(const event of result.events){const box=node('details',null,'order-event'),summary=node('summary',date(event.created)+' · '+labels[event.detail.status]);box.append(summary);
    for(const change of event.detail.changes||[]){const before=change.before,after=change.after;box.append(node('p',change.articul+' · '+({removed:'Ջնջված',added:'Ավելացված',changed:'Փոփոխված'}[change.kind])+(before?' · նախկինում՝ '+before.qty+' × '+money(before.unitPrice):'')+(after?' · հաստատված՝ '+after.qty+' × '+money(after.unitPrice):'')));}root.append(box);}
+  window.ZZWS_RECEIPTS?.render(order,root);
   return order.revision;
  }
  async function notifications(){openPersonalCabinet();await load();const root=el('orderNotificationList');root.replaceChildren();root.hidden=false;
@@ -59,17 +62,17 @@
  }
  async function submit(){
   if(busy||!serverIdentity)return;if(!Object.keys(cart).length){alert('Զամբյուղը դատարկ է');return;}if(!validateCartPrices())return;
-  const activeOwner=serverIdentity.id;
+  const activeOwner=serverIdentity.id;let receiptState;try{receiptState=await ZZWS_RECEIPTS.refresh();}catch(e){alert(ZZWS.message(e));return;}if(serverIdentity?.id!==activeOwner||!receiptState)return;if(ZZWS_RECEIPTS.blocked()&&!ZZWS_RECEIPTS.pendingRequest()){ZZWS_RECEIPTS.showPending();return;}
   const snapshot=JSON.stringify(cart),lines=Object.values(cart).map(item=>({articul:item.articul,qty:item.qty,unitPrice:getItemWholesalePrice(item)})).sort((a,b)=>a.articul.localeCompare(b.articul));
   const delivery={organization:getSelectedOrganizationName(),address:getDeliveryAddressValue(),contact:el('contactPersonInput').value,method:getSelectedDeliveryMethod(),date:el('deliveryDateInput').value,comment:el('orderCommentInput').value};
   const payload={lines,delivery,priceMode:adminOrderPriceMode},fingerprint=JSON.stringify(payload),key='zzws_order_request_'+serverIdentity.id;let pending;try{pending=JSON.parse(sessionStorage.getItem(key)||'null');}catch{}
   if(!pending)pending={fingerprint,payload,snapshot,requestId:crypto.randomUUID()};
   if(pending.fingerprint!==fingerprint&&!confirm('Նախորդ ուղարկման փորձը դեռ չի հաստատվել։ Կրկնե՞լ այն սկզբնական կազմով։ Զամբյուղի նոր փոփոխությունները կպահպանվեն։'))return;
   sessionStorage.setItem(key,JSON.stringify(pending));
-  busy=true;el('submitServerOrder').disabled=true;
+  busy=true;ZZWS_RECEIPTS.setSubmitting(true);
   try{const result=await secureApi('orders',{method:'POST',body:JSON.stringify({...pending.payload,requestId:pending.requestId})});sessionStorage.removeItem(key);if(serverIdentity?.id!==activeOwner)return;if(JSON.stringify(cart)===pending.snapshot)clearOrder();closeOrderModal();await ZZWS_MEMORY.flush();openPersonalCabinet();await load();alert('Պատվեր №'+result.number+' ուղարկվել է։ Սպասեք ադմինիստրատորի հաստատմանը։');}
   catch(e){if(e.status===400||e.status===409)sessionStorage.removeItem(key);alert(e.message);if(e.status===409){await loadPriceDataSilent();renderModalItems();}}
-  finally{busy=false;el('submitServerOrder').disabled=false;}
+  finally{busy=false;ZZWS_RECEIPTS.setSubmitting(false);ZZWS_RECEIPTS.refresh().catch(()=>{});}
  }
  window.ZZWS_ORDERS={start,stop,load,notifications,submit};
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)poll();});

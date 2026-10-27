@@ -1,3 +1,5 @@
+import { receiptRoutes } from './receipt-routes.mjs';
+import { clientCategory } from './receipt-policy.mjs';
 import { publicError } from './public-error.mjs';
 import { assertXlsxArchive } from './xlsx-validation.mjs';
 import { priceDifference,scopePermissions,canAccess } from './operations.mjs';
@@ -180,8 +182,9 @@ export async function handle(req:Request){
       const factors=await client.auth.mfa.listFactors();if(factors.error)fail(500,'Չհաջողվեց ստուգել երկրորդ գործոնը');const factor=factors.data.totp.find((f:any)=>f.status==='verified');await client.auth.signOut({scope:'local'});if(factor&&!mfaVerified)fail(403,'Կրկին մուտք գործեք երկրորդ գործոնով');
       await query(table('sessions').update({confirmed_until:new Date(Date.now()+5*60000).toISOString()}).eq('hash',hash));await query(table('attempts').delete().eq('id',attempt));return json({ok:true});
     }
-    if(req.method==='POST'&&['admin/users','admin/users/scope','admin/users/reset-password','admin/users/delete','admin/storage/clear','admin/price/publish','admin/price/rollback','admin/rules','admin/users/import'].includes(path)&&!(confirmedUntil&&Date.parse(confirmedUntil)>Date.now()))return json({error:'Հաստատեք ձեր ընթացիկ գաղտնաբառը',reauthRequired:true},428);
+    if(req.method==='POST'&&['admin/users','admin/users/scope','admin/users/reset-password','admin/users/delete','admin/storage/clear','admin/price/publish','admin/price/rollback','admin/rules','admin/users/import','admin/receipt-control','admin/users/receipt-control'].includes(path)&&!(confirmedUntil&&Date.parse(confirmedUntil)>Date.now()))return json({error:'Հաստատեք ձեր ընթացիկ գաղտնաբառը',reauthRequired:true},428);
 
+    const receiptResponse=await receiptRoutes({path,req,user,service,table,query,body,json,fail});if(receiptResponse)return receiptResponse;
     const orderResponse=await orderRoutes({path,req,user,service,table,query,body,json,file,current,project,rowsFromBuffer,draft,fail});
     if(orderResponse)return orderResponse;
     if(req.method==='GET'&&path==='me/state'){
@@ -247,7 +250,7 @@ export async function handle(req:Request){
       return json({groups:Object.fromEntries(['KP','Dealers'].map(sheet=>{
         const profile={role:'client',sheet,client:'Նախադիտում',allBrands:true,brands:[],catalogAccess:{mode:'all',include:[],exclude:[]}};
         const products=project(v.products,profile,rules);
-        return [sheet,{count:products.length,sample:products.slice(0,5),difference}];
+        return [sheet,{count:products.length,sample:products.slice(0,5)}];
       }))});
     }
     if(req.method==='POST'&&path==='admin/access/preview'){
@@ -256,7 +259,7 @@ export async function handle(req:Request){
       return json({count:products.length,sample:products.slice(0,10),adminBypass:profile.role==='admin'});
     }
     if(req.method==='GET'&&path==='admin/dashboard'){
-      const counts:any={};if(user.permissions.includes('orders:read'))for(const state of ['new','confirmed','in_progress','completed','rejected']){const r=await table('orders').select('id',{count:'exact',head:true}).eq('status',state);if(r.error)fail(500,'Չհաջողվեց հաշվել պատվերները');counts[state]=r.count;}
+      const counts:any={};if(user.permissions.includes('orders:read'))for(const state of ['new','confirmed','in_progress','completed','rejected','received']){const r=await table('orders').select('id',{count:'exact',head:true}).eq('status',state);if(r.error)fail(500,'Չհաջողվեց հաշվել պատվերները');counts[state]=r.count;}
       const state=await query(table('state').select('version').eq('id',true).single());
       return json({counts,priceVersion:state.version,scope:user.adminScope,mfaVerified});
     }
@@ -277,7 +280,7 @@ export async function handle(req:Request){
       if(!target.needs_password_setup)fail(409,'Հաշիվն արդեն ակտիվացված է․ անհրաժեշտության դեպքում վերակայեք գաղտնաբառը');
       await query(table('sessions').delete().eq('user_id',target.id));return json({invitation:await security.invite(target.id,user.id)});
     }
-    if(req.method==='GET'&&path==='admin/users'){const rows=await query(table('users').select('*').order('login'));const scopes=await query(table('admin_scopes').select('*'));return json({users:rows.map((r:any)=>({...cleanUser(r),adminScope:scopes.find((x:any)=>x.user_id===r.id)?.scope||'owner'}))});}
+    if(req.method==='GET'&&path==='admin/users'){const rows=await query(table('users').select('*').order('login'));const scopes=await query(table('admin_scopes').select('*'));const state=await query(table('state').select('rules').eq('id',true).single());return json({users:rows.map((r:any)=>({...cleanUser(r),adminScope:scopes.find((x:any)=>x.user_id===r.id)?.scope||'owner',clientCategory:clientCategory(r.profile,state.rules)})),categoryByGroup:Object.fromEntries(['KP','Dealers'].map(sheet=>[sheet,clientCategory({role:'client',sheet},state.rules)]))});}
     if(req.method==='POST'&&path==='admin/users')return json(await saveUser(await body(req),user.id));
     if(req.method==='POST'&&path==='admin/users/reset-password'){
       const p=await body(req),target=await query(table('users').select('*').eq('id',p.id).maybeSingle());

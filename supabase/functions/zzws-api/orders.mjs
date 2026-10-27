@@ -1,4 +1,4 @@
-export const statuses={new:'Նոր',confirmed:'Հաստատված',in_progress:'Ընթացքում',completed:'Ավարտված',rejected:'Մերժված'};
+export const statuses={new:'Նոր',confirmed:'Հաստատված',in_progress:'Ընթացքում',completed:'Առաքված է',rejected:'Մերժված',received:'Ստացված է'};
 const text=(v,n=300)=>String(v??'').trim().slice(0,n);
 export function deliverySnapshot(p,user){
  const out={};for(const key of ['organization','address','contact','method','date','comment'])out[key]=text(p?.[key],key==='comment'?2000:300);

@@ -1,7 +1,7 @@
 import {statuses,normalizeLines,totalOf,deliverySnapshot,changesBetween,parseConfirmation,parsePastedConfirmation} from './orders.mjs';
 export async function orderRoutes(c){
  const {path,req,user,service,table,query,body,json,file,current,project,rowsFromBuffer,draft,fail}=c;
- const rpc=async(name,args)=>{const r=await service.rpc(name,args);if(r.error){if(r.error.code==='PT409')fail(409,'Պատվերն արդեն փոխվել է կամ նախադիտման ժամկետը լրացել է։ Վերաբացեք պատվերը');if(r.error.code==='PT404')fail(404,'Պատվերը չի գտնվել');console.error('Order operation',r.error.code);fail(500,'Չհաջողվեց պահպանել պատվերը');}return r.data;};
+ const rpc=async(name,args)=>{const r=await service.rpc(name,args);if(r.error){if(r.error.code==='PT429')fail(409,'Նոր պատվերի համար նախ հաստատեք բոլոր չստացված պատվերների ստացումը');if(r.error.code==='PT403')fail(403,'Հասանելիությունն արգելված է');if(r.error.code==='PT409')fail(409,'Պատվերն արդեն փոխվել է կամ նախադիտման ժամկետը լրացել է։ Վերաբացեք պատվերը');if(r.error.code==='PT404')fail(404,'Պատվերը չի գտնվել');console.error('Order operation',r.error.code);fail(500,'Չհաջողվեց պահպանել պատվերը');}return r.data;};
  const order=async(id,admin=false)=>{let q=table('orders').select('*').eq('id',id);if(!admin)q=q.eq('user_id',user.id);const row=await query(q.maybeSingle());if(!row)fail(404,'Պատվերը չի գտնվել');return row;};
  if(path==='orders'&&req.method==='POST'){
   const p=await body(req);if(!/^[a-f0-9-]{36}$/.test(p.requestId))fail(400,'Ուղարկման սխալ նույնացուցիչ');
@@ -11,7 +11,7 @@ export async function orderRoutes(c){
   return json(await rpc('zzws_submit_order',{p_user:user.id,p_request:p.requestId,p_customer:{id:user.id,login:user.login,client:user.client},p_delivery:deliverySnapshot(p.delivery,user),p_lines:lines,p_total:totalOf(lines)}));
  }
  if(path==='orders'&&req.method==='GET'){
-  const before=new URL(req.url).searchParams.get('before');let q=table('orders').select('*').eq('user_id',user.id).order('number',{ascending:false}).limit(50);if(before&&/^\d+$/.test(before))q=q.lt('number',before);return json({orders:await query(q)});
+  const before=new URL(req.url).searchParams.get('before');let q=table('orders').select('*').eq('user_id',user.id).order('number',{ascending:false}).limit(50);if(new URL(req.url).searchParams.get('receiptPending')==='true')q=q.is('received_at',null).in('status',['new','confirmed','in_progress','completed']);if(before&&/^\d+$/.test(before))q=q.lt('number',before);return json({orders:await query(q)});
  }
  if(path==='orders/notifications'&&req.method==='GET'){
   const events=await query(table('order_events').select('id,order_id,revision,detail,created').eq('user_id',user.id).is('read_at',null).order('created',{ascending:false}).limit(50));
@@ -54,6 +54,7 @@ export async function orderRoutes(c){
   const p=await body(req),d=path.endsWith('/apply')?await draft(p.draft,user.id,'order'):null;
   if(d&&(p.orderId!==d.payload.orderId||p.revision!==d.payload.revision))fail(409,'Նախադիտումը վերաբերում է այլ պատվերի կամ տարբերակի։ Կրկին ստուգեք ֆայլը');
   const o=await order(d?.payload.orderId||p.id,true),revision=d?.payload.revision??p.revision;
+  if(o.received_at||o.status==='received'||p.status==='received')fail(409,'Ստացված պատվերը չի խմբագրվում');
   if(revision!==o.revision)fail(409,'Պատվերն արդեն փոխվել է։ Վերաբացեք պատվերը');
   const status=d?'confirmed':p.status;if(!statuses[status])fail(400,'Անհայտ կարգավիճակ');
   const lines=d?d.payload.lines:await prepare(o,p.lines);if(!lines.length&&status!=='rejected')fail(400,'Դատարկ պատվերը կարելի է միայն մերժել');

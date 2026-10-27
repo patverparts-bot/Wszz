@@ -3,7 +3,7 @@ function finishSessionLoading(){document.documentElement.removeAttribute('data-s
 function sessionLoadFailed(message){document.documentElement.setAttribute('data-session-pending','true');el('sessionLoadingText').textContent=message||'Չհաջողվեց թարմացնել տվյալները։ Ստուգեք կապը։';el('sessionSpinner').hidden=true;el('sessionRetryActions').hidden=false;}
 let draft = null, userDraft = null, users = [];
 let catalogPairs=[],userAccessEditor=null,groupEditors={},groupRevision=null;
-let editingUserId=null,auditEntries=[];
+let editingUserId=null,auditEntries=[],categoryByGroup={KP:'KP',Dealers:'Dealers'};
 function status(message, error = false) { el('status').textContent = message; el('status').className = error ? 'error' : ''; }
 async function api(path, options = {}) {
   try { return await ZZWS.json(path, options); }
@@ -52,6 +52,7 @@ async function enter() {
   const activeTab=rememberedAdminTab();for(const section of adminTabs)el(section).hidden=section!==activeTab;
   el('login').hidden = true; el('workspace').hidden = false; el('logout').hidden = false;
   catalogPairs=(await api('admin/catalog-options')).pairs;
+  ZZWS_ADMIN_RECEIPTS.start(user);
   ZZWS_ADMIN_ORDERS.start();
   const permissions=user.permissions||['price:read','users','rules'];await Promise.all([...(permissions.includes('price:read')?[loadVersions()]:[]),...(permissions.includes('users')?[loadUsers()]:[]),...(permissions.includes('rules')?[loadGroupRules()]:[])]);await selectAdminTab(activeTab);finishSessionLoading(); status('Մուտք եք գործել որպես ' + user.client);
 }
@@ -75,8 +76,8 @@ async function loadVersions() {
     v.id === d.active ? 'Գործող' : button('Վերականգնել', async () => { if (!confirm('Վերադարձնե՞լ գնացուցակի այս տարբերակը։')) return; await api('admin/price/rollback',{method:'POST',body:JSON.stringify({version:v.id})}); await loadVersions(); status('Տարբերակը վերականգնված է'); })])));
 }
 async function loadUsers() {
-  const d = await api('admin/users'); users = d.users;
-  el('userList').replaceChildren(table(['Մուտքանուն','Հաճախորդ','Դեր','Գներ','Հասանելիություն',''], users.map(u => [u.login,u.client,u.role==='admin'?'Ադմինիստրատոր':'Հաճախորդ',u.sheet,u.active?'Միացված է':'Անջատված է',button('Խմբագրել', () => editUser(u))])));
+  const d = await api('admin/users'); users = d.users;categoryByGroup=d.categoryByGroup||categoryByGroup;
+  el('userList').replaceChildren(table(['Մուտքանուն','Հաճախորդ','Դեր','Գներ','Կատեգորիա','Հասանելիություն',''], users.map(u => [u.login,u.client,u.role==='admin'?'Ադմինիստրատոր':'Հաճախորդ',u.sheet,u.role==='client'?(u.clientCategory||categoryByGroup[u.sheet]||u.sheet):'—',u.active?'Միացված է':'Անջատված է',button('Խմբագրել', () => editUser(u))])));
 }
 function editUser(user = {}) {
   const f = el('userForm'); f.reset(); f.hidden = false;
@@ -96,6 +97,7 @@ function editUser(user = {}) {
   el('adminScopePanel').hidden=!user.id||user.role!=='admin';el('adminScope').value=user.adminScope||'owner';
   el('resetUserPassword').hidden=!user.id;el('issueInvitation').hidden=!user.id||!user.needsPasswordSetup;
   el('passwordSetupState').textContent=!user.id||user.needsPasswordSetup?'Առաջին մուտք՝ մուտքանունով և մեկանգամյա հրավերի կոդով։':'Օգտատերն արդեն սահմանել է գաղտնաբառը։';
+  updateClientCategory();ZZWS_ADMIN_RECEIPTS.loadClient(user);
   f.scrollIntoView({behavior:'smooth'});
 }
 el('resetUserPassword').onclick=()=>run(async()=>{
@@ -130,7 +132,10 @@ function userPayload(){
   for(let i=1;i<=3;i++)for(const key of ['organization','address','contact'])delete p[key+(i===1?'':String(i))];
   return p;
 }
+function updateClientCategory(){const f=el('userForm');el('clientCategory').value=f.elements.role.value==='admin'?'—':(categoryByGroup[f.elements.sheet.value]||f.elements.sheet.value);}
+el('userForm').elements.role.addEventListener('change',updateClientCategory);
 el('userForm').elements.sheet.onchange=()=>{
+  updateClientCategory();
   const f=el('userForm');
   if(!f.elements.id.value)userAccessEditor.reset(ZZWS_RULES_UI.legacyAccess({sheet:f.elements.sheet.value,allBrands:false,brands:[]}));
   el('userAccessPreview').replaceChildren();

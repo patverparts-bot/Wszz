@@ -15,7 +15,7 @@
 try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.classList.toggle('dark', __t ? __t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches); } catch (e) {}</script>
 <!-- SheetJS (XLSX reader/writer) -->
 <script src="js/vendor/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="styles.css?v=5.1-fixes">
+<link rel="stylesheet" href="styles.css?v=5.2-receipts">
 <style>
 .auth-entry-card {
   opacity: 1;
@@ -106,7 +106,7 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 </div>
 </header>
 
-<button id="orderNotificationNotice" type="button" hidden onclick="ZZWS_ORDERS.notifications()" class="order-notification-notice"></button>
+<div id="receiptLimitNotice" class="receipt-limit-box" role="status" hidden></div><button id="orderNotificationNotice" type="button" hidden onclick="ZZWS_ORDERS.notifications()" class="order-notification-notice"></button>
 <div id="stickySearchBar" class="sticky top-0 z-40 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-2.5 shadow-sm transition-colors duration-200">
   <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-stretch gap-2">
     <div class="relative w-full min-w-0">
@@ -297,7 +297,7 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 
 <div id="modalBody" class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden order-modal-body">
 
-<details id="savedCartsPanel" class="saved-carts-panel">
+<div id="receiptCartNotice" class="receipt-limit-box" role="status" hidden></div><details id="savedCartsPanel" class="saved-carts-panel">
 <summary><span>Պահպանված զամբյուղներ</span><span id="savedCartsCount" class="saved-count">0 / 10</span></summary>
 <div class="saved-carts-content"><p class="saved-help">Ընթացիկ զամբյուղը պահպանվում է ինքնաբերաբար։ Պահպանեք առանձին տարբերակ՝ դրան ավելի ուշ վերադառնալու համար։</p>
 <form id="saveCartForm" class="saved-cart-form" onsubmit="event.preventDefault();ZZWS_MEMORY.saveNamed()"><label for="savedCartTitle">Զամբյուղի անվանում<input id="savedCartTitle" maxlength="80" required placeholder="Օրինակ՝ նոյեմբերի գնումներ" autocomplete="off"></label><button type="submit" class="saved-primary">Պահպանել ընթացիկը</button><button type="button" onclick="ZZWS_MEMORY.savedList()" class="saved-secondary">Թարմացնել</button></form>
@@ -422,7 +422,7 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
   </div>
 
   <div class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Ուղարկված պատվերներն ու դրանց կազմը</div>
-  <button type="button" class="cabinet-notifications-link" onclick="ZZWS_ORDERS.notifications()">Ցույց տալ պատվերների փոփոխությունները</button><div class="server-orders-scroll"><div id="orderNotificationList" class="order-notification-list" hidden></div><div id="serverOrdersList"></div><button id="moreServerOrders" type="button" hidden onclick="ZZWS_ORDERS.load(true)">Ցույց տալ նախորդ պատվերները</button><details class="legacy-order-history"><summary>Նախկին արտահանումներ՝ Excel / Viber / Email</summary><div id="cabinetHistoryList" class="space-y-3"></div></details></div>
+  <button type="button" class="cabinet-notifications-link" onclick="ZZWS_ORDERS.notifications()">Ցույց տալ պատվերների փոփոխությունները</button><div id="receiptResultNotice" class="receipt-proof" role="alert" hidden></div><label class="receipt-pending-filter"><input type="checkbox" id="pendingReceiptOnly"> Միայն չփակված պատվերները</label><div class="server-orders-scroll"><div id="orderNotificationList" class="order-notification-list" hidden></div><div id="serverOrdersList"></div><button id="moreServerOrders" type="button" hidden onclick="ZZWS_ORDERS.load(true)">Ցույց տալ նախորդ պատվերները</button><details class="legacy-order-history"><summary>Նախկին արտահանումներ՝ Excel / Viber / Email</summary><div id="cabinetHistoryList" class="space-y-3"></div></details></div>
 
   <div class="border-t dark:border-gray-700 pt-3 mt-3 flex justify-between items-center flex-shrink-0">
     <button onclick="clearOrderHistory()" aria-label="Մաքրել պատմությունը" class="px-3.5 py-2 bg-red-50 dark:bg-red-950/50 hover:bg-red-100 text-red-600 dark:text-red-400 rounded-lg text-xs font-semibold transition">
@@ -489,24 +489,24 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
   </div>
 </dialog>
 
-<script src="js/product-photos.js?v=5.1-fixes"></script>
-<script src="js/api-config.js?v=5.1-fixes"></script>
-<script src="js/api-client.js?v=5.1-fixes"></script>
-<script src="js/core.js?v=5.1-fixes"></script>
-<script src="js/photo-preview.js?v=5.1-fixes"></script>
-<script src="js/security-ui.js?v=5.1-fixes"></script><script src="js/password-setup.js?v=5.1-fixes"></script>
-<script src="js/price-sort.js?v=5.1-fixes"></script>
-<script src="js/auth-data.js?v=5.1-fixes"></script>
-<script src="js/multi-search.js?v=5.1-fixes"></script>
-<script src="js/catalog.js?v=5.1-fixes"></script>
-<script src="js/order-state.js?v=5.1-fixes"></script>
-<script src="js/bulk-add.js?v=5.1-fixes"></script>
-<script src="js/order-submit.js?v=5.1-fixes"></script>
-<script src="js/user-memory.js?v=5.1-fixes"></script>
-<script src="js/order-comparison.js?v=5.1-fixes"></script>
-<script src="js/server-orders.js?v=5.1-fixes"></script>
-<script src="js/catalog-columns.js?v=5.1-fixes"></script><script src="js/sticky-controls.js?v=5.1-fixes"></script>
-<script src="js/user-guide.js?v=5.1-fixes"></script>
+<script src="js/product-photos.js?v=5.2-receipts"></script>
+<script src="js/api-config.js?v=5.2-receipts"></script>
+<script src="js/api-client.js?v=5.2-receipts"></script>
+<script src="js/core.js?v=5.2-receipts"></script>
+<script src="js/photo-preview.js?v=5.2-receipts"></script>
+<script src="js/security-ui.js?v=5.2-receipts"></script><script src="js/password-setup.js?v=5.2-receipts"></script>
+<script src="js/price-sort.js?v=5.2-receipts"></script>
+<script src="js/auth-data.js?v=5.2-receipts"></script>
+<script src="js/multi-search.js?v=5.2-receipts"></script>
+<script src="js/catalog.js?v=5.2-receipts"></script>
+<script src="js/order-state.js?v=5.2-receipts"></script>
+<script src="js/bulk-add.js?v=5.2-receipts"></script>
+<script src="js/order-submit.js?v=5.2-receipts"></script>
+<script src="js/user-memory.js?v=5.2-receipts"></script>
+<script src="js/order-comparison.js?v=5.2-receipts"></script>
+<script src="js/receipts.js?v=5.2-receipts"></script><script src="js/server-orders.js?v=5.2-receipts"></script>
+<script src="js/catalog-columns.js?v=5.2-receipts"></script><script src="js/sticky-controls.js?v=5.2-receipts"></script>
+<script src="js/user-guide.js?v=5.2-receipts"></script>
 <script>
 (() => {
   const screen = document.getElementById('authScreen');
@@ -537,5 +537,5 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
   showAuthCard();
 })();
 </script>
-<script src="js/ui-language.js?v=5.1-fixes"></script><script src="js/context-help.js?v=5.1-fixes"></script></body>
+<script src="js/ui-language.js?v=5.2-receipts"></script><script src="js/context-help.js?v=5.2-receipts"></script></body>
 </html>
