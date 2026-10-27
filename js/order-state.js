@@ -232,7 +232,7 @@ function populateOrderModalFields() {
   clientRowsData.forEach((row, index) => {
     const opt = document.createElement('option');
     opt.value = index;
-    opt.text = row.organization || authorizedClient;
+    opt.text = [`${index+1}. ${row.organization || authorizedClient}`,row.address || '',row.contact || ''].filter(Boolean).join(' — ');
     orgSelect.appendChild(opt);
   });
 
@@ -397,7 +397,8 @@ function closeOrderModal() { document.getElementById('orderModal').classList.add
 
 function getSelectedOrganizationName() {
   const sel = document.getElementById('organizationSelect');
-  return (sel && sel.options.length > 0 && sel.selectedIndex >= 0) ? sel.options[sel.selectedIndex].text : authorizedClient;
+  if(!sel||sel.selectedIndex<0)return authorizedClient;
+  return clientRowsData[Number(sel.value)]?.organization||authorizedClient;
 }
 
 function buildHistorySnapshot(cartItems) {

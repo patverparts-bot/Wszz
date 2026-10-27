@@ -18,7 +18,9 @@ create table public.zzws_versions (
 create index zzws_versions_created on public.zzws_versions(created desc);
 create table public.zzws_state (
  id boolean primary key default true check(id),
- version uuid references public.zzws_versions(id)
+ version uuid references public.zzws_versions(id),
+ rules jsonb not null default '{}'::jsonb,
+ rules_revision uuid not null default gen_random_uuid()
 );
 insert into public.zzws_state(id) values(true);
 create table public.zzws_drafts (
@@ -106,7 +108,7 @@ grant execute on function public.zzws_login_gate(text,text),public.zzws_consume_
 
 create function public.zzws_import_users(p_draft uuid,p_actor uuid,p_users jsonb) returns void
 language plpgsql security invoker set search_path='' as $$
-declare item jsonb; old public.zzws_users; v_profile jsonb;
+declare item jsonb; old public.zzws_users; v_profile jsonb; v_rows jsonb;
 begin
  perform 1 from public.zzws_drafts where id=p_draft and actor=p_actor and kind='users' and expires>now() for update;
  if not found then raise exception 'Draft expired'; end if;
@@ -114,8 +116,13 @@ begin
   select * into old from public.zzws_users where login=item->>'login' for update;
   if found then
    if old.profile->>'role'='admin' then raise exception 'Cannot import administrator'; end if;
+   v_rows=item->'profile'->'rowsList';
+   if coalesce((item->>'preserveExtraContacts')::boolean,false) and jsonb_array_length(old.profile->'rowsList')>1 then
+    select v_rows || coalesce(jsonb_agg(r.value order by r.ordinality),'[]'::jsonb) into v_rows
+    from jsonb_array_elements(old.profile->'rowsList') with ordinality r(value,ordinality) where r.ordinality between 2 and 3;
+   end if;
    v_profile=old.profile || jsonb_build_object('client',item->'profile'->'client','sheet',item->'profile'->'sheet',
-      'brands',item->'profile'->'brands','allBrands',item->'profile'->'allBrands','rowsList',item->'profile'->'rowsList');
+      'brands',item->'profile'->'brands','allBrands',item->'profile'->'allBrands','rowsList',v_rows);
    update public.zzws_users set profile=v_profile where id=old.id;
    delete from public.zzws_sessions where user_id=old.id;
   else
@@ -127,3 +134,16 @@ begin
 end $$;
 revoke all on function public.zzws_import_users(uuid,uuid,jsonb) from public, anon, authenticated;
 grant execute on function public.zzws_import_users(uuid,uuid,jsonb) to service_role;
+
+create function public.zzws_update_rules(p_rules jsonb,p_expected uuid,p_actor uuid) returns uuid
+language plpgsql security invoker set search_path='' as $$
+declare v_revision uuid;
+begin
+ update public.zzws_state set rules=p_rules,rules_revision=gen_random_uuid()
+ where id and rules_revision=p_expected returning rules_revision into v_revision;
+ if not found then raise exception 'Rules changed; reload before saving' using errcode='PT409'; end if;
+ insert into public.zzws_audit(actor,action,detail) values(p_actor,'rules_update',jsonb_build_object('revision',v_revision,'rules',p_rules)::text);
+ return v_revision;
+end $$;
+revoke all on function public.zzws_update_rules(jsonb,uuid,uuid) from public,anon,authenticated;
+grant execute on function public.zzws_update_rules(jsonb,uuid,uuid) to service_role;

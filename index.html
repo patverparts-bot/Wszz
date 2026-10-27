@@ -13,7 +13,7 @@
 try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.classList.toggle('dark', __t ? __t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches); } catch (e) {}</script>
 <!-- SheetJS (XLSX reader/writer) -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="styles.css?v=3.1-supabase">
+<link rel="stylesheet" href="styles.css?v=3.3-contacts">
 <style>
 .auth-entry-card {
   opacity: 1;
@@ -44,7 +44,7 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 
     <div class="space-y-4">
       <input id="loginInput" autocomplete="username" placeholder="Լոգին" aria-label="Լոգին" class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white text-gray-900">
-      <input type="password" id="passwordInput" autocomplete="current-password" placeholder="Գաղտնաբառ..." aria-label="Գաղտնաբառ"
+      <input type="password" id="passwordInput" inputmode="numeric" autocomplete="current-password" placeholder="Գաղտնաբառ..." aria-label="Գաղտնաբառ"
       class="w-full px-4 py-3 border border-gray-300/80 dark:border-gray-700 rounded-xl text-center text-lg tracking-widest bg-white/80 dark:bg-gray-800 dark:text-white focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent shadow-inner font-bold">
       
       <button onclick="checkPassword()" aria-label="Մուտք գործել" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition transform hover:scale-[1.01] active:scale-[0.99]">
@@ -530,17 +530,17 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
   </div>
 </dialog>
 
-<script src="js/product-photos.js?v=3.1-supabase"></script>
-<script src="js/api-config.js?v=3.1-supabase"></script>
-<script src="js/api-client.js?v=3.1-supabase"></script>
-<script src="js/core.js?v=3.1-supabase"></script>
-<script src="js/photo-preview.js?v=3.1-supabase"></script>
-<script src="js/auth-data.js?v=3.1-supabase"></script>
-<script src="js/catalog.js?v=3.1-supabase"></script>
-<script src="js/order-state.js?v=3.1-supabase"></script>
-<script src="js/bulk-add.js?v=3.1-supabase"></script>
-<script src="js/order-submit.js?v=3.1-supabase"></script>
-<script src="js/user-guide.js?v=3.1-supabase"></script>
+<script src="js/product-photos.js?v=3.3-contacts"></script>
+<script src="js/api-config.js?v=3.3-contacts"></script>
+<script src="js/api-client.js?v=3.3-contacts"></script>
+<script src="js/core.js?v=3.3-contacts"></script>
+<script src="js/photo-preview.js?v=3.3-contacts"></script>
+<script src="js/auth-data.js?v=3.3-contacts"></script>
+<script src="js/catalog.js?v=3.3-contacts"></script>
+<script src="js/order-state.js?v=3.3-contacts"></script>
+<script src="js/bulk-add.js?v=3.3-contacts"></script>
+<script src="js/order-submit.js?v=3.3-contacts"></script>
+<script src="js/user-guide.js?v=3.3-contacts"></script>
 <script>
 (() => {
   const screen = document.getElementById('authScreen');

@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.95.0';
 import XLSX from './vendor/xlsx.mjs';
 import { parsePrice, project, validateProfile, parseUsers } from './catalog.mjs';
+import { defaultRules, effectiveRules, validateRules, validPassword } from './rules.mjs';
 
 const PROJECT_URL = Deno.env.get('SUPABASE_URL')!;
 const envKey=(name:string,legacy:string)=>JSON.parse(Deno.env.get(name)||'{}').default||Deno.env.get(legacy)!;
@@ -11,7 +12,8 @@ const digest=async(s:string)=>Array.from(new Uint8Array(await crypto.subtle.dige
 const random=()=>Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b=>b.toString(16).padStart(2,'0')).join('');
 const authClient=()=>createClient(PROJECT_URL,publicKey,{auth:{persistSession:false,autoRefreshToken:false}});
 const email=(login:string)=>login+'@users.zzws.invalid';
-const goodPassword=(p:unknown)=>typeof p==='string'&&p.length>=12&&p.length<=256;
+const goodPassword=validPassword;
+const randomPassword=()=>Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b=>String(b%10)).join('');
 function fail(code:number,message:string):never{throw {code,message};}
 async function query(q:any){const {data,error}=await q;if(error){console.error('Database operation failed',error.code);fail(500,'Операция не выполнена. Повторите позже');}return data;}
 const table=(name:string)=>service.from('zzws_'+name);
@@ -67,13 +69,21 @@ async function draft(id:string,actor:string,kind:string){
   const row=await query(table('drafts').select('*').eq('id',id).eq('actor',actor).eq('kind',kind).gt('expires',new Date().toISOString()).maybeSingle());
   if(!row)fail(404,'Проверка истекла. Загрузите файл заново');return row;
 }
-async function current(){const state=await query(table('state').select('version').eq('id',true).single());if(!state?.version)fail(409,'Администратор ещё не опубликовал прайс');return query(table('versions').select('*').eq('id',state.version).single());}
+async function current(){
+  const state=await query(table('state').select('*').eq('id',true).single());
+  if(!state?.version)fail(409,'Администратор ещё не опубликовал прайс');
+  const version=await query(table('versions').select('*').eq('id',state.version).single());
+  return {...version,rules:effectiveRules(state.rules),rulesRevision:state.rules_revision};
+}
 async function saveUser(p:any,actor:string){
   const validated=validateProfile(p),{login,profile}=validated;
   const old=p.id?await query(table('users').select('*').eq('id',p.id).maybeSingle()):null;
+  // An older admin client must not erase restrictions it does not understand.
+  if(old&&Object.hasOwn(old.profile,'catalogAccess')&&!Object.hasOwn(p,'catalogAccess'))profile.catalogAccess=old.profile.catalogAccess;
+  if(old&&!Object.hasOwn(p,'rowsList'))profile.rowsList=old.profile.rowsList;
   if(p.id&&!old)fail(404,'Пользователь не найден');
   if(old?.id===actor&&(!p.active||profile.role!=='admin'))fail(400,'Нельзя заблокировать себя или снять собственные права');
-  if((!old||p.password)&&!goodPassword(p.password))fail(400,'Пароль должен содержать от 12 до 256 символов');
+  if((!old||p.password)&&!goodPassword(p.password))fail(400,'Пароль должен содержать от 6 до 256 цифр; буквы, пробелы и другие символы запрещены');
   const duplicate=await query(table('users').select('id').eq('login',login).maybeSingle());
   if(duplicate&&duplicate.id!==old?.id)fail(400,'Логин уже используется');
   let uid=old?.id,newAuth=false;
@@ -105,7 +115,7 @@ export async function handle(req:Request){
     if(req.method==='GET'&&path==='health')return json({ok:true});
     if(req.method==='POST'&&path==='bootstrap'){
       const p=await body(req),{login,profile}=validateProfile({...p,client:'Администратор',role:'admin',sheet:'Dealers',allBrands:true});
-      if(!goodPassword(p.password)||typeof p.setupToken!=='string'||p.setupToken.length!==64)fail(400,'Проверьте код настройки и пароль (минимум 12 символов)');
+      if(!goodPassword(p.password)||typeof p.setupToken!=='string'||p.setupToken.length!==64)fail(400,'Проверьте код настройки: пароль должен содержать минимум 6 цифр и только цифры');
       const consumed=await query(service.rpc('zzws_consume_setup',{p_hash:await digest(p.setupToken)}));
       if(!consumed)fail(403,'Код настройки недействителен или уже использован');
       const auth=await service.auth.admin.createUser({email:email(login),password:p.password,email_confirm:true});
@@ -134,15 +144,45 @@ export async function handle(req:Request){
     if(req.method==='POST'&&path==='logout'){await query(table('sessions').delete().eq('hash',hash));await audit(user.id,'logout');return json({ok:true});}
     if(req.method==='GET'&&['catalog','catalog/version','catalog/export'].includes(path)){
       const v=await current(),updated=new Date(v.created).toLocaleDateString('en-GB',{timeZone:'Asia/Yerevan'});
-      if(path==='catalog/version')return json({version:v.id,updated});
-      const products=project(v.products,user);
-      if(path==='catalog')return json({products,version:v.id,updated});
-      const rows=[['Получатель',user.client,'Версия',v.id],['Артикул','Бренд','Категория','Название','Розница','Ваша цена','Наличие',...(user.role==='admin'?['KP']:[])],
+      const version=v.id+':'+v.rulesRevision;
+      if(path==='catalog/version')return json({version,updated});
+      const products=project(v.products,user,v.rules);
+      if(path==='catalog')return json({products,version,updated});
+      const rows=[['Получатель',user.client,'Версия',version],['Артикул','Бренд','Категория','Название','Розница','Ваша цена','Наличие',...(user.role==='admin'?['KP']:[])],
         ...products.map((p:any)=>[p.articul,p.brand,p.category,p.name,p.retail,p.wholesale,p.stockStatus,...(user.role==='admin'?[p.kpPrice]:[])])];
-      await audit(user.id,'export',v.id);return file(rows,'PriceList.xlsx');
+      await audit(user.id,'export',version);return file(rows,'PriceList.xlsx');
     }
     if(!path.startsWith('admin/'))fail(404,'Не найдено');
     if(user.role!=='admin')fail(403,'Доступ запрещён');
+    if(req.method==='GET'&&path==='admin/catalog-options'){
+      const v=await current();
+      const pairs=[...new Map(v.products.map((p:any)=>[JSON.stringify([p.brand,p.category]),{brand:p.brand,category:p.category}])).values()];
+      return json({pairs});
+    }
+    if(req.method==='GET'&&path==='admin/rules'){
+      const state=await query(table('state').select('rules,rules_revision').eq('id',true).single());
+      return json({rules:effectiveRules(state.rules),defaults:defaultRules(),revision:state.rules_revision});
+    }
+    if(req.method==='POST'&&path==='admin/rules'){
+      const p=await body(req),rules=validateRules(p.rules);
+      const result=await service.rpc('zzws_update_rules',{p_rules:rules,p_expected:p.revision,p_actor:user.id});
+      if(['PT409','40001'].includes(result.error?.code))fail(409,'Правила уже изменены в другом окне. Загрузите их заново перед сохранением');
+      if(result.error)fail(500,'Не удалось сохранить правила');
+      return json({rules,revision:result.data});
+    }
+    if(req.method==='POST'&&path==='admin/rules/preview'){
+      const p=await body(req),rules=validateRules(p.rules),v=await current();
+      return json({groups:Object.fromEntries(['KP','Dealers'].map(sheet=>{
+        const profile={role:'client',sheet,client:'Предпросмотр',allBrands:true,brands:[],catalogAccess:{mode:'all',include:[],exclude:[]}};
+        const products=project(v.products,profile,rules);
+        return [sheet,{count:products.length,sample:products.slice(0,5)}];
+      }))});
+    }
+    if(req.method==='POST'&&path==='admin/access/preview'){
+      const p=await body(req),{profile}=validateProfile({...p,login:p.login||'preview',client:p.client||'Предпросмотр'}),v=await current();
+      const products=project(v.products,profile,v.rules);
+      return json({count:products.length,sample:products.slice(0,10),adminBypass:profile.role==='admin'});
+    }
     if(req.method==='GET'&&path==='admin/users'){const rows=await query(table('users').select('*').order('login'));return json({users:rows.map(cleanUser)});}
     if(req.method==='POST'&&path==='admin/users')return json(await saveUser(await body(req),user.id));
     if(req.method==='POST'&&path==='admin/users/delete'){
@@ -175,7 +215,7 @@ export async function handle(req:Request){
       const p=await body(req),v=await query(table('versions').select('id').eq('id',p.version).maybeSingle());if(!v)fail(404,'Версия не найдена');
       await query(table('state').update({version:p.version}).eq('id',true));await audit(user.id,'price_rollback',p.version);return json({ok:true});
     }
-    if(req.method==='GET'&&path==='admin/users/template')return file([['login','client','sheet','brands','allBrands','organization','address','contact'],['client-example','Название клиента','Dealers','','no','','','']],'Users-template.xlsx');
+    if(req.method==='GET'&&path==='admin/users/template')return file([['login','client','sheet','brands','allBrands','organization','address','contact','organization2','address2','contact2','organization3','address3','contact3'],['client-example','Название клиента','Dealers','','no','','','','','','','','','']],'Users-template.xlsx');
     if(req.method==='POST'&&path==='admin/users/preview'){
       const users=parseUsers(await uploadRows(req));
       const old=await query(table('users').select('id,login,profile'));
@@ -191,7 +231,7 @@ export async function handle(req:Request){
         const prepared=[];
         for(const u of d.payload){const record=existing.find((r:any)=>r.login===u.login);if(record?.profile.role==='admin')fail(400,'Импорт не может менять администратора');
           if(record){prepared.push({...u,id:record.id});continue;}
-          const auth=await service.auth.admin.createUser({email:email(u.login),password:random(),email_confirm:true});
+          const auth=await service.auth.admin.createUser({email:email(u.login),password:randomPassword(),email_confirm:true});
           if(auth.error)fail(400,'Не удалось подготовить пользователя: '+u.login);ids.push(auth.data.user.id);prepared.push({...u,id:auth.data.user.id});
         }
         await query(service.rpc('zzws_import_users',{p_draft:p.draft,p_actor:user.id,p_users:prepared}));
