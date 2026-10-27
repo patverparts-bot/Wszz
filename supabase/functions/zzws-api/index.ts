@@ -1,8 +1,10 @@
+import { priceDifference,scopePermissions,canAccess } from './operations.mjs';
 import { createClient } from 'npm:@supabase/supabase-js@2.95.0';
 import XLSX from './vendor/xlsx.mjs';
 import { parsePrice, project, validateProfile, parseUsers } from './catalog.mjs';
 import { defaultRules, effectiveRules, validateRules, validPassword } from './rules.mjs';
 import { validateMemory } from './memory.mjs';
+import { securityTools } from './security.ts';
 import { orderRoutes } from './order-routes.mjs';
 
 const PROJECT_URL = Deno.env.get('SUPABASE_URL')!;
@@ -59,11 +61,11 @@ async function identity(req:Request){
   const token=(req.headers.get('authorization')||'').replace(/^Bearer /,'');
   if(!/^[a-f0-9]{64}$/.test(token))fail(401,'Մուտք գործեք համակարգ');
   const hash=await digest(token);
-  const session=await query(table('sessions').select('user_id,expires,setup_only').eq('hash',hash).gt('expires',new Date().toISOString()).maybeSingle());
+  const session=await query(table('sessions').select('user_id,expires,setup_only,invitation_hash,mfa_verified,confirmed_until').eq('hash',hash).gt('expires',new Date().toISOString()).maybeSingle());
   if(!session)fail(401,'Մուտք գործեք համակարգ');
   const user=await query(table('users').select('*').eq('id',session.user_id).eq('active',true).maybeSingle());
   if(!user)fail(401,'Հասանելիությունն անջատված է');
-  return {user:cleanUser(user),hash,setupOnly:session.setup_only};
+  return {user:cleanUser(user),hash,setupOnly:session.setup_only,invitationHash:session.invitation_hash,mfaVerified:session.mfa_verified,confirmedUntil:session.confirmed_until};
 }
 
 async function body(req:Request){const b=await req.json().catch(()=>null);if(!b||Array.isArray(b)||typeof b!=='object')fail(400,'Սպասվում է JSON օբյեկտ');return b;}
@@ -104,7 +106,7 @@ async function saveUser(p:any,actor:string){
   try{await query(service.rpc('zzws_save_user',{p_id:uid,p_login:login,p_profile:profile,p_active:p.active!==false,p_actor:actor}));}
   catch(e){if(newAuth)await service.auth.admin.deleteUser(uid);throw e;}
   if(old&&p.password)await audit(actor,'password_reset',JSON.stringify({target:{id:uid,login,client:profile.client}}));
-  return {id:uid};
+  return {id:uid,...(!old?{invitation:await (await securityTools({service,table,query,digest,random,fail,authClient,cleanUser,audit})).invite(uid,actor)}:{})};
 }
 
 export async function handle(req:Request){
@@ -130,6 +132,13 @@ export async function handle(req:Request){
       if(inserted.error){await service.auth.admin.deleteUser(auth.data.user.id);fail(500,'Չհաջողվեց ավարտել կարգավորումը');}
       await audit(auth.data.user.id,'bootstrap');return json({ok:true});
     }
+    if(req.method==='POST'&&path==='maintenance/backup'){
+      const token=(req.headers.get('authorization')||'').replace(/^Bearer /,'');if(!/^[a-f0-9]{64}$/.test(token))fail(401,'Հասանելիությունն արգելված է');
+      const key=await query(table('backup_keys').select('hash').eq('hash',await digest(token)).gt('expires',new Date().toISOString()).maybeSingle());if(!key)fail(401,'Հասանելիությունն արգելված է');
+      const snapshot=await query(service.rpc('zzws_application_snapshot'));return json(snapshot);
+    }
+    const security=await securityTools({service,table,query,digest,random,fail,authClient,cleanUser,audit});
+    if(req.method==='POST'&&path==='login/mfa'){const p=await body(req);return json(await security.verify(p.challengeToken,p.code));}
     if(req.method==='POST'&&path==='login'){
       const p=await body(req),login=String(p.login||'').trim().toLowerCase(),password=String(p.password||'');
       if(!/^[a-z0-9][a-z0-9._-]{0,79}$/.test(login)||password.length>256)fail(401,'Սխալ մուտքանուն կամ գաղտնաբառ');
@@ -137,25 +146,30 @@ export async function handle(req:Request){
       const attempt=await query(service.rpc('zzws_login_gate',{p_login:login,p_ip:ip}));if(!attempt)fail(429,'Չափազանց շատ փորձեր։ Կրկնեք 15 րոպեից');
       const candidate=await query(table('users').select('*').eq('login',login).eq('active',true).maybeSingle());
       if(candidate?.needs_password_setup){
-        const token=random();await query(table('sessions').insert({hash:await digest(token),user_id:candidate.id,setup_only:true,expires:new Date(Date.now()+10*60000).toISOString()}));
+        const invitation=await query(table('invitations').select('hash').eq('user_id',candidate.id).eq('hash',await digest(password)).gt('expires',new Date().toISOString()).maybeSingle());
+        if(!invitation)fail(401,'Սխալ մուտքանուն, գաղտնաբառ կամ հրավերի կոդ');
+        const token=random();await query(table('sessions').insert({hash:await digest(token),user_id:candidate.id,invitation_hash:invitation.hash,setup_only:true,expires:new Date(Date.now()+10*60000).toISOString()}));
         await query(table('attempts').delete().eq('id',attempt));
         return json({id:candidate.id,login:candidate.login,role:candidate.profile.role,needsPasswordSetup:true,sessionToken:token});
       }
       const client=authClient();const auth=await client.auth.signInWithPassword({email:email(login),password});
       if(auth.error||!auth.data.user){await audit(null,'login_failed');fail(401,'Սխալ մուտքանուն կամ գաղտնաբառ');}
-      // Immediately discard the Auth session. All subsequent access uses independently revocable opaque tokens.
-      await client.auth.signOut({scope:'local'});
       const row=await query(table('users').select('*').eq('id',auth.data.user.id).eq('active',true).maybeSingle());
       if(!row)fail(401,'Սխալ մուտքանուն կամ գաղտնաբառ');
-      const token=random();await query(table('sessions').insert({hash:await digest(token),user_id:row.id,expires:new Date(Date.now()+8*3600000).toISOString()}));
+      let factor=null;if(row.profile.role==='admin'){const factors=await client.auth.mfa.listFactors();if(factors.error)fail(500,'Չհաջողվեց ստուգել երկրորդ գործոնը');factor=factors.data.totp.find((f:any)=>f.status==='verified');}
+      if(row.profile.role==='admin'&&factor)return json(await security.stage(row,auth.data.session,'login',factor.id));
+      await client.auth.signOut({scope:'local'});
+      const result=await security.session(row);
       await query(table('attempts').delete().eq('id',attempt));await audit(row.id,'login');
-      return json({...cleanUser(row),sessionToken:token});
+      return json(result);
     }
-    const {user,hash,setupOnly}=await identity(req);
-    if(req.method==='GET'&&path==='me')return json(user);
+    const {user,hash,setupOnly,invitationHash,mfaVerified,confirmedUntil}=await identity(req);
+    if(user.role==='admin'){const scope=await query(table('admin_scopes').select('scope').eq('user_id',user.id).maybeSingle());user.adminScope=scope?.scope||'owner';user.permissions=scopePermissions[user.adminScope]||[];}
+    if(req.method==='GET'&&path==='me')return json({...user,mfaVerified});
     if(req.method==='POST'&&path==='logout'){await query(table('sessions').delete().eq('hash',hash));await audit(user.id,'logout');return json({ok:true});}
     if(req.method==='POST'&&path==='account/password'){
       if(!user.needsPasswordSetup||!setupOnly)fail(403,'Գաղտնաբառի կարգավորումը հասանելի չէ։ Կրկին մուտք գործեք');
+      const validInvite=await query(table('invitations').select('hash').eq('user_id',user.id).eq('hash',invitationHash||'').gt('expires',new Date().toISOString()).maybeSingle());if(!validInvite)fail(403,'Հրավերի ժամկետը լրացել է։ Դիմեք ադմինիստրատորին');
       const p=await body(req);if(!goodPassword(p.password))fail(400,'Գաղտնաբառը պետք է պարունակի առնվազն 6 թվանշան և միայն թվեր');
       const claimed=await query(table('users').update({password_setup_claim:hash}).eq('id',user.id).eq('needs_password_setup',true).is('password_setup_claim',null).select('id'));
       if(!claimed.length)fail(409,'Գաղտնաբառն արդեն սահմանվում է այլ պատուհանում։ Կրկին մուտք գործեք');
@@ -163,10 +177,23 @@ export async function handle(req:Request){
       if(result.error){await query(table('users').update({password_setup_claim:null}).eq('id',user.id).eq('password_setup_claim',hash));fail(400,'Չհաջողվեց սահմանել գաղտնաբառը։ Կրկին փորձեք');}
       await query(table('sessions').delete().eq('user_id',user.id));
       await query(table('users').update({needs_password_setup:false,password_setup_claim:null}).eq('id',user.id).eq('password_setup_claim',hash));
+      const account=await service.auth.admin.getUserById(user.id);if(account.error||!account.data.user)fail(500,'Չհաջողվեց ստուգել հաշվի պաշտպանությունը');const factor=account.data.user.factors?.find((f:any)=>f.factor_type==='totp'&&f.status==='verified');
+      if(user.role==='admin'&&factor){await query(table('invitations').delete().eq('user_id',user.id));await audit(user.id,'password_setup');const client=authClient(),auth=await client.auth.signInWithPassword({email:email(user.login),password:p.password});if(auth.error)fail(401,'Կրկին մուտք գործեք');return json(await security.stage({id:user.id},auth.data.session,'login',factor.id));}
       const token=random();await query(table('sessions').insert({hash:await digest(token),user_id:user.id,expires:new Date(Date.now()+8*3600000).toISOString()}));
+      await query(table('invitations').delete().eq('user_id',user.id));
       await audit(user.id,'password_setup');return json({...user,needsPasswordSetup:false,sessionToken:token});
     }
     if(user.needsPasswordSetup||setupOnly)fail(403,'Նախ սահմանեք նոր գաղտնաբառը');
+    if(path.startsWith('admin/')&&(user.role!=='admin'||!canAccess(user.adminScope,path,req.method)))fail(403,'Այս գործողության իրավունքը չունեք');
+    if(req.method==='POST'&&path==='account/reauth'){
+      const p=await body(req),ip=await digest((req.headers.get('x-forwarded-for')||'unknown').split(',')[0].trim());
+      const attempt=await query(service.rpc('zzws_login_gate',{p_login:user.login,p_ip:ip}));if(!attempt)fail(429,'Չափազանց շատ փորձեր։ Կրկնեք 15 րոպեից');
+      const client=authClient(),r=await client.auth.signInWithPassword({email:email(user.login),password:String(p.password||'')});if(r.error||r.data.user?.id!==user.id)fail(400,'Գաղտնաբառը սխալ է');
+      const factors=await client.auth.mfa.listFactors();if(factors.error)fail(500,'Չհաջողվեց ստուգել երկրորդ գործոնը');const factor=factors.data.totp.find((f:any)=>f.status==='verified');await client.auth.signOut({scope:'local'});if(factor&&!mfaVerified)fail(403,'Կրկին մուտք գործեք երկրորդ գործոնով');
+      await query(table('sessions').update({confirmed_until:new Date(Date.now()+5*60000).toISOString()}).eq('hash',hash));await query(table('attempts').delete().eq('id',attempt));return json({ok:true});
+    }
+    if(req.method==='POST'&&['admin/users','admin/users/scope','admin/users/reset-password','admin/users/delete','admin/storage/clear','admin/price/publish','admin/price/rollback','admin/rules','admin/users/import'].includes(path)&&!(confirmedUntil&&Date.parse(confirmedUntil)>Date.now()))return json({error:'Հաստատեք ձեր ընթացիկ գաղտնաբառը',reauthRequired:true},428);
+
     const orderResponse=await orderRoutes({path,req,user,service,table,query,body,json,file,current,project,rowsFromBuffer,draft,fail});
     if(orderResponse)return orderResponse;
     if(req.method==='GET'&&path==='me/state'){
@@ -232,7 +259,7 @@ export async function handle(req:Request){
       return json({groups:Object.fromEntries(['KP','Dealers'].map(sheet=>{
         const profile={role:'client',sheet,client:'Նախադիտում',allBrands:true,brands:[],catalogAccess:{mode:'all',include:[],exclude:[]}};
         const products=project(v.products,profile,rules);
-        return [sheet,{count:products.length,sample:products.slice(0,5)}];
+        return [sheet,{count:products.length,sample:products.slice(0,5),difference}];
       }))});
     }
     if(req.method==='POST'&&path==='admin/access/preview'){
@@ -240,7 +267,29 @@ export async function handle(req:Request){
       const products=project(v.products,profile,v.rules);
       return json({count:products.length,sample:products.slice(0,10),adminBypass:profile.role==='admin'});
     }
-    if(req.method==='GET'&&path==='admin/users'){const rows=await query(table('users').select('*').order('login'));return json({users:rows.map(cleanUser)});}
+    if(req.method==='GET'&&path==='admin/dashboard'){
+      const counts:any={};if(user.permissions.includes('orders:read'))for(const state of ['new','confirmed','in_progress','completed','rejected']){const r=await table('orders').select('id',{count:'exact',head:true}).eq('status',state);if(r.error)fail(500,'Չհաջողվեց հաշվել պատվերները');counts[state]=r.count;}
+      const state=await query(table('state').select('version').eq('id',true).single());
+      return json({counts,priceVersion:state.version,scope:user.adminScope,mfaVerified});
+    }
+    if(req.method==='POST'&&path==='admin/users/scope'){
+      const p=await body(req);if(p.id===user.id||!scopePermissions[p.scope])fail(400,'Սեփական իրավունքը կամ անհայտ դերը փոխել չի կարելի');
+      const target=await query(table('users').select('id,profile').eq('id',p.id).single());if(target.profile.role!=='admin')fail(400,'Ընտրեք ադմինիստրատոր');
+      await query(table('admin_scopes').upsert({user_id:p.id,scope:p.scope}));await query(table('sessions').delete().eq('user_id',p.id));await audit(user.id,'admin_scope_update',JSON.stringify({target:{id:p.id},scope:p.scope}));return json({ok:true});
+    }
+    if(req.method==='POST'&&path==='admin/security/enroll'){
+      const p=await body(req),client=authClient(),r=await client.auth.signInWithPassword({email:email(user.login),password:String(p.password||'')});
+      if(r.error||r.data.user?.id!==user.id)fail(401,'Գաղտնաբառը սխալ է');
+      const factors=await client.auth.mfa.listFactors();if(factors.error)fail(500,'Չհաջողվեց ստուգել երկրորդ գործոնը');const factor=factors.data.totp.find((f:any)=>f.status==='verified');
+      if(factor){await client.auth.signOut({scope:'local'});fail(409,'Երկփուլ պաշտպանությունն արդեն միացված է');}
+      return json(await security.stage({id:user.id},r.data.session,'enroll'));
+    }
+    if(req.method==='POST'&&path==='admin/users/invitation'){
+      const p=await body(req),target=await query(table('users').select('id,needs_password_setup').eq('id',p.id).single());
+      if(!target.needs_password_setup)fail(409,'Հաշիվն արդեն ակտիվացված է․ անհրաժեշտության դեպքում վերակայեք գաղտնաբառը');
+      await query(table('sessions').delete().eq('user_id',target.id));return json({invitation:await security.invite(target.id,user.id)});
+    }
+    if(req.method==='GET'&&path==='admin/users'){const rows=await query(table('users').select('*').order('login'));const scopes=await query(table('admin_scopes').select('*'));return json({users:rows.map((r:any)=>({...cleanUser(r),adminScope:scopes.find((x:any)=>x.user_id===r.id)?.scope||'owner'}))});}
     if(req.method==='POST'&&path==='admin/users')return json(await saveUser(await body(req),user.id));
     if(req.method==='POST'&&path==='admin/users/reset-password'){
       const p=await body(req),target=await query(table('users').select('*').eq('id',p.id).maybeSingle());
@@ -250,7 +299,7 @@ export async function handle(req:Request){
       const result=await service.auth.admin.updateUserById(target.id,{password:randomPassword()});
       if(result.error)fail(400,'Չհաջողվեց վերակայել գաղտնաբառը');
       await query(table('users').update({needs_password_setup:true,password_setup_claim:null}).eq('id',target.id));
-      await audit(user.id,'password_setup_reset',JSON.stringify({target:{id:target.id,login:target.login,client:target.profile.client}}));return json({ok:true});
+      await audit(user.id,'password_setup_reset',JSON.stringify({target:{id:target.id,login:target.login,client:target.profile.client}}));return json({ok:true,invitation:await security.invite(target.id,user.id)});
     }
     if(req.method==='POST'&&path==='admin/users/delete'){
       const p=await body(req),target=await query(table('users').select('id,login,profile').eq('id',p.id).maybeSingle());
@@ -270,9 +319,9 @@ export async function handle(req:Request){
       return json({active:state?.version,versions:versions.map((v:any)=>({...v,created:Date.parse(v.created)/1000}))});
     }
     if(req.method==='POST'&&path==='admin/price/preview'){
-      const products=parsePrice(await uploadRows(req));
+      const products=parsePrice(await uploadRows(req));let prior:any[]=[];try{prior=(await current()).products;}catch(e:any){if(e.code!==409)throw e;}const difference=priceDifference(prior,products);
       const d=await query(table('drafts').insert({actor:user.id,kind:'price',payload:products}).select('id').single());
-      await audit(user.id,'price_preview',String(products.length));return json({draft:d.id,count:products.length,sample:products.slice(0,5)});
+      await audit(user.id,'price_preview',String(products.length));return json({draft:d.id,count:products.length,sample:products.slice(0,5),difference});
     }
     if(req.method==='POST'&&path==='admin/price/publish'){
       const p=await body(req);await draft(p.draft,user.id,'price');

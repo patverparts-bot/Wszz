@@ -27,18 +27,19 @@ function table(headers, rows) {
 }
 function button(label, callback) { const b = document.createElement('button'); b.type='button'; b.textContent = label; b.onclick = () => run(callback); return b; }
 async function run(fn) { try { await fn(); } catch(e) { status(e.message, true); } }
-const adminTabs=['orders','price','users','rules','audit','storage'];
+const adminTabs=['dashboard','orders','price','users','rules','audit','storage'];
 function rememberedAdminTab(){
   const linked=new URLSearchParams(location.hash.slice(1)).get('tab');if(adminTabs.includes(linked))return linked;
   try{const saved=sessionStorage.getItem('zzws_admin_tab_v1');if(adminTabs.includes(saved))return saved;}catch{}
-  return 'price';
+  return 'dashboard';
 }
 async function selectAdminTab(name){
-  if(!adminTabs.includes(name))name='price';
+  if(!adminTabs.includes(name)||!ZZWS_ADMIN_HOME.can(name))name='dashboard';
   for(const section of adminTabs)el(section).hidden=section!==name;
   document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('admin-tab-active',b.dataset.tab===name);b.setAttribute('aria-current',b.dataset.tab===name?'page':'false');});
   try{sessionStorage.setItem('zzws_admin_tab_v1',name);}catch{}
   history.replaceState(null,'',location.pathname+location.search+'#tab='+name);
+  if(name==='dashboard')await ZZWS_ADMIN_HOME.load();
   if(name==='audit')await loadAudit();
   if(name==='storage')await ZZWS_STORAGE.load();
   if(name==='orders')await ZZWS_ADMIN_ORDERS.load();
@@ -47,19 +48,20 @@ async function enter() {
   let user = await api('me');
   if(user.needsPasswordSetup){user=await requirePasswordSetup(user);if(!user){showLogin();return;}}
   if (user.role !== 'admin') { showLogin();const e=new Error('Անհրաժեշտ է ադմինիստրատորի հաշիվ');e.status=403;throw e; }
+  ZZWS_ADMIN_HOME.setUser(user);
   const activeTab=rememberedAdminTab();for(const section of adminTabs)el(section).hidden=section!==activeTab;
   el('login').hidden = true; el('workspace').hidden = false; el('logout').hidden = false;
   catalogPairs=(await api('admin/catalog-options')).pairs;
   ZZWS_ADMIN_ORDERS.start();
-  await Promise.all([loadVersions(), loadUsers(),loadGroupRules()]);await selectAdminTab(activeTab);finishSessionLoading(); status('Մուտք եք գործել որպես ' + user.client);
+  const permissions=user.permissions||['price:read','users','rules'];await Promise.all([...(permissions.includes('price:read')?[loadVersions()]:[]),...(permissions.includes('users')?[loadUsers()]:[]),...(permissions.includes('rules')?[loadGroupRules()]:[])]);await selectAdminTab(activeTab);finishSessionLoading(); status('Մուտք եք գործել որպես ' + user.client);
 }
-el('loginForm').onsubmit = e => { e.preventDefault(); run(async () => { await api('login', {method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(e.target)))}); e.target.reset(); await enter(); }); };
+el('loginForm').onsubmit = e => { e.preventDefault(); run(async () => { await completeSecureLogin(await api('login', {method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(e.target)))})); e.target.reset(); await enter(); }); };
 el('logout').onclick = () => run(async () => { await api('logout',{method:'POST'}); showLogin(); status('Դուք դուրս եք եկել'); });
 document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => run(()=>selectAdminTab(b.dataset.tab)));
 el('priceForm').onsubmit = e => { e.preventDefault(); run(async () => {
   draft = null; el('preview').hidden = true; status('Ֆայլը ստուգվում է…');
   const d = await api('admin/price/preview',{method:'POST',body:new FormData(e.target)});
-  draft = d.draft; el('summary').textContent = `Ստուգված ապրանքներ՝ ${d.count}։ Առաջին հինգ տողերը՝`;
+  draft = d.draft;const difference=d.difference;el('priceDifference').textContent=difference?'Ավելացված՝ '+difference.added+' · հեռացված՝ '+difference.removed+' · գինը փոխված՝ '+difference.changed+' · անփոփոխ՝ '+difference.unchanged:'';el('priceWarnings').replaceChildren(...(difference?.warnings||[]).map(w=>{const p=document.createElement('p');p.textContent=w.articul+' · '+w.name+' · '+w.source+': '+w.before+' → '+w.after+' ('+w.percent+'%)';return p;})); el('summary').textContent = `Ստուգված ապրանքներ՝ ${d.count}։ Առաջին հինգ տողերը՝`;
   el('sample').replaceChildren(table(['Արտիկուլ','Բրենդ','Անվանում','WS','KP'],d.sample.map(p => [p.articul,p.brand,p.name,p.ws,p.kpPromo||p.kp])));
   el('preview').hidden = false; status('Ֆայլը ստուգված է։ Գործող գնացուցակը դեռ չի փոխվել։');
 }); };
@@ -91,17 +93,19 @@ function editUser(user = {}) {
   f.elements.password.required = false;
   f.elements.password.disabled=!user.id||user.needsPasswordSetup;
   f.elements.password.placeholder=!user.id||user.needsPasswordSetup?'Օգտատերը գաղտնաբառը կսահմանի առաջին մուտքի ժամանակ':'Թողեք դատարկ՝ ընթացիկը պահպանելու համար';
-  el('resetUserPassword').hidden=!user.id;
-  el('passwordSetupState').textContent=!user.id||user.needsPasswordSetup?'Առաջին մուտք՝ միայն մուտքանուն, այնուհետև սեփական գաղտնաբառի սահմանում։':'Օգտատերն արդեն սահմանել է գաղտնաբառը։';
+  el('adminScopePanel').hidden=!user.id||user.role!=='admin';el('adminScope').value=user.adminScope||'owner';
+  el('resetUserPassword').hidden=!user.id;el('issueInvitation').hidden=!user.id||!user.needsPasswordSetup;
+  el('passwordSetupState').textContent=!user.id||user.needsPasswordSetup?'Առաջին մուտք՝ մուտքանունով և մեկանգամյա հրավերի կոդով։':'Օգտատերն արդեն սահմանել է գաղտնաբառը։';
   f.scrollIntoView({behavior:'smooth'});
 }
 el('resetUserPassword').onclick=()=>run(async()=>{
   if(!editingUserId)return;
   const target=users.find(u=>u.id===editingUserId);
-  if(!confirm('Վերակայել գաղտնաբառը '+target.login+'։ Բոլոր աշխատաշրջանները կավարտվեն։ Հաջորդ մուտքը կլինի միայն մուտքանունով՝ նոր գաղտնաբառի պարտադիր սահմանմամբ։ Մինչև կարգավորումը մուտքանունն իմացող ցանկացած անձ կարող է սահմանել այն։'))return;
-  await api('admin/users/reset-password',{method:'POST',body:JSON.stringify({id:editingUserId})});
-  await loadUsers();editUser(users.find(u=>u.id===editingUserId));status('Գաղտնաբառը վերակայված է։ Օգտատերը պետք է անմիջապես մուտք գործի մուտքանունով և սահմանի նոր գաղտնաբառ։');
+  if(!confirm('Վերակայել գաղտնաբառը '+target.login+'։ Բոլոր աշխատաշրջանները կավարտվեն։ Կստեղծվի 48 ժամ գործող մեկանգամյա հրավեր։'))return;
+  const reset=await api('admin/users/reset-password',{method:'POST',body:JSON.stringify({id:editingUserId})});showInvitation(target.login,reset.invitation);
+  await loadUsers();editUser(users.find(u=>u.id===editingUserId));status('Գաղտնաբառը վերակայված է։ Փոխանցեք մեկանգամյա հրավերը օգտատիրոջը՝ նոր գաղտնաբառ սահմանելու համար։');
 });
+el('issueInvitation').onclick=()=>run(async()=>{const target=users.find(u=>u.id===editingUserId);if(!target)return;const data=await api('admin/users/invitation',{method:'POST',body:JSON.stringify({id:target.id})});showInvitation(target.login,data.invitation);});
 el('newUser').onclick = () => editUser(); el('cancelUser').onclick = () => { el('userForm').hidden = true; };
 el('usersImportForm').onsubmit = e => { e.preventDefault(); run(async () => {
   userDraft = null; el('usersPreview').hidden = true;
@@ -141,7 +145,7 @@ el('previewUserAccess').onclick=()=>run(async()=>{
 });
 el('userForm').onsubmit = e => { e.preventDefault(); run(async () => {
   const p=userPayload();
-  await api('admin/users',{method:'POST',body:JSON.stringify(p)}); e.target.reset(); e.target.hidden = true;
+  const saved=await api('admin/users',{method:'POST',body:JSON.stringify(p)});if(saved.invitation)showInvitation(p.login,saved.invitation); e.target.reset(); e.target.hidden = true;
   await loadUsers(); status('Օգտատերը պահպանված է։ Նախկին աշխատաշրջանները դադարեցված են։');
 }); };
 async function loadAudit(){

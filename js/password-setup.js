@@ -13,7 +13,7 @@
         e.preventDefault();const f=e.target,msg=f.querySelector('[role=alert]'),b=f.querySelector('[type=submit]');msg.textContent='';
         if(f.elements.password.value!==f.elements.confirm.value){msg.textContent='Գաղտնաբառերը չեն համընկնում';return;}
         b.disabled=true;
-        try{const result=await ZZWS.json('account/password',{method:'POST',body:JSON.stringify({password:f.elements.password.value})});f.reset();dialog.close();pending(result);pending=null;}
+        try{const response=await ZZWS.json('account/password',{method:'POST',body:JSON.stringify({password:f.elements.password.value})});const result=await completeSecureLogin(response);f.reset();dialog.close();pending(result);pending=null;}
         catch(error){msg.textContent=error.message;}finally{b.disabled=false;}
       };
     }

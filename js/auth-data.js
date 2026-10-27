@@ -40,7 +40,7 @@ async function checkPassword() {
   try {
     const user = await secureApi('login', {method:'POST',body:JSON.stringify({
       login:document.getElementById('loginInput').value.trim(),password:document.getElementById('passwordInput').value})});
-    await acceptIdentity(user);
+    await acceptIdentity(await completeSecureLogin(user));
   } catch(e) { errorMsg.textContent = e.message; errorMsg.classList.remove('hidden'); }
 }
 

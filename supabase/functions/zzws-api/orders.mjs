@@ -1,7 +1,5 @@
 export const statuses={new:'Նոր',confirmed:'Հաստատված',in_progress:'Ընթացքում',completed:'Ավարտված',rejected:'Մերժված'};
 const text=(v,n=300)=>String(v??'').trim().slice(0,n);
-export const cash='Կանխիկ',bank='Բանկային փոխանցումով';
-export function payment(value){if([cash,'Наличные','cash'].includes(value))return cash;if([bank,'Безналичный','bank',''].includes(value??''))return bank;throw new Error('Անհայտ վճարման եղանակ');}
 export function deliverySnapshot(p,user){
  const out={};for(const key of ['organization','address','contact','method','date','comment'])out[key]=text(p?.[key],key==='comment'?2000:300);
  out.organization=out.organization||user.client;return out;
@@ -16,30 +14,30 @@ export function normalizeLines(raw,products,old=[],admin=false,mode='WS'){
   const source=product||prior,serverPrice=mode==='KP'&&source.kpPrice!==undefined?source.kpPrice:source.wholesale;
   const unitPrice=admin?Number(input.unitPrice??prior?.unitPrice??serverPrice):Number(serverPrice);
   if(!Number.isFinite(unitPrice)||unitPrice<=0||unitPrice>1e10)throw new Error('Հասանելի գին չկա՝ '+articul);
-  return {articul,name:text(source.name,500),brand:text(source.brand),category:text(source.category),qty,unitPrice,paymentMethod:payment(input.paymentMethod??prior?.paymentMethod??bank)};
+  return {articul,name:text(source.name,500),brand:text(source.brand),category:text(source.category),qty,unitPrice};
  });
 }
 export const totalOf=lines=>{const total=Number(lines.reduce((sum,p)=>sum+p.qty*p.unitPrice,0).toFixed(2));if(!Number.isFinite(total)||total>1e14)throw new Error('Պատվերի գումարը չափազանց մեծ է');return total;};
 export function changesBetween(before,after){
  const a=new Map(before.map(p=>[p.articul,p])),b=new Map(after.map(p=>[p.articul,p])),changes=[];
  for(const row of before)if(!b.has(row.articul))changes.push({articul:row.articul,name:row.name,kind:'removed',before:row,after:null});
- for(const row of after){const prev=a.get(row.articul);if(!prev)changes.push({articul:row.articul,name:row.name,kind:'added',before:null,after:row});else if(['qty','unitPrice','paymentMethod'].some(key=>prev[key]!==row[key]))changes.push({articul:row.articul,name:row.name,kind:'changed',before:prev,after:row});}
+ for(const row of after){const prev=a.get(row.articul);if(!prev)changes.push({articul:row.articul,name:row.name,kind:'added',before:null,after:row});else if(['qty','unitPrice'].some(key=>prev[key]!==row[key]))changes.push({articul:row.articul,name:row.name,kind:'changed',before:prev,after:row});}
  return changes;
 }
 const header=v=>text(v).toLowerCase().replace(/[\s_().:՝-]/g,'');
 function parseSimpleFinalOrder(rows){
- const names={articul:['артикул','articul','sku','код','արտիկուլ'],qty:['количество','колво','qty','քանակհատ','քանակ'],unitPrice:['цена','ценазаединицу','unitprice','մեծածախգինamd','միավորիգին','գին'],paymentMethod:['оплата','paymentmethod','վճարմանեղանակ','վճարում']};
+ const names={articul:['артикул','articul','sku','код','արտիկուլ'],qty:['количество','колво','qty','քանակհատ','քանակ'],unitPrice:['цена','ценазаединицу','unitprice','մեծածախգինamd','միավորիգին','գին']};
  let start=-1,columns={};
  for(let i=0;i<Math.min(rows.length,40);i++){const normalized=rows[i].map(header),mapping={};for(const [key,variants] of Object.entries(names))mapping[key]=normalized.findIndex(v=>variants.includes(v));if(mapping.articul>=0&&mapping.qty>=0){start=i;columns=mapping;break;}}
  if(start<0)throw new Error('«Արտիկուլ» և «Քանակ» սյունակները չեն գտնվել։ Օգտագործեք ձևանմուշը');
  const result=[],seen=new Set();
  for(const row of rows.slice(start+1)){
   const articul=text(row[columns.articul],100);if(!articul)continue;
-  if(/^(итого|всего|total|ընդհանուր|գնացուցակի|կազմակերպություն|կոնտրագենտ|առաքման|մեկնաբանություն|կոնտակտային)/i.test(articul))continue;
+  if(/^(итого|всего|total|ընդհանուր|ընդամենը|գնացուցակի|կազմակերպություն|կոնտրագենտ|առաքման|մեկնաբանություն|կոնտակտային)/i.test(articul))continue;
   if(seen.has(articul))throw new Error('Ֆայլում կրկնվող արտիկուլ՝ '+articul);seen.add(articul);
   const qty=reportNumber(row[columns.qty]);if(qty===0)continue;if(!Number.isInteger(qty)||qty<1||qty>9999)throw new Error('Սխալ քանակ՝ '+articul);
   const input={articul,qty};if(columns.unitPrice>=0&&row[columns.unitPrice]!=null&&String(row[columns.unitPrice]).trim()!=='')input.unitPrice=reportNumber(row[columns.unitPrice]);
-  if(columns.paymentMethod>=0&&row[columns.paymentMethod]!=null)input.paymentMethod=payment(row[columns.paymentMethod]);result.push(input);
+  result.push(input);
  }
  if(!result.length)throw new Error('Վերջնական պատվերում դիրքեր չկան');if(result.length>500)throw new Error('Թույլատրվում է մինչև 500 դիրք');return result;
 }

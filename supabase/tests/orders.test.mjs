@@ -1,16 +1,16 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {normalizeLines,totalOf,changesBetween,parseConfirmation,parsePastedConfirmation,reportNumber,bank} from '../functions/zzws-api/orders.mjs';
+import {normalizeLines,totalOf,changesBetween,parseConfirmation,parsePastedConfirmation,reportNumber} from '../functions/zzws-api/orders.mjs';
 const products=[{articul:'001',name:'First',wholesale:100,retail:150,kpPrice:90},{articul:'002',name:'Second',wholesale:200}];
 test('customer order prices always come from permitted catalogue',()=>{
  const rows=normalizeLines([{articul:'001',qty:2,unitPrice:1}],products);assert.equal(rows[0].unitPrice,100);assert.equal(totalOf(rows),200);
  assert.throws(()=>normalizeLines([{articul:'private',qty:1}],products));
  assert.equal(normalizeLines([{articul:'001',qty:1}],products,[],false,'KP')[0].unitPrice,90);
 });
-test('quantities, duplicate articles, prices and payment are validated',()=>{
+test('quantities and prices are validated; obsolete payment is ignored',()=>{
  for(const qty of [0,-1,1.2,10000])assert.throws(()=>normalizeLines([{articul:'001',qty}],products));
  assert.throws(()=>normalizeLines([{articul:'001',qty:1},{articul:'001',qty:2}],products));
  assert.throws(()=>normalizeLines([{articul:'001',qty:1,unitPrice:0}],products,[],true));
- assert.throws(()=>normalizeLines([{articul:'001',qty:1,paymentMethod:'unknown'}],products));
+ assert.ok(!Object.hasOwn(normalizeLines([{articul:'001',qty:1,paymentMethod:'unknown'}],products)[0],'paymentMethod'));
 });
 test('manual and file finalization detect removed, added and changed lines',()=>{
  const before=normalizeLines([{articul:'001',qty:2}],products);
@@ -41,3 +41,5 @@ test('plain tables preserve leading zeros and accept formatted numbers',()=>{
  for(const [raw,expected] of [['900.00',900],['9 000',9000],['1.234,50',1234.5]])assert.equal(reportNumber(raw),expected);
  assert.throws(()=>parsePastedConfirmation('not a table'));assert.throws(()=>parsePastedConfirmation('Артикул\tКоличество\n001\t1\n001\t2'));
 });
+
+test('current Armenian confirmation export round trips while legacy payment columns are ignored',()=>{const result=parseConfirmation([['Արտիկուլ','Քանակ','Գին','Վճարում'],['001',2,90,'obsolete'],['Ընդամենը','','',180]]);assert.equal(result.lines.length,1);assert.equal(result.lines[0].unitPrice,90);assert.ok(!Object.hasOwn(result.lines[0],'paymentMethod'));});

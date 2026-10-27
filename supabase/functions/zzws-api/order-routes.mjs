@@ -26,12 +26,15 @@ export async function orderRoutes(c){
  if(!path.startsWith('admin/orders'))return null;
  if(user.role!=='admin')fail(403,'Հասանելիությունն արգելված է');
  if(path==='admin/orders'&&req.method==='GET'){
-  const params=new URL(req.url).searchParams,status=params.get('status'),before=params.get('before');let q=table('orders').select('*').order('number',{ascending:false}).limit(100);if(status&&statuses[status])q=q.eq('status',status);if(before&&/^\d+$/.test(before))q=q.lt('number',before);return json({orders:await query(q)});
+  const params=new URL(req.url).searchParams,status=params.get('status'),before=params.get('before');let q=table('orders').select('*').order('number',{ascending:false}).limit(100);if(status&&statuses[status])q=q.eq('status',status);
+  const search=String(params.get('search')||'').replace(/[^\p{L}\p{N} ._-]/gu,'').trim().slice(0,100);if(search){const terms=['customer->>client.ilike.*'+search+'*','customer->>login.ilike.*'+search+'*','delivery->>organization.ilike.*'+search+'*'];if(/^\d+$/.test(search)&&search.length<16)terms.push('number.eq.'+search);q=q.or(terms.join(','));}
+  for(const [param,column] of [['from','gte'],['to','lt']]){const date=params.get(param);if(date&&/^\d{4}-\d{2}-\d{2}$/.test(date)){const stamp=new Date(date+'T00:00:00+04:00');if(!Number.isNaN(stamp.valueOf()))q=q[column]('created',new Date(stamp.valueOf()+(param==='to'?86400000:0)).toISOString());}}
+  if(before&&/^\d+$/.test(before))q=q.lt('number',before);return json({orders:await query(q)});
  }
- if(path==='admin/orders/template'&&req.method==='GET')return file([['Արտիկուլ','Քանակ','Գին','Վճարում'],['014676',1,'','Բանկային փոխանցումով']],'Final-order-template.xlsx');
+ if(path==='admin/orders/template'&&req.method==='GET')return file([['Արտիկուլ','Քանակ','Գին'],['014676',1,'']],'Final-order-template.xlsx');
  if(path==='admin/orders/detail'&&req.method==='POST'){const p=await body(req),o=await order(p.id,true);return json({...o,events:await query(table('order_events').select('detail,created,revision').eq('order_id',o.id).order('revision',{ascending:false}).limit(50))});}
  if(path==='admin/orders/export'&&req.method==='POST'){
-  const p=await body(req),o=await order(p.id,true);return file([['Պատվեր',o.number,'Կարգավիճակ',statuses[o.status]],['Արտիկուլ','Անվանում','Քանակ','Գին','Գումար','Վճարում'],...o.lines.map(row=>[row.articul,row.name,row.qty,row.unitPrice,row.qty*row.unitPrice,row.paymentMethod]),['Ընդամենը','','','',o.total]],'Order-'+o.number+'.xlsx');
+  const p=await body(req),o=await order(p.id,true);return file([['Պատվեր',o.number,'Կարգավիճակ',statuses[o.status]],['Արտիկուլ','Անվանում','Քանակ','Գին','Գումար'],...o.lines.map(row=>[row.articul,row.name,row.qty,row.unitPrice,row.qty*row.unitPrice]),['Ընդամենը','','','',o.total]],'Order-'+o.number+'.xlsx');
  }
  const prepare=async(o,raw)=>{
   const customer=o.user_id?await query(table('users').select('*').eq('id',o.user_id).maybeSingle()):null;

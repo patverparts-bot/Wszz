@@ -16,7 +16,6 @@ function normalizeCart(raw) {
       qty: qty,
       addedPrice: Number(v.addedPrice) || 0,
       addedPriceMode: v.addedPriceMode === 'KP' ? 'KP' : 'WS',
-      paymentMethod: v.paymentMethod === 'Կանխիկ' ? 'Կանխիկ' : 'Բանկային փոխանցումով'
     };
   });
   return out;
@@ -74,7 +73,6 @@ function addToCart(articul) {
       qty: 1, 
       addedPrice: getItemWholesalePrice({ articul: articul }),
       addedPriceMode: isAdminUser() ? adminOrderPriceMode : 'WS',
-      paymentMethod: globalMethod 
     };
   } else {
     cart[articul].qty = Math.min(cart[articul].qty + 1, MAX_QTY);
@@ -91,7 +89,7 @@ function setDirectQty(articul, newQty) {
     if (!cart[articul]) {
       const p = getProduct(articul);
       if (!p) return;
-      cart[articul] = { articul: articul, qty: newQty, addedPrice: getItemWholesalePrice({ articul: articul }), addedPriceMode: isAdminUser() ? adminOrderPriceMode : 'WS', paymentMethod: 'Բանկային փոխանցումով' };
+      cart[articul] = { articul: articul, qty: newQty, addedPrice: getItemWholesalePrice({ articul: articul }), addedPriceMode: isAdminUser() ? adminOrderPriceMode : 'WS' };
     } else {
       cart[articul].qty = newQty;
     }
@@ -218,11 +216,7 @@ function clearOrder() {
   refreshAllActions();
 }
 
-function applyGlobalPayment(method) {
-  Object.values(cart).forEach(item => item.paymentMethod = method);
-  saveCartToStorage();
-  renderModalItems();
-}
+
 
 function populateOrderModalFields() {
   const orgSelect = document.getElementById('organizationSelect');
@@ -268,9 +262,6 @@ function renderModalItems() {
     const sum = currentPrice * item.qty;
     totalSum += sum;
 
-    if (!item.paymentMethod) {
-      item.paymentMethod = 'Բանկային փոխանցումով';
-    }
 
     const prod = getProduct(item.articul);
     const stockStatus = (prod && prod.stockStatus) ? prod.stockStatus : 'Առկա է';
@@ -300,10 +291,6 @@ function renderModalItems() {
           <button type="button" data-act="mqty" data-delta="1" data-art="${escapeHtml(articul)}" aria-label="Ավելացնել քանակը">+</button>
         </div><span class="print-only">${item.qty}</span></div>
         <div class="basket-line-total"><span class="basket-field-label">Ընդհանուր գումար</span><strong>${sum.toLocaleString('hy-AM')} ֏</strong></div>
-        <label class="basket-payment print-hidden"><span class="basket-field-label">Վճարման եղանակ</span><select data-act="pay" data-art="${escapeHtml(articul)}" aria-label="Վճարման եղանակ ապրանքի համար">
-          <option value="Բանկային փոխանցումով" ${item.paymentMethod === 'Բանկային փոխանցումով' ? 'selected' : ''}>Բանկային փոխանցումով</option>
-          <option value="Կանխիկ" ${item.paymentMethod === 'Կանխիկ' ? 'selected' : ''}>Կանխիկ</option>
-        </select></label><div class="print-only">Վճարում՝ ${escapeHtml(item.paymentMethod)}</div>
       </div>`;
     listContainer.appendChild(div);
   });
@@ -330,12 +317,7 @@ function openOrderModal() {
   document.getElementById('orderModal').classList.remove('hidden');
 }
 
-function updateItemPayment(articul, method) {
-  if (cart[articul]) {
-    cart[articul].paymentMethod = method;
-    saveCartToStorage();
-  }
-}
+
 
 function changeQty(articul, delta) {
   if (!cart[articul]) return;
@@ -391,7 +373,7 @@ function getSelectedOrganizationName() {
 function buildHistorySnapshot(cartItems) {
   const snap = {};
   Object.entries(cartItems).forEach(([k, it]) => {
-    snap[k] = { articul: it.articul, qty: it.qty, paymentMethod: it.paymentMethod, name: getItemName(it), price: getItemWholesalePrice(it) };
+    snap[k] = { articul: it.articul, qty: it.qty, name: getItemName(it), price: getItemWholesalePrice(it) };
   });
   return snap;
 }
@@ -521,7 +503,6 @@ function restoreOrderFromHistory(orderId) {
           qty: item.qty || 1,
           addedPrice: getItemWholesalePrice({ articul: art }),
           addedPriceMode: isAdminUser() ? adminOrderPriceMode : 'WS',
-          paymentMethod: item.paymentMethod || 'Բանկային փոխանցումով'
         };
         count++;
       }

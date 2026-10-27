@@ -12,10 +12,11 @@
     if(response.status===401)sessionStorage.removeItem(key);
     return response;
   }
-  async function json(path,options={}){
+  async function json(path,options={},retried=false){
     const response=await request(path,options);let data;try{data=await response.json();}catch{throw new Error('Սերվերը վերադարձրել է սխալ պատասխան։');}
+    if(response.status===428&&data.reauthRequired&&!retried&&window.requireReauthentication){await window.requireReauthentication();return json(path,options,true);}
     if(!response.ok){const error=new Error(data.error||'Հարցման սխալ');error.status=response.status;error.data=data;throw error;}
-    if(['login','account/password'].includes(path)&&data.sessionToken){sessionStorage.setItem(key,data.sessionToken);delete data.sessionToken;}
+    if(['login','login/mfa','account/password'].includes(path)&&data.sessionToken){sessionStorage.setItem(key,data.sessionToken);delete data.sessionToken;}
     if(path==='logout')sessionStorage.removeItem(key);
     return data;
   }

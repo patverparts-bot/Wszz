@@ -10,7 +10,7 @@
   const persist=()=>{if(!owner)return;try{localStorage.setItem(key(),JSON.stringify(pending));}catch{banner('Չհաջողվեց պահպանել տեղային պատճենը։ Մի փակեք էջը մինչև համաժամացումը։',true);}};
   function read(){
     const draft={};for(const id of fields)draft[id]=document.getElementById(id)?.value||'';
-    return {cart:copy(cart),favorites:[...favoritesSet],history:cache('history',[]),filters:cache('filters',{}),preferences:{theme:localStorage.getItem('zigzag_theme')||'light',filtersOpen:localStorage.getItem('zigzag_filters_open_'+userStorageId())||'false',priceMode:adminOrderPriceMode},draft};
+    return {cart:copy(cart),favorites:[...favoritesSet],history:cache('history',[]),filters:cache('filters',{}),preferences:{theme:localStorage.getItem('zigzag_theme')||'light',filtersOpen:localStorage.getItem('zigzag_filters_open_'+userStorageId())||'false',priceMode:adminOrderPriceMode,hiddenColumns:JSON.parse(localStorage.getItem('zigzag_columns_'+userStorageId())||'[]')},draft};
   }
   function apply(section,value,render=true){
     value=value??(['favorites','history'].includes(section)?[]:{});
@@ -26,6 +26,7 @@
     }
     if(section==='history'&&render)renderOrderHistoryList();
     if(section==='preferences'){
+      localStorage.setItem('zigzag_columns_'+userStorageId(),JSON.stringify(value.hiddenColumns||[]));window.ZZWS_COLUMNS?.render();
       const theme=value.theme==='dark'?'dark':'light';localStorage.setItem('zigzag_theme',theme);document.documentElement.classList.toggle('dark',theme==='dark');
       localStorage.setItem('zigzag_filters_open_'+userStorageId(),value.filtersOpen||'false');
       if(render)toggleMobileFilters(value.filtersOpen==='1');

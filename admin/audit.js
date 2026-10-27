@@ -1,5 +1,5 @@
 (() => {
-  const labels={order_submit:['Պատվերն ուղարկված է','orders'],order_update:['Պատվերը փոփոխված է','orders'],user_data_clear:['Օգտատիրոջ տվյալները մաքրված են','users'],password_setup:['Գաղտնաբառը սահմանված է','auth'],password_setup_reset:['Առաջին մուտքը վերականգնված է','users'],bootstrap:['Առաջին ադմինիստրատորը ստեղծված է','users'],login:['Մուտք է գործել կաբինետ կամ կատալոգ','auth'],logout:['Դուրս է եկել համակարգից','auth'],login_failed:['Մուտքի անհաջող փորձ','auth'],user_update:['Օգտատերը փոփոխված է','users'],user_delete:['Օգտատերը ջնջված է','users'],password_reset:['Գաղտնաբառը փոխված է','users'],users_import:['Օգտատերերը ներմուծված են','users'],price_preview:['Գնացուցակի ֆայլը ստուգված է','price'],price_publish:['Նոր գնացուցակը հրապարակված է','price'],price_rollback:['Գնացուցակի տարբերակը վերականգնված է','price'],export:['Անհատական գնացուցակը ներբեռնված է','price'],rules_update:['Խմբերի կանոնները փոփոխված են','rules']};
+  const labels={mfa_enroll:['Երկփուլ պաշտպանությունն ակտիվացված է','auth'],admin_scope_update:['Աշխատակցի իրավունքները փոփոխված են','users'],order_submit:['Պատվերն ուղարկված է','orders'],order_update:['Պատվերը փոփոխված է','orders'],user_data_clear:['Օգտատիրոջ տվյալները մաքրված են','users'],password_setup:['Գաղտնաբառը սահմանված է','auth'],password_setup_reset:['Առաջին մուտքը վերականգնված է','users'],bootstrap:['Առաջին ադմինիստրատորը ստեղծված է','users'],login:['Մուտք է գործել կաբինետ կամ կատալոգ','auth'],logout:['Դուրս է եկել համակարգից','auth'],login_failed:['Մուտքի անհաջող փորձ','auth'],user_update:['Օգտատերը փոփոխված է','users'],user_delete:['Օգտատերը ջնջված է','users'],password_reset:['Գաղտնաբառը փոխված է','users'],users_import:['Օգտատերերը ներմուծված են','users'],price_preview:['Գնացուցակի ֆայլը ստուգված է','price'],price_publish:['Նոր գնացուցակը հրապարակված է','price'],price_rollback:['Գնացուցակի տարբերակը վերականգնված է','price'],export:['Անհատական գնացուցակը ներբեռնված է','price'],rules_update:['Խմբերի կանոնները փոփոխված են','rules']};
   const date=value=>new Intl.DateTimeFormat('hy-AM',{timeZone:'Asia/Yerevan',dateStyle:'short',timeStyle:'medium'}).format(new Date(value));
   const name=user=>user?(user.client&&user.client!==user.login?`${user.client} (${user.login})`:user.login):'Այլևս գոյություն չունեցող հաշիվ';
   function changeText(value){
@@ -19,6 +19,8 @@
       const target=info.target||people.get(row.detail);
       let action=label,description='';
       switch(row.action){
+        case 'mfa_enroll':description='Հաշվի մուտքի համար այժմ պահանջվում է նաև նույնականացնող հավելվածի կոդը։';break;
+        case 'admin_scope_update':description='Աշխատակցի դերը՝ '+({owner:'Սեփականատեր',manager:'Պատվերների մենեջեր',price:'Գնացուցակի օպերատոր',viewer:'Դիտող'}[info.scope]||'փոփոխված է');break;
         case 'bootstrap':description='Կաբինետի սկզբնական կարգավորումն ավարտված է։';break;
         case 'login':description='Օգտատերը հաջողությամբ մուտք է գործել իր հաշիվ։';break;
         case 'logout':description='Օգտատիրոջ աշխատաշրջանն ավարտված է։';break;

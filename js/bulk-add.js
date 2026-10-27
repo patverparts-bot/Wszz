@@ -87,8 +87,6 @@ function previewBulkAdd() {
 
 function confirmBulkAdd() {
   if (bulkAddPreviewItems.length === 0) return;
-  const paymentSelect = document.getElementById('globalPaymentSelect');
-  const paymentMethod = paymentSelect ? paymentSelect.value : 'Բանկային փոխանցումով';
   let added = 0;
   let capped = 0;
 
@@ -106,7 +104,6 @@ function confirmBulkAdd() {
         qty: 1,
         addedPrice: getItemWholesalePrice({ articul }),
         addedPriceMode: isAdminUser() ? adminOrderPriceMode : 'WS',
-        paymentMethod
       };
     }
     added++;

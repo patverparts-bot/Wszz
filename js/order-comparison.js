@@ -12,7 +12,7 @@
  }
  function render(original,current){
   const root=node('div',null,'order-lines-scroll order-comparison'),table=node('table');
-  const header=table.createTHead().insertRow();for(const label of ['Պատվիրված ապրանք','Քանակ','Միավորի գին','Գումար','Վճարում'])header.append(node('th',label));
+  const header=table.createTHead().insertRow();for(const label of ['Պատվիրված ապրանք','Քանակ','Միավորի գին','Գումար'])header.append(node('th',label));
   for(const {before,after} of model(original,current)){
    const row=table.insertRow(),product=before||after;row.dataset.articul=product.articul;if(!after)row.className='comparison-removed';if(!before)row.className='comparison-added';
    const title=row.insertCell(),name=node(after?'strong':'del',product.name);title.append(name,node('small',product.articul));
@@ -20,7 +20,6 @@
    value(row.insertCell(),before?.qty,after?.qty,v=>String(v),!after);
    value(row.insertCell(),before?.unitPrice,after?.unitPrice,money,!after);
    value(row.insertCell(),before?before.qty*before.unitPrice:null,after?after.qty*after.unitPrice:null,money,!after);
-   value(row.insertCell(),before?.paymentMethod,after?.paymentMethod,v=>String(v||''),!after);
   }
   root.append(table);return root;
  }

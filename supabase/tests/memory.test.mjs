@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import fs from 'node:fs';
 import {validateMemory} from '../functions/zzws-api/memory.mjs';
 test('saved carts retain only order fields and numeric quantities',()=>{
- assert.deepEqual({...validateMemory('cart',{a:{qty:2,articul:'a',addedPrice:12,password:'discard',product:{secret:true}}})},{a:{qty:2,articul:'a',addedPrice:12,addedPriceMode:'WS',paymentMethod:''}});
+ assert.deepEqual({...validateMemory('cart',{a:{qty:2,articul:'a',addedPrice:12,password:'discard',product:{secret:true}}})},{a:{qty:2,articul:'a',addedPrice:12,addedPriceMode:'WS'}});
  for(const qty of [-1,0,1.5,1000001,'2'])assert.throws(()=>validateMemory('cart',{a:{qty}}));
 });
 test('memory bounds and section whitelist',()=>{
