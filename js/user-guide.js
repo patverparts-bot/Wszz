@@ -16,7 +16,7 @@
     content.textContent = 'Ուղեցույցը բեռնվում է…';
     loading = (async () => {
       try {
-        const response = await fetch('help/user-guide.html?v=2.62');
+        const response = await fetch('help/user-guide.html?v=2.63');
         if (!response.ok) throw new Error('Guide unavailable');
         const html = await response.text();
         content.innerHTML = html;
@@ -74,9 +74,9 @@
     if (!desktop.matches) tocDetails.open = false;
     requestAnimationFrame(() => {
       const top = content.scrollTop + heading.getBoundingClientRect().top - content.getBoundingClientRect().top - 16;
-      content.scrollTo({ top, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
       heading.tabIndex = -1;
       heading.focus({ preventScroll: true });
+      content.scrollTo({ top, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
     });
   });
   desktop.addEventListener('change', () => { tocDetails.open = desktop.matches; });
