@@ -81,13 +81,10 @@
     stop();owner=user.id;
     const state=await ZZWS.json('me/state');versions=state.versions||{};
     try{pending=JSON.parse(localStorage.getItem(key())||'{}');}catch{pending={};}
-    const legacy={};for(const section of ['cart','favorites','history','filters']){try{legacy[section]=JSON.parse(localStorage.getItem('zigzag_'+suffix[section]+'_'+authorizedClient)||(['favorites','history'].includes(section)?'[]':'{}'));}catch{legacy[section]=['favorites','history'].includes(section)?[]:{ };}}
-    const importLegacy=!Object.keys(state.data).length&&Object.values(legacy).some(v=>v&&Object.keys(v).length)&&confirm('На этом устройстве есть старые локальные данные для «'+authorizedClient+'». Подтвердите, что они принадлежат вам. Перенести корзину, избранное, историю и фильтры в вашу учётную запись на сервере?');
     for(const id of fields){const el=document.getElementById(id);if(el)el.value='';}
     populateOrderModalFields();modalFieldsInitialized=true;
     for(const section of sections){
       let value=state.data[section]??(['favorites','history'].includes(section)?[]:{});
-      if(importLegacy&&Object.hasOwn(legacy,section)&&!pending[section])pending[section]={value:legacy[section],version:versions[section]||0};
       if(pending[section])value=pending[section].value;
       apply(section,value,false);
     }
