@@ -2,7 +2,7 @@
   const sections=['cart','favorites','history','filters','preferences','draft'];
   const suffix={cart:'cart',favorites:'favs',history:'history',filters:'filters'};
   const fields=['organizationSelect','deliveryMethodInput','deliveryDateInput','deliveryAddressInput','contactPersonInput','orderCommentInput'];
-  let owner=null,versions={},baseline={},pending={},timer=null,busy=false,ready=false,pollAt=0,suspended=false;
+  let owner=null,versions={},baseline={},pending={},timer=null,busy=false,ready=false,pollAt=0,suspended=false,clearedUntil=0;
   const copy=v=>JSON.parse(JSON.stringify(v));
   const key=()=>`zzws_pending_${owner}`;
   const cache=(section,fallback)=>{try{return JSON.parse(localStorage.getItem('zigzag_'+suffix[section]+'_'+userStorageId())||JSON.stringify(fallback));}catch{return fallback;}};
@@ -15,7 +15,7 @@
   function apply(section,value,render=true){
     value=value??(['favorites','history'].includes(section)?[]:{});
     if(suffix[section])localStorage.setItem('zigzag_'+suffix[section]+'_'+userStorageId(),JSON.stringify(value));
-    if(section==='cart'){cart=normalizeCart(value);if(render&&catalogLoaded){reconcileCart();updateOrderPanel();refreshAllActions();}}
+    if(section==='cart'){cart=normalizeCart(value);if(render&&catalogLoaded){reconcileCart();updateOrderPanel();refreshAllActions();if(!document.getElementById('orderModal').classList.contains('hidden')){renderModalItems();savedList();}}}
     if(section==='favorites'){favoritesSet=new Set(value);if(render&&catalogLoaded)resetAndRender();}
     if(section==='filters'&&render&&catalogLoaded){
       for(const id of ['searchInput','brandInput','categoryInput'])document.getElementById(id).value='';
@@ -26,12 +26,12 @@
     }
     if(section==='history'&&render)renderOrderHistoryList();
     if(section==='preferences'){
-      if(value.theme){localStorage.setItem('zigzag_theme',value.theme);document.documentElement.classList.toggle('dark',value.theme==='dark');}
+      const theme=value.theme==='dark'?'dark':'light';localStorage.setItem('zigzag_theme',theme);document.documentElement.classList.toggle('dark',theme==='dark');
       localStorage.setItem('zigzag_filters_open_'+userStorageId(),value.filtersOpen||'false');
       if(render)toggleMobileFilters(value.filtersOpen==='1');
       adminOrderPriceMode=value.priceMode==='KP'&&isAdminUser()?'KP':'WS';localStorage.setItem('zigzag_admin_price_mode_'+userStorageId(),adminOrderPriceMode);
     }
-    if(section==='draft'){for(const id of fields){const el=document.getElementById(id);if(el&&Object.hasOwn(value,id))el.value=value[id];}checkDeliveryBadge();}
+    if(section==='draft'){for(const id of fields){const el=document.getElementById(id);if(el)el.value=Object.hasOwn(value,id)?value[id]:id==='organizationSelect'?'0':id==='deliveryMethodInput'?'Առաքում':'';}handleDeliveryMethodChange();checkDeliveryBadge();}
   }
   function capture(){
     if(!ready||suspended||!serverIdentity||owner!==serverIdentity.id)return;
@@ -57,6 +57,7 @@
           else if(pending[section])pending[section].version=result.version;
         }catch(e){
           if(e.status===409){
+            if(e.data.cleared){delete pending[section];versions[section]=e.data.version;suspended=true;apply(section,e.data.value);baseline[section]=read()[section];suspended=false;clearedUntil=Date.now()+30000;persist();continue;}
             const label={cart:'корзина',favorites:'избранное',history:'история',filters:'фильтры',preferences:'настройки',draft:'данные заказа'}[section];
             suspended=true;
             const keep=confirm('На другом устройстве изменены '+label+'. ОК — сохранить данные этого устройства поверх серверных. Отмена — загрузить данные с сервера.');
@@ -66,7 +67,7 @@
           }else throw e;
         }persist();
       }
-      banner(Object.keys(pending).length?'Синхронизация изменений…':'Данные сохранены на сервере');
+      banner(Object.keys(pending).length?'Синхронизация изменений…':clearedUntil>Date.now()?'Данные очищены администратором и обновлены на этом устройстве':'Данные сохранены на сервере');
       if(!Object.keys(pending).length&&Date.now()-pollAt>15000&&!document.hidden){
         pollAt=Date.now();const state=await ZZWS.json('me/state');capture();
         if(owner!==activeOwner)return;

@@ -8,6 +8,7 @@ async function api(path, options = {}) {
   catch(e) { if(e.status === 401) showLogin(); throw e; }
 }
 function showLogin() {
+  window.ZZWS_STORAGE?.reset();
   el('workspace').hidden=true;el('login').hidden=false;el('logout').hidden=true;draft=null;userDraft=null;
   users=[];catalogPairs=[];groupEditors={};groupRevision=null;userAccessEditor=null;editingUserId=null;auditEntries=[];
   for(const id of ['userList','groupRulesEditors','events','userAccessEditor','userAccessPreview','groupRulesPreview','sample','usersChanges','versions'])el(id).replaceChildren();
@@ -33,8 +34,9 @@ async function enter() {
 el('loginForm').onsubmit = e => { e.preventDefault(); run(async () => { await api('login', {method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(e.target)))}); e.target.reset(); await enter(); }); };
 el('logout').onclick = () => run(async () => { await api('logout',{method:'POST'}); showLogin(); status('Вы вышли'); });
 document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => run(async () => {
-  for (const name of ['price','users','rules','audit']) el(name).hidden = name !== b.dataset.tab;
+  for (const name of ['price','users','rules','audit','storage']) el(name).hidden = name !== b.dataset.tab;
   if (b.dataset.tab === 'audit') await loadAudit();
+  if (b.dataset.tab === 'storage') await ZZWS_STORAGE.load();
 }));
 el('priceForm').onsubmit = e => { e.preventDefault(); run(async () => {
   draft = null; el('preview').hidden = true; status('Проверяю файл…');

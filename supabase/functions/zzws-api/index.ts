@@ -199,6 +199,15 @@ export async function handle(req:Request){
     }
     if(!path.startsWith('admin/'))fail(404,'Не найдено');
     if(user.role!=='admin')fail(403,'Доступ запрещён');
+    if(req.method==='GET'&&path==='admin/storage')return json(await query(service.rpc('zzws_storage_report')));
+    if(req.method==='POST'&&path==='admin/storage/clear'){
+      const p=await body(req);
+      if(p.confirm!==true||!['cart','favorites','history','filters','preferences','draft','savedCarts','all'].includes(p.section)||typeof p.revision!=='string')fail(400,'Подтвердите выбранную очистку данных');
+      const result=await service.rpc('zzws_clear_user_data',{p_user:p.targetId,p_section:p.section,p_revision:p.revision,p_actor:user.id});
+      if(result.error?.code==='PT409')fail(409,'Данные пользователя изменились. Обновите отчёт и повторите очистку');
+      if(result.error?.code==='PT404')fail(404,'Пользователь не найден');
+      if(result.error)fail(500,'Не удалось очистить данные');return json(result.data);
+    }
     if(req.method==='GET'&&path==='admin/catalog-options'){
       const v=await current();
       const pairs=[...new Map(v.products.map((p:any)=>[JSON.stringify([p.brand,p.category]),{brand:p.brand,category:p.category}])).values()];

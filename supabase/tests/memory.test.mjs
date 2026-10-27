@@ -15,7 +15,7 @@ test('memory bounds and section whitelist',()=>{
  assert.throws(()=>validateMemory('draft',{text:'x'.repeat(300001)}));
 });
 test('price sorting puts unavailable prices last in both directions',()=>{
- const scope={document:{addEventListener(){}}};vm.createContext(scope);vm.runInContext(fs.readFileSync(new URL('../../js/price-sort.js',import.meta.url),'utf8'),scope);
+ const scope={document:{addEventListener(){}},window:{addEventListener(){}}};vm.createContext(scope);vm.runInContext(fs.readFileSync(new URL('../../js/price-sort.js',import.meta.url),'utf8'),scope);
  const rows=[{articul:'zero',retail:0},{articul:'b',retail:20},{articul:'a',retail:10},{articul:'missing'}];
  assert.deepEqual([...rows].sort((a,b)=>scope.compareProductPrices(a,b,'retail',1)).map(x=>x.articul),['a','b','missing','zero']);
  assert.deepEqual([...rows].sort((a,b)=>scope.compareProductPrices(a,b,'retail',-1)).map(x=>x.articul),['b','a','missing','zero']);

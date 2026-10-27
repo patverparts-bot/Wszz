@@ -230,12 +230,12 @@ let cols = [
   { name: 'Արտիկուլ / Որոնում', sort: 'articul', align: 'text-left' },
   { name: 'Բրենդ', sort: 'brand', align: 'text-left' },
   { name: 'Անվանում', sort: 'name', align: 'text-left' },
-  { name: 'Առկայություն', sort: 'stockStatus', align: 'text-left' },
-  { name: 'Մանրածախ', sort: 'retail', align: 'text-right' }
+  { name: 'Առկայու&shy;թյուն', sort: 'stockStatus', align: 'text-left' },
+  { name: 'Մանրա&shy;ծախ', sort: 'retail', align: 'text-right' }
 ];
 
 if (serverIdentity?.allowResale) {
-  cols.push({ name: 'Վերավաճառքի մեծածախ գին', sort: 'resaleWholesale', align: 'text-right' });
+  cols.push({ name: 'Վերա&shy;վաճառքի մեծա&shy;ծախ գին', sort: 'resaleWholesale', align: 'text-right' });
 }
 
 if (isAdminUser()) {
@@ -245,13 +245,14 @@ if (isAdminUser()) {
   cols.push({ name: 'WS Margin', sort: 'marginVal', align: 'text-center' });
 } else {
   cols.push({ name: '<span class="catalog-margin-heading">Եկամտա&shy;բերություն</span>', sort: 'marginVal', align: 'text-center' });
-  cols.push({ name: 'Մեծածախ (Wholesale)', sort: 'wholesale', align: 'text-right' });
+  cols.push({ name: 'Մեծա&shy;ծախ (Wholesale)', sort: 'wholesale', align: 'text-right' });
 }
-cols.push({ name: 'Գործողություն', align: 'text-center' });
+cols.push({ name: 'Գործո&shy;ղություն', align: 'text-center' });
 
 headerRow.innerHTML = cols.map(c => `<th style="height:48px;max-height:48px;padding:6px 8px;line-height:1.15;vertical-align:middle" class="${thClass} ${c.align}">${c.sort ? `<button type="button" class="column-sort-button" data-sort-column="${c.sort}" title="Սեղմեք՝ փոխելու դասավորությունը"><span>${c.name}</span><span class="sort-arrow" aria-hidden="true">↕</span></button>` : c.name}</th>`).join('');
 document.getElementById('mobileColumnSort').innerHTML='<span class="mobile-sort-label">Սորտավորել՝</span>'+cols.filter(c=>c.sort).map(c=>`<button type="button" data-sort-column="${c.sort}"><span>${c.name}</span><span class="sort-arrow" aria-hidden="true">↕</span></button>`).join('');
 updateColumnSortIndicators();
+requestAnimationFrame(fitCatalogHeadings);
 headerRow.style.setProperty('height', '48px', 'important');
 headerRow.querySelectorAll('th').forEach(th => {
   th.style.setProperty('height', '48px', 'important');
