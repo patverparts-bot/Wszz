@@ -46,22 +46,22 @@ body { font-family: 'Inter', sans-serif; }
 #catalogTable.layout-standard th:nth-child(1) { width: 3%; }
 #catalogTable.layout-standard th:nth-child(2) { width: 11%; }
 #catalogTable.layout-standard th:nth-child(3) { width: 8%; }
-#catalogTable.layout-standard th:nth-child(4) { width: 19%; }
+#catalogTable.layout-standard th:nth-child(4) { width: 25%; }
 #catalogTable.layout-standard th:nth-child(5) { width: 11%; }
 #catalogTable.layout-standard th:nth-child(6) { width: 9%; }
-#catalogTable.layout-standard th:nth-child(7) { width: 11%; }
-#catalogTable.layout-standard th:nth-child(8) { width: 16%; }
+#catalogTable.layout-standard th:nth-child(7) { width: 10%; }
+#catalogTable.layout-standard th:nth-child(8) { width: 11%; }
 #catalogTable.layout-standard th:nth-child(9) { width: 12%; }
 
 #catalogTable.layout-resale th:nth-child(1) { width: 3%; }
 #catalogTable.layout-resale th:nth-child(2) { width: 10%; }
 #catalogTable.layout-resale th:nth-child(3) { width: 7%; }
-#catalogTable.layout-resale th:nth-child(4) { width: 18%; }
+#catalogTable.layout-resale th:nth-child(4) { width: 24%; }
 #catalogTable.layout-resale th:nth-child(5) { width: 9%; }
 #catalogTable.layout-resale th:nth-child(6) { width: 7%; }
 #catalogTable.layout-resale th:nth-child(7) { width: 8%; }
-#catalogTable.layout-resale th:nth-child(8) { width: 9%; }
-#catalogTable.layout-resale th:nth-child(9) { width: 17%; }
+#catalogTable.layout-resale th:nth-child(8) { width: 10%; }
+#catalogTable.layout-resale th:nth-child(9) { width: 10%; }
 #catalogTable.layout-resale th:nth-child(10) { width: 12%; }
 
 #catalogTable.layout-admin th:nth-child(1) { width: 3%; }
@@ -371,3 +371,25 @@ body.zzws-guide-open { overflow: hidden; }
 }
 
 .auth-entry-card:has(.zzws-login-help[open]) { max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; }
+
+/* Keep partner margin and wholesale price columns close, including the resale layout. */
+#catalogTable.layout-standard th:nth-child(8),
+#catalogTable.layout-standard td:nth-child(8),
+#catalogTable.layout-resale th:nth-child(9),
+#catalogTable.layout-resale td:nth-child(9) {
+  text-align: center;
+}
+#catalogTable.layout-standard td:nth-child(8) > span,
+#catalogTable.layout-resale td:nth-child(9) > span {
+  display: inline-block;
+  width: 100%;
+  max-width: 12ch;
+  text-align: right;
+}
+#catalogTable.layout-standard td:nth-child(8) > .flex,
+#catalogTable.layout-resale td:nth-child(9) > .flex {
+  width: 100%;
+  max-width: 12ch;
+  margin-inline: auto;
+  align-items: flex-end;
+}
