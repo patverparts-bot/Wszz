@@ -14,8 +14,7 @@ begin
  if not(g->>'blocked')::boolean then raise exception 'Third order must latch the cycle';end if;
  o=public.zzws_submit_order(uid,req,'{}','{}',line,100);if(o->>'id')::uuid<>ids[1] then raise exception 'Retry must remain idempotent when blocked';end if;
  begin perform public.zzws_submit_order(uid,gen_random_uuid(),'{}','{}',line,100);raise exception 'Fourth order was incorrectly allowed';exception when sqlstate 'PT429' then null;end;
- begin perform public.zzws_confirm_receipt(uid,ids[1],1,true);raise exception 'Undispatched order was confirmed';exception when sqlstate 'PT409' then null;end;
- for i in 1..3 loop o=public.zzws_update_order(ids[i],1,line,'completed','',100,'{}',actor);end loop;
+ for i in 1..3 loop o=public.zzws_update_order(ids[i],1,line,(array['confirmed','in_progress','completed'])[i],'',100,'{}',actor);end loop;
  begin perform public.zzws_confirm_receipt(uid,ids[1],1,true);raise exception 'Stale revision was accepted';exception when sqlstate 'PT409' then null;end;
  begin perform public.zzws_confirm_receipt(other_uid,ids[1],2,true);raise exception 'Another customer confirmed receipt';exception when sqlstate 'PT404' then null;end;
  begin perform public.zzws_confirm_receipt(uid,ids[1],2,false);raise exception 'Attestation was not required';exception when sqlstate 'PT400' then null;end;
@@ -45,6 +44,18 @@ begin
  glob=public.zzws_save_receipt_control(actor,null,'on',null,(glob->>'revision')::uuid);
  for o in select to_jsonb(t) from public.zzws_orders t where user_id=uid and received_at is null loop perform public.zzws_update_order((o->>'id')::uuid,(o->>'revision')::integer,line,'rejected','',100,'{}',actor);end loop;
  if(public.zzws_receipt_state(uid)->>'blocked')::boolean then raise exception 'Rejected orders kept the cycle locked';end if;
+ -- Confirm from every administrator status, including new and rejected, preserving history.
+ for i in 1..5 loop
+  o=public.zzws_submit_order(other_uid,gen_random_uuid(),'{}','{}',line,100);
+  if i>1 then o=public.zzws_update_order((o->>'id')::uuid,1,line,(array['new','confirmed','in_progress','completed','rejected'])[i],'',100,'{}',actor);end if;
+  begin perform public.zzws_confirm_receipt(other_uid,(o->>'id')::uuid,null,true);raise exception 'Missing revision was accepted';exception when sqlstate 'PT409' then null;end;
+  g=public.zzws_confirm_receipt(other_uid,(o->>'id')::uuid,(o->>'revision')::integer,true);
+  if g->>'status'<>'received' or g->'receipt'->>'intact'<>'true' then raise exception 'Receipt rejected administrator status %',o->>'status';end if;
+  if not exists(select 1 from public.zzws_order_events where order_id=(o->>'id')::uuid and detail->>'kind'='receipt' and detail->>'oldStatus'=o->>'status') then raise exception 'Original administrator status was lost';end if;
+  perform public.zzws_confirm_receipt(other_uid,(o->>'id')::uuid,(o->>'revision')::integer,true);
+  if(select count(*) from public.zzws_receipt_notices where order_id=(o->>'id')::uuid)<>1 then raise exception 'Duplicate status receipt notice';end if;
+ end loop;
+
 end $$;
 rollback;
-select 'PASS: receipt cycle, ownership, revisions, idempotency, exemptions, immutable closure and independent admin notices (all fixtures rolled back)' as result;
+select 'PASS: all five administrator statuses, receipt cycle, ownership, revisions, idempotency, exemptions, immutable closure and independent admin notices (all fixtures rolled back)' as result;

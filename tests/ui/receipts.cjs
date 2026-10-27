@@ -9,7 +9,7 @@ const path=require('path');
   const uuid=n=>String(n).padStart(8,'0')+'-1111-4111-8111-111111111111';
   const customer={id:uuid(20),login:'demo.dealer',client:'Ցուցադրական հաճախորդ',role:'client',sheet:'Dealers',active:true,needsPasswordSetup:false,clientCategory:'Dealers',rowsList:[{organization:'Ցուցադրական կազմակերպություն',address:'Ցուցադրական հասցե',contact:'Ցուցադրական կոնտակտ'}]};
   const products=Array.from({length:60},(_,i)=>({articul:String(i+1).padStart(6,'0'),name:['Samsung UE55DU7100','Bosch KGN36','LG F2V5'][i%3]+' / '+(i+1),brand:['Samsung','Bosch','LG'][i%3],category:['Հեռուստացույց','Սառնարան','Լվացքի մեքենա'][i%3],retail:150000+i*1000,wholesale:100000+i*700,marginVal:33,hasWholesale:true,stockStatus:'Առկա է',targetWarehousesStock:1}));
-  const orders=[1,2,3].map(n=>({id:uuid(n),number:100+n,status:'completed',revision:2,created:'2026-10-28T08:00:00Z',updated:'2026-10-28T09:00:00Z',customer,delivery:{organization:customer.rowsList[0].organization,address:customer.rowsList[0].address,contact:customer.rowsList[0].contact,method:'Առաքում'},comment:'Պատրաստ է ստացման հաստատմանը',lines:[{...products[n-1],qty:2,unitPrice:products[n-1].wholesale}],original_lines:[{...products[n-1],qty:3,unitPrice:products[n-1].wholesale},{...products[5],qty:1,unitPrice:products[5].wholesale}],total:2*products[n-1].wholesale,events:[]}));
+  const orders=[1,2,3].map(n=>({id:uuid(n),number:100+n,status:['new','confirmed','in_progress'][n-1],revision:2,created:'2026-10-28T08:00:00Z',updated:'2026-10-28T09:00:00Z',customer,delivery:{organization:customer.rowsList[0].organization,address:customer.rowsList[0].address,contact:customer.rowsList[0].contact,method:'Առաքում'},comment:'Պատրաստ է ստացման հաստատմանը',lines:[{...products[n-1],qty:2,unitPrice:products[n-1].wholesale}],original_lines:[{...products[n-1],qty:3,unitPrice:products[n-1].wholesale},{...products[5],qty:1,unitPrice:products[5].wholesale}],total:2*products[n-1].wholesale,events:[]}));
   let globalSetting={mode:'on',revision:uuid(90)},clientSetting={mode:'inherit',revision:null},notices=[],latched=true,receiptPosts=0;const settingsPosts=[];
   const state=()=>{const pending=orders.filter(o=>o.status!=='received').length;if(!pending)latched=false;const enabled=globalSetting.mode==='on'&&clientSetting.mode!=='off'&&clientSetting.mode!=='until';return {statement,enabled,blocked:enabled&&latched,latched,pendingCount:pending,remaining:latched?0:3-pending,limit:3,outstanding:orders.filter(o=>o.status!=='received').map(({id,number,status})=>({id,number,status})),global:globalSetting,client:clientSetting};};
   async function setup(role='client',scope='owner',width=1440){
@@ -52,7 +52,11 @@ const path=require('path');
   await page.locator('#receiptLimitNotice').waitFor({state:'visible'});assert.ok((await page.locator('#receiptLimitNotice').innerText()).includes('բոլոր 3'));
   await shot(page,'01-catalogue');
   await page.evaluate(()=>{addToCart('000001');addToCart('000002');openOrderModal();});await page.locator('#orderModal').waitFor({state:'visible'});assert.equal(await page.locator('#submitServerOrder').isDisabled(),true);await shot(page,'02-cart');
-  await page.evaluate(()=>{closeOrderModal();openPersonalCabinet();});await page.locator('.server-order-card summary').first().click();
+  await page.evaluate(()=>{closeOrderModal();openPersonalCabinet();});
+  for(const status of ['new','confirmed','in_progress','completed','rejected']){
+   orders[0].status=status;await page.evaluate(()=>{document.querySelectorAll('.server-order-card[open]').forEach(card=>card.open=false);return ZZWS_ORDERS.load();});await page.locator('.server-order-card summary').first().click();await page.locator('.server-order-card').first().getByRole('button',{name:'Հաստատել ապրանքների ստացումը',exact:true}).waitFor();
+  }
+  orders[0].status='new';await page.evaluate(()=>ZZWS_ORDERS.load());
   await page.getByRole('button',{name:'Հաստատել ապրանքների ստացումը',exact:true}).click();await page.locator('#receiptConfirmationDialog').waitFor();
   await page.locator('#receiptConfirmationDialog button[type=submit]').click();assert.equal(receiptPosts,0);await shot(page,'03-receipt-confirmation');
   await page.locator('#receiptConfirmationDialog input[type=checkbox]').check();await page.locator('#receiptConfirmationDialog button[type=submit]').click();
@@ -74,6 +78,6 @@ const path=require('path');
   const viewer=await setup('admin','viewer');assert.equal(await viewer.page.locator('#receiptGlobalPanel').isVisible(),false);assert.equal(await viewer.page.locator('[data-tab=users]').isVisible(),false);
   const mobile=await setup('client','owner',390);await shot(mobile.page,'08-mobile-catalogue');assert.ok(await mobile.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
   for(const context of [client,admin,viewer,mobile]){assert.deepEqual(context.errors,[]);assert.deepEqual(context.csp,[]);}
-  console.log('PASS: receipt acknowledgement, closed proof, three-order latch, cycle unlock, client category, timed/indefinite/global controls, own notice read, viewer rights, mobile layout and CSP');
+  console.log('PASS: receipt from all administrator statuses, acknowledgement, closed proof, three-order latch, cycle unlock, client category, timed/indefinite/global controls, own notice read, viewer rights, mobile layout and CSP');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1);});
