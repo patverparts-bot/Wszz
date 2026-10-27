@@ -6,14 +6,14 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Մեծածախ Ցանկ / Կատալոգ v2.61</title>
+<title>Մեծածախ Ցանկ / Կատալոգ v2.62</title>
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config = { darkMode: 'class' };
 try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.classList.toggle('dark', __t ? __t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches); } catch (e) {}</script>
 <!-- SheetJS (XLSX reader/writer) -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="styles.css?v=2.61">
+<link rel="stylesheet" href="styles.css?v=2.62">
 <style>
 .auth-entry-card {
   opacity: 1;
@@ -37,7 +37,7 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
   <div class="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/70"></div>
 
   <div class="relative z-10 bg-white/50 dark:bg-gray-900/80 backdrop-blur-md rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 dark:border-gray-800 text-center auth-entry-card">
-    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.61</span>
+    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.62</span>
     
     <h2 class="text-2xl font-black text-gray-900 dark:text-white mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 dark:text-gray-300 mb-6 drop-shadow" id="auth-status">Կատալոգ մուտք գործելու համար պահանջվում է գաղտնաբառ</p>
@@ -51,6 +51,15 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
       </button>
       
       <p id="errorMsg" class="text-red-700 dark:text-red-400 text-xs hidden font-black bg-white/70 dark:bg-gray-800 py-1 px-2 rounded-lg">Սխալ գաղտնաբառ։ Փորձեք կրկին։</p>
+    <details id="loginHelp" class="zzws-login-help">
+      <summary>Ինչպե՞ս մուտք գործել</summary>
+      <ol>
+        <li>Գաղտնաբառը տրամադրում է ZIGZAG-ի մենեջերը։</li>
+        <li>Մուտքագրեք ձեր թվային գաղտնաբառը և սեղմեք «Մուտք գործել»։</li>
+        <li>Եթե մուտքի պատուհանը թաքնվել է, շարժեք մկնիկը կամ դիպչեք էկրանին։</li>
+      </ol>
+    </details>
+
     </div>
   </div>
 </div>
@@ -86,6 +95,10 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
   <button onclick="openPersonalCabinet()" aria-label="Անձնական հաշիվ" class="text-[10px] sm:text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 px-2 py-0.5 rounded transition flex items-center gap-1">
     <span>👤 Անձնական հաշիվ</span>
   </button>
+  <button type="button" data-open-user-guide class="text-[10px] sm:text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 px-2 py-0.5 rounded transition flex items-center gap-1">
+    <span>❓ Օգտագործողի ուղեցույց</span>
+  </button>
+
 
   <span id="priceDateBadge" class="text-[10px] sm:text-[11px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded border border-gray-200 dark:border-gray-600">Թարմացում...</span>
   <button onclick="logout()" aria-label="Դուրս գալ համակարգից" class="text-[10px] sm:text-[11px] font-semibold text-red-600 dark:text-red-400 hover:text-red-800 bg-red-50 dark:bg-red-950/50 hover:bg-red-100 px-2 py-0.5 rounded transition">
@@ -501,14 +514,29 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 
 <button id="scrollTopBtn" onclick="scrollToTop()" aria-label="Վերև գնալ" class="fixed bottom-20 right-4 sm:right-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-2xl hidden transition transform hover:scale-110" title="Վերև">⬆️</button>
 
-<script src="js/product-photos.js?v=2.61"></script>
-<script src="js/core.js?v=2.61"></script>
-<script src="js/photo-preview.js?v=2.61"></script>
-<script src="js/auth-data.js?v=2.61"></script>
-<script src="js/catalog.js?v=2.61"></script>
-<script src="js/order-state.js?v=2.61"></script>
-<script src="js/bulk-add.js?v=2.61"></script>
-<script src="js/order-submit.js?v=2.61"></script>
+<dialog id="userGuideDialog" class="zzws-guide-dialog" aria-labelledby="userGuideTitle">
+  <header class="zzws-guide-header">
+    <h2 id="userGuideTitle">ZZWS — Օգտագործողի ուղեցույց</h2>
+    <button type="button" id="closeUserGuide" class="zzws-guide-close" aria-label="Փակել ուղեցույցը" autofocus>&times;</button>
+  </header>
+  <div class="zzws-guide-layout">
+    <details id="userGuideToc" class="zzws-guide-toc">
+      <summary>Բովանդակություն</summary>
+      <nav id="userGuideTocLinks" aria-label="Ուղեցույցի բաժինները"></nav>
+    </details>
+    <article id="userGuideContent" class="zzws-guide-content" aria-label="Օգտագործողի ուղեցույց"></article>
+  </div>
+</dialog>
+
+<script src="js/product-photos.js?v=2.62"></script>
+<script src="js/core.js?v=2.62"></script>
+<script src="js/photo-preview.js?v=2.62"></script>
+<script src="js/auth-data.js?v=2.62"></script>
+<script src="js/catalog.js?v=2.62"></script>
+<script src="js/order-state.js?v=2.62"></script>
+<script src="js/bulk-add.js?v=2.62"></script>
+<script src="js/order-submit.js?v=2.62"></script>
+<script src="js/user-guide.js?v=2.62"></script>
 <script>
 (() => {
   const screen = document.getElementById('authScreen');
@@ -524,7 +552,7 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
     idleTimer = setTimeout(hideAuthCard, 5000);
   }
   function hideAuthCard() {
-    if (screen.classList.contains('hidden')) return;
+    if (screen.classList.contains('hidden') || screen.querySelector('#loginHelp[open]')) return;
     screen.classList.add('auth-screen-idle');
     card.setAttribute('aria-hidden', 'true');
     card.setAttribute('inert', '');
@@ -535,6 +563,7 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
   screen.addEventListener('touchstart', showAuthCard, { passive: true });
   screen.addEventListener('keydown', showAuthCard);
   screen.addEventListener('input', showAuthCard);
+  screen.querySelector('#loginHelp')?.addEventListener('toggle', showAuthCard);
   showAuthCard();
 })();
 </script>

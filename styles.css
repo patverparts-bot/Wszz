@@ -305,3 +305,69 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 @media (prefers-reduced-motion: reduce) {
   .desktop-photo-preview { transition: none; }
 }
+
+/* Login tips and the user guide share the catalog's light/dark appearance. */
+.zzws-login-help { margin-top: 18px; text-align: left; font-size: 12px; line-height: 1.65; color: #1e293b; }
+.zzws-login-help summary { cursor: pointer; color: #1d4ed8; font-weight: 600; text-align: center; }
+.zzws-login-help ol { margin: 10px 0 0; padding-left: 20px; list-style: decimal; }
+.dark .zzws-login-help { color: #e2e8f0; }
+.dark .zzws-login-help summary { color: #93c5fd; }
+body.zzws-guide-open { overflow: hidden; }
+.zzws-guide-dialog {
+  box-sizing: border-box; padding: 0; margin: auto;
+  width: min(1080px, calc(100vw - 24px)); max-width: none;
+  height: min(820px, calc(100vh - 24px)); height: min(820px, calc(100dvh - 24px)); max-height: none;
+  color: #1f2937; background: #fff; border: 1px solid #d1d5db; border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, .28); overflow: hidden;
+}
+.zzws-guide-dialog[open] { display: flex; flex-direction: column; }
+.zzws-guide-dialog::backdrop { background: rgba(15, 23, 42, .6); backdrop-filter: blur(3px); }
+.zzws-guide-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex: 0 0 auto; padding: 18px 22px; border-bottom: 1px solid #e5e7eb; }
+.zzws-guide-header h2 { font-size: 18px; font-weight: 700; line-height: 1.4; margin: 0; }
+.zzws-guide-close { flex-shrink: 0; width: 36px; height: 36px; border-radius: 10px; font-size: 25px; color: #64748b; background: #f1f5f9; }
+.zzws-guide-close:hover { color: #1d4ed8; background: #dbeafe; }
+.zzws-guide-layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 0; flex: 1; }
+.zzws-guide-toc { min-height: 0; padding: 18px 14px; background: #f8fafc; border-right: 1px solid #e5e7eb; overflow-y: auto; }
+.zzws-guide-toc summary { font-size: 13px; font-weight: 700; cursor: pointer; margin-bottom: 12px; color: #475569; }
+.zzws-guide-toc nav { display: flex; flex-direction: column; gap: 4px; }
+.zzws-guide-toc a { display: block; padding: 9px 10px; border-radius: 8px; color: #334155; font-size: 13px; line-height: 1.5; text-decoration: none; }
+.zzws-guide-toc a:hover, .zzws-guide-toc a:focus-visible { background: #dbeafe; color: #1d4ed8; }
+.zzws-guide-content { overflow-y: auto; overscroll-behavior: contain; min-height: 0; padding: 22px 28px 40px; font-size: 14px; line-height: 1.85; overflow-wrap: anywhere; }
+.zzws-guide-content section + section { margin-top: 30px; padding-top: 24px; border-top: 1px solid #e5e7eb; }
+.zzws-guide-content h2 { font-size: 19px; font-weight: 700; margin: 0 0 14px; line-height: 1.5; color: #1e40af; }
+.zzws-guide-content h3 { font-size: 15px; font-weight: 700; margin: 20px 0 8px; }
+.zzws-guide-content p { margin: 10px 0; }
+.zzws-guide-content ul, .zzws-guide-content ol { padding-left: 23px; margin: 10px 0; }
+.zzws-guide-content ul { list-style: disc; }
+.zzws-guide-content ol { list-style: decimal; }
+.zzws-guide-content li + li { margin-top: 5px; }
+.zzws-guide-content strong { font-weight: 700; }
+.zzws-guide-content code { padding: 2px 5px; border-radius: 4px; background: #f1f5f9; font-size: .92em; }
+.zzws-guide-notice { padding: 12px 15px; margin: 0 0 24px; border: 1px solid #bfdbfe; border-radius: 10px; background: #eff6ff; color: #1e40af; }
+.zzws-guide-table { max-width: 100%; overflow-x: auto; }
+.zzws-guide-content table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+.zzws-guide-content th, .zzws-guide-content td { border: 1px solid #e2e8f0; text-align: left; padding: 9px 11px; }
+.zzws-guide-content th { background: #f8fafc; font-weight: 700; }
+.zzws-guide-retry { padding: 8px 14px; border-radius: 8px; background: #2563eb; color: #fff; font-weight: 600; }
+.dark .zzws-guide-dialog { color: #e5e7eb; background: #1f2937; border-color: #4b5563; }
+.dark .zzws-guide-header, .dark .zzws-guide-content section + section { border-color: #374151; }
+.dark .zzws-guide-close { color: #cbd5e1; background: #374151; }
+.dark .zzws-guide-toc { background: #111827; border-color: #374151; }
+.dark .zzws-guide-toc summary, .dark .zzws-guide-toc a { color: #cbd5e1; }
+.dark .zzws-guide-toc a:hover, .dark .zzws-guide-toc a:focus-visible { background: #1e3a5f; color: #bfdbfe; }
+.dark .zzws-guide-content h2 { color: #93c5fd; }
+.dark .zzws-guide-notice { background: #172554; color: #bfdbfe; border-color: #1e40af; }
+.dark .zzws-guide-content code, .dark .zzws-guide-content th { background: #111827; }
+.dark .zzws-guide-content th, .dark .zzws-guide-content td { border-color: #4b5563; }
+@media (max-width: 767px) {
+  .zzws-guide-dialog { width: calc(100vw - 16px); height: calc(100vh - 16px); height: calc(100dvh - 16px); border-radius: 14px; }
+  .zzws-guide-header { padding: 14px 16px; }
+  .zzws-guide-header h2 { font-size: 15px; }
+  .zzws-guide-layout { display: flex; flex-direction: column; }
+  .zzws-guide-toc { padding: 10px 16px; border-right: 0; border-bottom: 1px solid #e5e7eb; flex: 0 0 auto; max-height: 38%; }
+  .zzws-guide-toc summary { margin-bottom: 0; }
+  .zzws-guide-toc[open] summary { margin-bottom: 8px; }
+  .zzws-guide-content { padding: 16px 18px 28px; flex: 1; }
+}
+
+.auth-entry-card:has(.zzws-login-help[open]) { max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; }
