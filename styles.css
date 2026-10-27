@@ -43,6 +43,11 @@ body { font-family: 'Inter', sans-serif; }
 }
 
 /* Proportional widths keep each authorized column set inside the available viewport. */
+.catalog-margin-heading {
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: manual;
+}
 #catalogTable.layout-standard th:nth-child(1) { width: 3%; }
 #catalogTable.layout-standard th:nth-child(2) { width: 11%; }
 #catalogTable.layout-standard th:nth-child(3) { width: 8%; }

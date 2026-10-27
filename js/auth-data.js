@@ -244,7 +244,7 @@ if (isAdminUser()) {
   cols.push({ name: 'WS Price', align: 'text-right' });
   cols.push({ name: 'WS Margin', align: 'text-center' });
 } else {
-  cols.push({ name: 'Եկամտաբերություն', align: 'text-center' });
+  cols.push({ name: '<span class="catalog-margin-heading">Եկամտա&shy;բերություն</span>', align: 'text-center' });
   cols.push({ name: 'Մեծածախ (Wholesale)', align: 'text-right' });
 }
 cols.push({ name: 'Գործողություն', align: 'text-center' });
