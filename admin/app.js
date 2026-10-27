@@ -1,6 +1,6 @@
 const el = id => document.getElementById(id);
 function finishSessionLoading(){document.documentElement.removeAttribute('data-session-pending');}
-function sessionLoadFailed(message){document.documentElement.setAttribute('data-session-pending','true');el('sessionLoadingText').textContent=message||'Не удалось обновить данные. Проверьте соединение.';el('sessionSpinner').hidden=true;el('sessionRetryActions').hidden=false;}
+function sessionLoadFailed(message){document.documentElement.setAttribute('data-session-pending','true');el('sessionLoadingText').textContent=message||'Չհաջողվեց թարմացնել տվյալները։ Ստուգեք կապը։';el('sessionSpinner').hidden=true;el('sessionRetryActions').hidden=false;}
 let draft = null, userDraft = null, users = [];
 let catalogPairs=[],userAccessEditor=null,groupEditors={},groupRevision=null;
 let editingUserId=null,auditEntries=[];
@@ -46,40 +46,40 @@ async function selectAdminTab(name){
 async function enter() {
   let user = await api('me');
   if(user.needsPasswordSetup){user=await requirePasswordSetup(user);if(!user){showLogin();return;}}
-  if (user.role !== 'admin') { showLogin();const e=new Error('Нужна учётная запись администратора');e.status=403;throw e; }
+  if (user.role !== 'admin') { showLogin();const e=new Error('Անհրաժեշտ է ադմինիստրատորի հաշիվ');e.status=403;throw e; }
   const activeTab=rememberedAdminTab();for(const section of adminTabs)el(section).hidden=section!==activeTab;
   el('login').hidden = true; el('workspace').hidden = false; el('logout').hidden = false;
   catalogPairs=(await api('admin/catalog-options')).pairs;
   ZZWS_ADMIN_ORDERS.start();
-  await Promise.all([loadVersions(), loadUsers(),loadGroupRules()]);await selectAdminTab(activeTab);finishSessionLoading(); status('Вы вошли как ' + user.client);
+  await Promise.all([loadVersions(), loadUsers(),loadGroupRules()]);await selectAdminTab(activeTab);finishSessionLoading(); status('Մուտք եք գործել որպես ' + user.client);
 }
 el('loginForm').onsubmit = e => { e.preventDefault(); run(async () => { await api('login', {method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(e.target)))}); e.target.reset(); await enter(); }); };
-el('logout').onclick = () => run(async () => { await api('logout',{method:'POST'}); showLogin(); status('Вы вышли'); });
+el('logout').onclick = () => run(async () => { await api('logout',{method:'POST'}); showLogin(); status('Դուք դուրս եք եկել'); });
 document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => run(()=>selectAdminTab(b.dataset.tab)));
 el('priceForm').onsubmit = e => { e.preventDefault(); run(async () => {
-  draft = null; el('preview').hidden = true; status('Проверяю файл…');
+  draft = null; el('preview').hidden = true; status('Ֆայլը ստուգվում է…');
   const d = await api('admin/price/preview',{method:'POST',body:new FormData(e.target)});
-  draft = d.draft; el('summary').textContent = `Проверено товаров: ${d.count}. Первые пять строк:`;
-  el('sample').replaceChildren(table(['Артикул','Бренд','Название','WS','KP'],d.sample.map(p => [p.articul,p.brand,p.name,p.ws,p.kpPromo||p.kp])));
-  el('preview').hidden = false; status('Файл прошёл проверку. Действующий прайс ещё не изменён.');
+  draft = d.draft; el('summary').textContent = `Ստուգված ապրանքներ՝ ${d.count}։ Առաջին հինգ տողերը՝`;
+  el('sample').replaceChildren(table(['Արտիկուլ','Բրենդ','Անվանում','WS','KP'],d.sample.map(p => [p.articul,p.brand,p.name,p.ws,p.kpPromo||p.kp])));
+  el('preview').hidden = false; status('Ֆայլը ստուգված է։ Գործող գնացուցակը դեռ չի փոխվել։');
 }); };
 el('publish').onclick = () => run(async () => { if (!draft) return; el('publish').disabled = true; try {
   await api('admin/price/publish',{method:'POST',body:JSON.stringify({draft})}); draft = null; el('preview').hidden = true;
-  await loadVersions(); status('Новый прайс опубликован');
+  await loadVersions(); status('Նոր գնացուցակը հրապարակված է');
 } finally { el('publish').disabled = false; } });
 async function loadVersions() {
   const d = await api('admin/price/versions');
-  el('versions').replaceChildren(table(['Дата','Версия','Действие'],d.versions.map(v => [new Date(v.created*1000).toLocaleString(),v.id,
-    v.id === d.active ? 'Действующая' : button('Восстановить', async () => { if (!confirm('Вернуть эту версию прайса?')) return; await api('admin/price/rollback',{method:'POST',body:JSON.stringify({version:v.id})}); await loadVersions(); status('Версия восстановлена'); })])));
+  el('versions').replaceChildren(table(['Ամսաթիվ','Տարբերակ','Գործողություն'],d.versions.map(v => [new Date(v.created*1000).toLocaleString(),v.id,
+    v.id === d.active ? 'Գործող' : button('Վերականգնել', async () => { if (!confirm('Վերադարձնե՞լ գնացուցակի այս տարբերակը։')) return; await api('admin/price/rollback',{method:'POST',body:JSON.stringify({version:v.id})}); await loadVersions(); status('Տարբերակը վերականգնված է'); })])));
 }
 async function loadUsers() {
   const d = await api('admin/users'); users = d.users;
-  el('userList').replaceChildren(table(['Логин','Клиент','Роль','Цены','Доступ',''], users.map(u => [u.login,u.client,u.role==='admin'?'Администратор':'Клиент',u.sheet,u.active?'Включён':'Выключен',button('Изменить', () => editUser(u))])));
+  el('userList').replaceChildren(table(['Մուտքանուն','Հաճախորդ','Դեր','Գներ','Հասանելիություն',''], users.map(u => [u.login,u.client,u.role==='admin'?'Ադմինիստրատոր':'Հաճախորդ',u.sheet,u.active?'Միացված է':'Անջատված է',button('Խմբագրել', () => editUser(u))])));
 }
 function editUser(user = {}) {
   const f = el('userForm'); f.reset(); f.hidden = false;
   editingUserId=user.id||null;f.elements.id.value=editingUserId||'';
-  el('userTitle').textContent=editingUserId?'Изменение пользователя: '+user.login:'Новый пользователь';
+  el('userTitle').textContent=editingUserId?'Օգտատիրոջ խմբագրում՝ '+user.login:'Նոր օգտատեր';
   for (const key of ['login','client','role','sheet']) if (user[key]) f.elements[key].value = user[key];
   for (const key of ['active','allowResale']) f.elements[key].checked = key === 'active' ? user.active !== false : !!user[key];
   userAccessEditor=ZZWS_RULES_UI.accessEditor(el('userAccessEditor'),ZZWS_RULES_UI.legacyAccess({...user,sheet:user.sheet||'Dealers'}),catalogPairs);
@@ -90,29 +90,29 @@ function editUser(user = {}) {
   }
   f.elements.password.required = false;
   f.elements.password.disabled=!user.id||user.needsPasswordSetup;
-  f.elements.password.placeholder=!user.id||user.needsPasswordSetup?'Пользователь задаст пароль при первом входе':'Оставьте пустым, чтобы сохранить текущий';
+  f.elements.password.placeholder=!user.id||user.needsPasswordSetup?'Օգտատերը գաղտնաբառը կսահմանի առաջին մուտքի ժամանակ':'Թողեք դատարկ՝ ընթացիկը պահպանելու համար';
   el('resetUserPassword').hidden=!user.id;
-  el('passwordSetupState').textContent=!user.id||user.needsPasswordSetup?'Первый вход: только логин, затем установка своего пароля.':'Пароль уже установлен пользователем.';
+  el('passwordSetupState').textContent=!user.id||user.needsPasswordSetup?'Առաջին մուտք՝ միայն մուտքանուն, այնուհետև սեփական գաղտնաբառի սահմանում։':'Օգտատերն արդեն սահմանել է գաղտնաբառը։';
   f.scrollIntoView({behavior:'smooth'});
 }
 el('resetUserPassword').onclick=()=>run(async()=>{
   if(!editingUserId)return;
   const target=users.find(u=>u.id===editingUserId);
-  if(!confirm('Сбросить пароль '+target.login+'? Все его сессии завершатся. Следующий вход — только по логину с обязательной установкой нового пароля. До настройки любой знающий логин сможет задать пароль.'))return;
+  if(!confirm('Վերակայել գաղտնաբառը '+target.login+'։ Բոլոր աշխատաշրջանները կավարտվեն։ Հաջորդ մուտքը կլինի միայն մուտքանունով՝ նոր գաղտնաբառի պարտադիր սահմանմամբ։ Մինչև կարգավորումը մուտքանունն իմացող ցանկացած անձ կարող է սահմանել այն։'))return;
   await api('admin/users/reset-password',{method:'POST',body:JSON.stringify({id:editingUserId})});
-  await loadUsers();editUser(users.find(u=>u.id===editingUserId));status('Пароль сброшен. Пользователь должен сразу войти по логину и установить новый пароль.');
+  await loadUsers();editUser(users.find(u=>u.id===editingUserId));status('Գաղտնաբառը վերակայված է։ Օգտատերը պետք է անմիջապես մուտք գործի մուտքանունով և սահմանի նոր գաղտնաբառ։');
 });
 el('newUser').onclick = () => editUser(); el('cancelUser').onclick = () => { el('userForm').hidden = true; };
 el('usersImportForm').onsubmit = e => { e.preventDefault(); run(async () => {
   userDraft = null; el('usersPreview').hidden = true;
   const d = await api('admin/users/preview',{method:'POST',body:new FormData(e.target)});
   userDraft = d.draft;
-  el('usersChanges').replaceChildren(table(['Логин','Клиент','Изменение'],d.users.map(u=>[u.login,u.client,u.action==='create'?'Создать с выключенным доступом':'Обновить данные и отозвать сессии'])));
-  el('usersPreview').hidden = false; status('Проверьте изменения перед применением');
+  el('usersChanges').replaceChildren(table(['Մուտքանուն','Հաճախորդ','Փոփոխություն'],d.users.map(u=>[u.login,u.client,u.action==='create'?'Ստեղծել անջատված հասանելիությամբ':'Թարմացնել տվյալները և դադարեցնել աշխատաշրջանները'])));
+  el('usersPreview').hidden = false; status('Ստուգեք փոփոխությունները մինչև կիրառելը');
 }); };
 el('importUsers').onclick = () => run(async () => { if (!userDraft) return; el('importUsers').disabled=true; try {
   await api('admin/users/import',{method:'POST',body:JSON.stringify({draft:userDraft})}); userDraft=null;
-  el('usersPreview').hidden=true; await loadUsers(); status('Импорт завершён. Включите доступ новым пользователям: первый вход по логину с установкой своего пароля.');
+  el('usersPreview').hidden=true; await loadUsers(); status('Ներմուծումն ավարտված է։ Միացրեք նոր օգտատերերի հասանելիությունը․ առաջին մուտքը մուտքանունով է՝ գաղտնաբառի սահմանմամբ։');
 } finally { el('importUsers').disabled=false; } });
 function userPayload(){
   const f = el('userForm'), p = Object.fromEntries(new FormData(f));
@@ -132,8 +132,8 @@ el('userForm').elements.sheet.onchange=()=>{
   el('userAccessPreview').replaceChildren();
 };
 function showProductPreview(root,data){
-  const summary=document.createElement('p');summary.className='preview-count';summary.textContent=`Доступно товаров: ${data.count}`+(data.adminBypass?' (администратор: ограничения не применяются)':'');
-  root.replaceChildren(summary,table(['Бренд','Категория','Товар','Цена клиента'],data.sample.map(p=>[p.brand,p.category,p.name,p.wholesale])));
+  const summary=document.createElement('p');summary.className='preview-count';summary.textContent=`Հասանելի ապրանքներ՝ ${data.count}`+(data.adminBypass?' (ադմինիստրատոր․ սահմանափակումները չեն կիրառվում)':'');
+  root.replaceChildren(summary,table(['Բրենդ','Կատեգորիա','Ապրանք','Հաճախորդի գին'],data.sample.map(p=>[p.brand,p.category,p.name,p.wholesale])));
 }
 el('previewUserAccess').onclick=()=>run(async()=>{
   const p=userPayload();delete p.password;
@@ -142,7 +142,7 @@ el('previewUserAccess').onclick=()=>run(async()=>{
 el('userForm').onsubmit = e => { e.preventDefault(); run(async () => {
   const p=userPayload();
   await api('admin/users',{method:'POST',body:JSON.stringify(p)}); e.target.reset(); e.target.hidden = true;
-  await loadUsers(); status('Пользователь сохранён. Его прежние сессии отозваны.');
+  await loadUsers(); status('Օգտատերը պահպանված է։ Նախկին աշխատաշրջանները դադարեցված են։');
 }); };
 async function loadAudit(){
   await loadUsers();
@@ -152,12 +152,12 @@ async function loadAudit(){
 function renderAudit(){
   const search=el('auditSearch').value.trim().toLocaleLowerCase('ru'),group=el('auditGroup').value;
   const entries=auditEntries.filter(e=>(!group||e.group===group)&&(!search||[e.actor,e.action,e.description].join(' ').toLocaleLowerCase('ru').includes(search)));
-  el('auditCount').textContent=`Показано событий: ${entries.length} из ${auditEntries.length}`;
-  if(!entries.length){const empty=document.createElement('p');empty.textContent='По выбранным условиям событий нет.';el('events').replaceChildren(empty);return;}
-  el('events').replaceChildren(table(['Когда · Ереван','Кто','Что сделал','Подробности'],entries.map(e=>{
+  el('auditCount').textContent=`Ցուցադրված իրադարձություններ՝ ${entries.length} / ${auditEntries.length}`;
+  if(!entries.length){const empty=document.createElement('p');empty.textContent='Ընտրված պայմաններով իրադարձություններ չկան։';el('events').replaceChildren(empty);return;}
+  el('events').replaceChildren(table(['Երբ · Երևան','Ով','Գործողություն','Մանրամասներ'],entries.map(e=>{
     const details=document.createElement('div'),text=document.createElement('p');text.textContent=e.description;details.append(text);
     const disclosure=document.createElement('details'),title=document.createElement('summary'),code=document.createElement('pre');
-    title.textContent='Технические сведения';code.textContent=JSON.stringify(e.raw,null,2);disclosure.append(title,code);details.append(disclosure);
+    title.textContent='Տեխնիկական տվյալներ';code.textContent=JSON.stringify(e.raw,null,2);disclosure.append(title,code);details.append(disclosure);
     return [e.time,e.actor,e.action,details];
   })));
 }
@@ -168,13 +168,13 @@ async function loadGroupRules(){
   for(const group of ['KP','Dealers']){
     const card=document.createElement('fieldset');card.dataset.groupRules=group;
     const title=document.createElement('legend');title.textContent=group;
-    const priceTitle=document.createElement('h3');priceTitle.textContent='Выбор цены';
+    const priceTitle=document.createElement('h3');priceTitle.textContent='Գնի ընտրություն';
     const priceRoot=document.createElement('div'),accessRoot=document.createElement('div');
-    const accessTitle=document.createElement('h3');accessTitle.textContent='Общий доступ группы';
+    const accessTitle=document.createElement('h3');accessTitle.textContent='Խմբի ընդհանուր հասանելիություն';
     const pricing=ZZWS_RULES_UI.pricingEditor(priceRoot,data.rules[group].pricing);
     const access=ZZWS_RULES_UI.accessEditor(accessRoot,data.rules[group].access,catalogPairs);
-    const reset=button('Восстановить стандарт '+group,()=>{
-      pricing.reset(data.defaults[group].pricing);access.reset(data.defaults[group].access);el('groupRulesPreview').replaceChildren();status('Стандартные правила восстановлены в форме. Для применения нажмите «Сохранить правила групп».');
+    const reset=button('Վերականգնել ստանդարտը '+group,()=>{
+      pricing.reset(data.defaults[group].pricing);access.reset(data.defaults[group].access);el('groupRulesPreview').replaceChildren();status('Ստանդարտ կանոնները վերականգնված են ձևում։ Կիրառելու համար սեղմեք «Պահպանել խմբերի կանոնները»։');
     });
     card.append(title,priceTitle,priceRoot,accessTitle,accessRoot,reset);container.append(card);groupEditors[group]={pricing,access};
   }
@@ -183,14 +183,14 @@ function groupPayload(){return Object.fromEntries(['KP','Dealers'].map(g=>[g,{pr
 el('previewGroupRules').onclick=()=>run(async()=>{
   const data=await api('admin/rules/preview',{method:'POST',body:JSON.stringify({rules:groupPayload()})});
   const root=el('groupRulesPreview');root.replaceChildren();
-  for(const group of ['KP','Dealers']){const title=document.createElement('h3');title.textContent=group+' — без персональных ограничений';const box=document.createElement('div');showProductPreview(box,data.groups[group]);root.append(title,box);}
+  for(const group of ['KP','Dealers']){const title=document.createElement('h3');title.textContent=group+' — առանց անհատական սահմանափակումների';const box=document.createElement('div');showProductPreview(box,data.groups[group]);root.append(title,box);}
 });
 el('reloadGroupRules').onclick=()=>run(loadGroupRules);
 el('groupRulesForm').onsubmit=e=>{e.preventDefault();run(async()=>{
   const submit=e.target.querySelector('[type=submit]');submit.disabled=true;
   try {
     const data=await api('admin/rules',{method:'POST',body:JSON.stringify({rules:groupPayload(),revision:groupRevision})});groupRevision=data.revision;
-    status('Правила групп сохранены. Новые запросы используют их сразу; открытые каталоги обновятся при следующей проверке.');
+    status('Խմբերի կանոնները պահպանված են։ Նոր հարցումներն արդեն օգտագործում են դրանք, իսկ բաց կատալոգները կթարմացվեն հաջորդ ստուգման ժամանակ։');
   } finally { submit.disabled=false; }
 });};
 const setupToken = new URLSearchParams(location.hash.slice(1)).get('setup');
@@ -198,17 +198,17 @@ if (setupToken) {
   history.replaceState(null, '', location.pathname);
   finishSessionLoading();el('login').hidden = true; el('setup').hidden = false;
 } else {
-  run(async () => { try { await enter(); } catch(e) { if(sessionStorage.getItem('zzws_session_v3')&&e.status!==403)sessionLoadFailed(e.message);else{showLogin();if (!e.message.includes('Войдите'))status(e.message,true);} } });
+  run(async () => { try { await enter(); } catch(e) { if(sessionStorage.getItem('zzws_session_v3')&&e.status!==403)sessionLoadFailed(e.message);else{showLogin();if (!e.message.includes('Մուտք գործեք'))status(e.message,true);} } });
 }
 el('setupForm').onsubmit = e => { e.preventDefault(); run(async () => {
   const p = Object.fromEntries(new FormData(e.target));
-  if(p.password !== p.confirm) throw new Error('Пароли не совпадают');
+  if(p.password !== p.confirm) throw new Error('Գաղտնաբառերը չեն համընկնում');
   const button=e.target.querySelector('button'); button.disabled=true;
   try { await api('bootstrap',{method:'POST',body:JSON.stringify({...p,setupToken})});
-    e.target.reset(); el('setup').hidden=true; showLogin(); status('Администратор создан. Войдите с выбранными логином и паролем.');
+    e.target.reset(); el('setup').hidden=true; showLogin(); status('Ադմինիստրատորը ստեղծված է։ Մուտք գործեք ընտրված մուտքանունով և գաղտնաբառով։');
   } finally { button.disabled=false; }
 }); };
 el('userTemplate').onclick = () => run(async () => {
-  const response=await ZZWS.request('admin/users/template'); if(!response.ok)throw new Error('Войдите как администратор');
+  const response=await ZZWS.request('admin/users/template'); if(!response.ok)throw new Error('Մուտք գործեք որպես ադմինիստրատոր');
   const url=URL.createObjectURL(await response.blob());const a=document.createElement('a');a.href=url;a.download='Users-template.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 });

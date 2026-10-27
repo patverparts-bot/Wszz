@@ -18,10 +18,10 @@ function buildEmailFormattedText() {
     const price = getItemWholesalePrice(item);
     const sum = price * item.qty;
     total += sum;
-    text += `${i}. Արտիկուլ: ${getItemArticul(artKey, item)}\n   Անվանում: ${getItemName(item)}\n   Միավորի գին: ${price.toLocaleString('ru-RU')} ֏ | Քանակ: ${item.qty} հատ\n   Վճարում: ${item.paymentMethod || 'Բանկային փոխանցումով'}\n   Գումար: ${sum.toLocaleString('ru-RU')} ֏\n\n`;
+    text += `${i}. Արտիկուլ: ${getItemArticul(artKey, item)}\n   Անվանում: ${getItemName(item)}\n   Միավորի գին: ${price.toLocaleString('hy-AM')} ֏ | Քանակ: ${item.qty} հատ\n   Վճարում: ${item.paymentMethod || 'Բանկային փոխանցումով'}\n   Գումար: ${sum.toLocaleString('hy-AM')} ֏\n\n`;
     i++;
   });
-  text += `ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏\n`;
+  text += `ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('hy-AM')} ֏\n`;
   text += `Գնացուցակի թարմացում՝ ${cachedPriceDateText || '—'}`;
   return text;
 }
@@ -43,7 +43,7 @@ function buildViberFormattedText() {
   if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
   if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
   if (comment) text += `Մեկնաբանություն: ${comment}\n`;
-  text += `\nԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏\n`;
+  text += `\nԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('hy-AM')} ֏\n`;
   text += `Գնացուցակի թարմացում՝ ${cachedPriceDateText || '—'}`;
   return text;
 }

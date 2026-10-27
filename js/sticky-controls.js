@@ -5,9 +5,9 @@
  panel.id='catalogFiltersPanel';toolbar.classList.add('sticky-search-inner');
  const actions=document.createElement('div');actions.id='stickySearchActions';actions.className='sticky-search-actions';
  for(const selector of ['.catalog-header-actions .header-notifications','.catalog-header-actions .header-primary']){const button=document.querySelector(selector);if(button)actions.append(button);}
- toolbar.append(actions);if(bulk){bulk.classList.add('sticky-bulk-add');bulk.innerHTML='<span class="bulk-add-full">Добавить списком</span><span class="bulk-add-short">Списком</span>';}
+ toolbar.append(actions);if(bulk){bulk.classList.add('sticky-bulk-add');bulk.innerHTML='<span class="bulk-add-full">Ավելացնել ցանկով</span><span class="bulk-add-short">Ցանկով</span>';}
  const summary=document.createElement('button');summary.id='compactFiltersRow';summary.type='button';summary.className='compact-filters-row';summary.setAttribute('aria-controls','filtersContainer');
- const label=document.createElement('span');label.className='compact-filters-label';label.textContent='Фильтры';
+ const label=document.createElement('span');label.className='compact-filters-label';label.textContent='Ֆիլտրեր';
  const selected=document.createElement('span');selected.id='compactFilterValues';selected.className='compact-filter-values';
  const icon=document.createElement('span');icon.className='compact-filters-chevron';icon.textContent='⌄';icon.setAttribute('aria-hidden','true');summary.append(label,selected,icon);
  bar.append(summary,panel);
@@ -17,14 +17,14 @@
  function setCompact(value){if(compact===value)return;compact=value;bar.classList.toggle('filters-auto-compact',compact);refreshSummary();updateStickyOffsets();}
  function refreshSummary(){
   const values=[];
-  for(const brand of selectedBrands)values.push('Бренд: '+brand);
-  for(const category of selectedCategories)values.push('Категория: '+category);
-  const checkboxes={favOnlyFilter:'Избранное',promoOnlyFilter:'Акции',stockOnlyFilter:'В наличии',wholesaleOnlyFilter:'С оптовой ценой'};
+  for(const brand of selectedBrands)values.push('Բրենդ՝ '+brand);
+  for(const category of selectedCategories)values.push('Կատեգորիա՝ '+category);
+  const checkboxes={favOnlyFilter:'Ընտրվածներ',promoOnlyFilter:'Ակցիաներ',stockOnlyFilter:'Առկա է',wholesaleOnlyFilter:'Մեծածախ գնով'};
   for(const [id,title] of Object.entries(checkboxes))if(document.getElementById(id)?.checked&&(id!=='wholesaleOnlyFilter'||isAdminUser()))values.push(title);
-  const sort=activeColumnSort();if(sort.direction){const names={articul:'Артикул',brand:'Бренд',name:'Название',stockStatus:'Наличие',retail:'Розница',wholesale:'Ваша цена',kpPrice:'KP',marginVal:'Доходность',kpMarginVal:'Доходность KP',resaleWholesale:'Перепродажа'};values.push((names[sort.key]||sort.key)+(sort.direction===1?' ↑':' ↓'));}
-  selected.replaceChildren();if(!values.length){const empty=document.createElement('span');empty.className='compact-filter-empty';empty.textContent='Не выбраны';selected.append(empty);}
+  const sort=activeColumnSort();if(sort.direction){const names={articul:'Արտիկուլ',brand:'Բրենդ',name:'Անվանում',stockStatus:'Առկայություն',retail:'Մանրածախ',wholesale:'Ձեր գինը',kpPrice:'KP',marginVal:'Եկամտաբերություն',kpMarginVal:'KP եկամտաբերություն',resaleWholesale:'Վերավաճառք'};values.push((names[sort.key]||sort.key)+(sort.direction===1?' ↑':' ↓'));}
+  selected.replaceChildren();if(!values.length){const empty=document.createElement('span');empty.className='compact-filter-empty';empty.textContent='Ընտրված չեն';selected.append(empty);}
   for(const value of values){const chip=document.createElement('span');chip.className='compact-filter-chip';chip.textContent=value;chip.title=value;selected.append(chip);}
-  const expanded=!compact&&!body.classList.contains('hidden');summary.setAttribute('aria-expanded',String(expanded));summary.title=expanded?'Свернуть фильтры':'Показать фильтры';icon.textContent=expanded?'⌃':'⌄';
+  const expanded=!compact&&!body.classList.contains('hidden');summary.setAttribute('aria-expanded',String(expanded));summary.title=expanded?'Ծալել ֆիլտրերը':'Բացել ֆիլտրերը';icon.textContent=expanded?'⌃':'⌄';
   panel.classList.toggle('filter-body-closed',body.classList.contains('hidden'));
  }
  function onScroll(){scheduled=false;const app=document.getElementById('mainApp');if(app.classList.contains('hidden'))return;

@@ -24,7 +24,7 @@ test('unknown columns are not exposed as prices or warehouses',()=>{
  const r=rows();r[0].push('Internal margin');r[1].push(999);const p=parsePrice(r);assert.ok(!('Internal margin' in p[0].stocks));assert.deepEqual(project(p,user()),project(parsePrice(rows()),user()));
 });
 test('duplicate articles and negative prices reject publication',()=>{
- const r=rows();r.push(r[1]);assert.throws(()=>parsePrice(r),/Повтор/);const b=rows();b[1][6]=-1;assert.throws(()=>parsePrice(b),/Некорректная/);
+ const r=rows();r.push(r[1]);assert.throws(()=>parsePrice(r),/Կրկնվող/);const b=rows();b[1][6]=-1;assert.throws(()=>parsePrice(b),/Սխալ/);
 });
 test('bad headers reject publication',()=>assert.throws(()=>parsePrice([['Wrong'],[1]])));
 test('KP without allowed brands gets empty catalogue',()=>assert.deepEqual(project(parsePrice(rows()),{...user('KP'),brands:[]}),[]));
@@ -34,7 +34,7 @@ test('manual profiles validate roles, groups and login',()=>{
 });
 test('user import rejects duplicates and assigns no administrator roles',()=>{
  const r=[['login','client','sheet','brands','allBrands','organization','address','contact'],['client','Client','KP','LG','no','','','']];
- assert.equal(parseUsers(r)[0].profile.role,'client');r.push(r[1]);assert.throws(()=>parseUsers(r),/Повтор/);
+ assert.equal(parseUsers(r)[0].profile.role,'client');r.push(r[1]);assert.throws(()=>parseUsers(r),/Կրկնվող/);
 });
 test('vendored SheetJS round trips Unicode XLSX',()=>{
  assert.equal(XLSX.version,'0.20.3');const book=XLSX.utils.book_new();XLSX.utils.book_append_sheet(book,XLSX.utils.aoa_to_sheet(rows()),'Price');

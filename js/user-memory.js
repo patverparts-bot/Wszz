@@ -7,7 +7,7 @@
   const key=()=>`zzws_pending_${owner}`;
   const cache=(section,fallback)=>{try{return JSON.parse(localStorage.getItem('zigzag_'+suffix[section]+'_'+userStorageId())||JSON.stringify(fallback));}catch{return fallback;}};
   const banner=(message,error=false)=>{let box=document.getElementById('memoryStatus');if(!box){box=document.createElement('p');box.id='memoryStatus';box.setAttribute('role','status');document.getElementById('welcomeMsg').after(box);}box.textContent=message;box.classList.toggle('sync-error',error);};
-  const persist=()=>{if(!owner)return;try{localStorage.setItem(key(),JSON.stringify(pending));}catch{banner('Не удалось сохранить локальную копию. Не закрывайте страницу до синхронизации.',true);}};
+  const persist=()=>{if(!owner)return;try{localStorage.setItem(key(),JSON.stringify(pending));}catch{banner('Չհաջողվեց պահպանել տեղային պատճենը։ Մի փակեք էջը մինչև համաժամացումը։',true);}};
   function read(){
     const draft={};for(const id of fields)draft[id]=document.getElementById(id)?.value||'';
     return {cart:copy(cart),favorites:[...favoritesSet],history:cache('history',[]),filters:cache('filters',{}),preferences:{theme:localStorage.getItem('zigzag_theme')||'light',filtersOpen:localStorage.getItem('zigzag_filters_open_'+userStorageId())||'false',priceMode:adminOrderPriceMode},draft};
@@ -58,16 +58,16 @@
         }catch(e){
           if(e.status===409){
             if(e.data.cleared){delete pending[section];versions[section]=e.data.version;suspended=true;apply(section,e.data.value);baseline[section]=read()[section];suspended=false;clearedUntil=Date.now()+30000;persist();continue;}
-            const label={cart:'корзина',favorites:'избранное',history:'история',filters:'фильтры',preferences:'настройки',draft:'данные заказа'}[section];
+            const label={cart:'զամբյուղ',favorites:'ընտրվածներ',history:'պատմություն',filters:'ֆիլտրեր',preferences:'կարգավորումներ',draft:'պատվերի տվյալներ'}[section];
             suspended=true;
-            const keep=confirm('На другом устройстве изменены '+label+'. ОК — сохранить данные этого устройства поверх серверных. Отмена — загрузить данные с сервера.');
+            const keep=confirm('Այլ սարքում փոփոխվել են՝ '+label+'։ Լավ՝ այս սարքի տվյալներով փոխարինել սերվերի տվյալները։ Չեղարկել՝ բեռնել սերվերի տվյալները։');
             if(keep)pending[section].version=e.data.version;
             else{delete pending[section];versions[section]=e.data.version;apply(section,e.data.value);baseline[section]=read()[section];}
             suspended=false;
           }else throw e;
         }persist();
       }
-      banner(Object.keys(pending).length?'Синхронизация изменений…':clearedUntil>Date.now()?'Данные очищены администратором и обновлены на этом устройстве':'Данные сохранены на сервере');
+      banner(Object.keys(pending).length?'Փոփոխությունները համաժամացվում են…':clearedUntil>Date.now()?'Ադմինիստրատորը մաքրել է տվյալները։ Դրանք թարմացվել են այս սարքում':'Տվյալները պահպանվել են սերվերում');
       if(!Object.keys(pending).length&&Date.now()-pollAt>15000&&!document.hidden){
         pollAt=Date.now();const state=await ZZWS.json('me/state');capture();
         if(owner!==activeOwner)return;
@@ -75,7 +75,7 @@
         for(const section of sections){if(!pending[section]&&(state.versions[section]||0)!==(versions[section]||0)){apply(section,state.data[section]);versions[section]=state.versions[section]||0;baseline[section]=read()[section];}}
         suspended=false;
       }
-    }catch(e){banner('Изменения ждут отправки на сервер: '+e.message,true);}
+    }catch(e){banner('Փոփոխությունները սպասում են սերվեր ուղարկելուն՝ '+e.message,true);}
     finally{busy=false;suspended=false;if(owner===activeOwner)persist();}
   }
   async function start(user){
@@ -96,14 +96,14 @@
     const root=document.getElementById('savedCartsList');if(!root)return;
     try{const data=await ZZWS.json('me/carts');root.replaceChildren();
       document.getElementById('savedCartsCount').textContent=`${data.carts.length} / 10`;
-      if(!data.carts.length){const empty=document.createElement('p');empty.className='saved-empty';empty.textContent='Сохранённых корзин пока нет. Добавьте товары и сохраните свой первый вариант.';root.append(empty);}
+      if(!data.carts.length){const empty=document.createElement('p');empty.className='saved-empty';empty.textContent='Պահպանված զամբյուղներ դեռ չկան։ Ավելացրեք ապրանքներ և պահպանեք առաջին տարբերակը։';root.append(empty);}
       for(const row of data.carts){
         const box=document.createElement('article'),info=document.createElement('div'),title=document.createElement('h5'),meta=document.createElement('p'),actions=document.createElement('div');
         box.className='saved-cart-card';info.className='saved-cart-info';actions.className='saved-cart-actions';title.textContent=row.title;
         const count=Object.values(row.cart).reduce((n,item)=>n+(Number(item.qty)||0),0);
-        meta.textContent=new Intl.DateTimeFormat('ru-RU',{timeZone:'Asia/Yerevan',dateStyle:'medium',timeStyle:'short'}).format(new Date(row.saved_at))+' · '+Object.keys(row.cart).length+' поз. · '+count+' шт.';
+        meta.textContent=new Intl.DateTimeFormat('hy-AM',{timeZone:'Asia/Yerevan',dateStyle:'medium',timeStyle:'short'}).format(new Date(row.saved_at))+' · '+Object.keys(row.cart).length+' դիրք · '+count+' հատ';
         info.append(title,meta);box.append(info,actions);
-        for(const [text,action] of [['Загрузить',async()=>{if(Object.keys(cart).length&&!confirm('Заменить текущую корзину сохранённой?'))return;apply('cart',row.cart);apply('draft',row.draft);capture();await flush();renderModalItems();document.getElementById('savedCartsPanel').open=false;}],['Удалить',async()=>{if(!confirm('Удалить корзину «'+row.title+'»?'))return;await ZZWS.json('me/carts/delete',{method:'POST',body:JSON.stringify({id:row.id})});await savedList();}]]){const b=document.createElement('button');b.type='button';b.textContent=text;b.className=text==='Удалить'?'saved-delete':'saved-secondary';b.setAttribute('aria-label',text+' корзину «'+row.title+'»');b.onclick=()=>action().catch(e=>alert(e.message));actions.append(b);}root.append(box);}
+        for(const [text,action] of [['Բեռնել',async()=>{if(Object.keys(cart).length&&!confirm('Ընթացիկ զամբյուղը փոխարինե՞լ պահպանվածով։'))return;apply('cart',row.cart);apply('draft',row.draft);capture();await flush();renderModalItems();document.getElementById('savedCartsPanel').open=false;}],['Ջնջել',async()=>{if(!confirm('Ջնջե՞լ «'+row.title+'»?'))return;await ZZWS.json('me/carts/delete',{method:'POST',body:JSON.stringify({id:row.id})});await savedList();}]]){const b=document.createElement('button');b.type='button';b.textContent=text;b.className=text==='Ջնջել'?'saved-delete':'saved-secondary';b.setAttribute('aria-label',text+' « զամբյուղը՝'+row.title+'»');b.onclick=()=>action().catch(e=>alert(e.message));actions.append(b);}root.append(box);}
     }catch(e){root.textContent=e.message;}
   }
   async function saveNamed(){
@@ -111,11 +111,11 @@
     try{let result;
       try{result=await ZZWS.json('me/carts',{method:'POST',body:JSON.stringify(payload)});}
       catch(e){if(e.status!==409||!e.data.limit)throw e;const oldest=e.data.oldest;
-        if(!confirm('Уже сохранено 10 корзин. Заменить самую старую — «'+oldest.title+'» от '+new Date(oldest.saved_at).toLocaleString('ru-RU')+'?'))return;
+        if(!confirm('Արդեն պահպանված է 10 զամբյուղ։ Փոխարինե՞լ ամենահինը՝ «'+oldest.title+'», ամսաթիվ՝ '+new Date(oldest.saved_at).toLocaleString('hy-AM')+'?'))return;
         result=await ZZWS.json('me/carts',{method:'POST',body:JSON.stringify({...payload,replace:oldest.id})});
       }
-      input.value='';await savedList();alert(result.replaced?'Корзина сохранена. Самая старая корзина заменена.':'Корзина сохранена на сервере.');
-    }catch(e){alert(e.data?.limit?'Список корзин изменился на другом устройстве. Обновите список и повторите сохранение.':e.message);}
+      input.value='';await savedList();alert(result.replaced?'Զամբյուղը պահպանվել է։ Ամենահին զամբյուղը փոխարինվել է։':'Զամբյուղը պահպանվել է սերվերում։');
+    }catch(e){alert(e.data?.limit?'Զամբյուղների ցանկը փոխվել է այլ սարքում։ Թարմացրեք ցանկը և կրկնեք պահպանումը։':e.message);}
   }
   window.ZZWS_MEMORY={start,stop,capture,flush,savedList,saveNamed,restoreDraft:()=>{if(ready)apply('draft',baseline.draft,false);}};
   document.addEventListener('visibilitychange',()=>{if(document.hidden){capture();flush();}});

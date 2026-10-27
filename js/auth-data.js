@@ -3,7 +3,7 @@ let serverIdentity = null;
 function finishSessionLoading(){document.documentElement.removeAttribute('data-session-pending');}
 function sessionLoadFailed(message){
   document.documentElement.setAttribute('data-session-pending','true');
-  document.getElementById('sessionLoadingText').textContent=message||'Не удалось обновить данные. Проверьте соединение.';
+  document.getElementById('sessionLoadingText').textContent=message||'Չհաջողվեց թարմացնել տվյալները։ Ստուգեք կապը։';
   document.getElementById('sessionSpinner').hidden=true;document.getElementById('sessionRetryActions').hidden=false;
 }
 async function secureApi(path, options = {}) {
@@ -248,13 +248,13 @@ if (serverIdentity?.allowResale) {
 }
 
 if (isAdminUser()) {
-  cols.push({ name: 'KP Price', sort: 'kpPrice', align: 'text-right' });
-  cols.push({ name: 'KP Margin', sort: 'kpMarginVal', align: 'text-center' });
-  cols.push({ name: 'WS Price', sort: 'wholesale', align: 'text-right' });
-  cols.push({ name: 'WS Margin', sort: 'marginVal', align: 'text-center' });
+  cols.push({ name: 'KP գին', sort: 'kpPrice', align: 'text-right' });
+  cols.push({ name: 'KP եկամտա&shy;բերություն', sort: 'kpMarginVal', align: 'text-center' });
+  cols.push({ name: 'Մեծածախ գին', sort: 'wholesale', align: 'text-right' });
+  cols.push({ name: 'Մեծածախ եկամտա&shy;բերություն', sort: 'marginVal', align: 'text-center' });
 } else {
   cols.push({ name: '<span class="catalog-margin-heading">Եկամտա&shy;բերություն</span>', sort: 'marginVal', align: 'text-center' });
-  cols.push({ name: 'Մեծա&shy;ծախ (Wholesale)', sort: 'wholesale', align: 'text-right' });
+  cols.push({ name: 'Մեծա&shy;ծախ', sort: 'wholesale', align: 'text-right' });
 }
 cols.push({ name: 'Գործո&shy;ղություն', align: 'text-center' });
 
@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 hideVersionBadge();
 try { await acceptIdentity(await secureApi('me')); } catch(e) {
   if(sessionStorage.getItem('zzws_session_v3'))sessionLoadFailed(e.message);
-  else{finishSessionLoading();if (!e.message.includes('Войдите')) document.getElementById('auth-status').textContent = 'Սերվերը հասանելի չէ։';}
+  else{finishSessionLoading();if (!e.message.includes('Մուտք գործեք')) document.getElementById('auth-status').textContent = 'Սերվերը հասանելի չէ։';}
 }
 
 const pwdInput = document.getElementById('passwordInput');

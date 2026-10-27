@@ -10,14 +10,14 @@ export function defaultRules(){
 const object=v=>!!v&&typeof v==='object'&&!Array.isArray(v);
 export const validPassword=value=>typeof value==='string'&&/^[0-9]{6,256}$/.test(value);
 export function validateContacts(value,client){
-  if(!Array.isArray(value)||value.length>3)throw Error('Допустимо до трёх вариантов контрагента, адреса и контакта');
+  if(!Array.isArray(value)||value.length>3)throw Error('Թույլատրվում է գործընկերոջ, հասցեի և կոնտակտի մինչև երեք տարբերակ');
   const result=[];
   for(const row of value){
-    if(!object(row))throw Error('Неверные контактные данные');
+    if(!object(row))throw Error('Սխալ կոնտակտային տվյալներ');
     const normalized={};
     for(const field of ['organization','address','contact']){
       const text=row[field]??'';
-      if(typeof text!=='string'||text.length>300)throw Error('Контрагент, адрес и контакт должны содержать до 300 символов');
+      if(typeof text!=='string'||text.length>300)throw Error('Գործընկերոջ, հասցեի և կոնտակտի դաշտերը կարող են պարունակել մինչև 300 նիշ');
       normalized[field]=text.trim();
     }
     if(!Object.values(normalized).some(Boolean))continue;
@@ -26,28 +26,28 @@ export function validateContacts(value,client){
   return result.length?result:[{organization:client,address:'',contact:''}];
 }
 export function validateAccess(value){
-  if(!object(value)||!['all','selected'].includes(value.mode))throw Error('Выберите режим разрешений каталога');
+  if(!object(value)||!['all','selected'].includes(value.mode))throw Error('Ընտրեք կատալոգի թույլտվությունների ռեժիմը');
   const read=(rows,label)=>{
-    if(!Array.isArray(rows)||rows.length>100)throw Error(label+': допустимо до 100 связок');
+    if(!Array.isArray(rows)||rows.length>100)throw Error(label+'․ թույլատրվում է մինչև 100 կապ');
     return rows.map(r=>{
-      if(!object(r)||typeof r.brand!=='string'||typeof r.category!=='string')throw Error('Неверная связка бренда и категории');
+      if(!object(r)||typeof r.brand!=='string'||typeof r.category!=='string')throw Error('Բրենդի և կատեգորիայի սխալ կապ');
       const brand=r.brand.trim(),category=r.category.trim(),categoryMatch=r.categoryMatch??'exact';
-      if(brand.length>200||category.length>300||(!key(brand)&&!key(category))||!['exact','contains'].includes(categoryMatch))throw Error('Укажите бренд, категорию или оба значения в каждой связке');
+      if(brand.length>200||category.length>300||(!key(brand)&&!key(category))||!['exact','contains'].includes(categoryMatch))throw Error('Յուրաքանչյուր կապում նշեք բրենդը, կատեգորիան կամ երկուսը միասին');
       return {brand,category,categoryMatch};
     });
   };
-  return {mode:value.mode,include:read(value.include??[],'Разрешения'),exclude:read(value.exclude??[],'Исключения')};
+  return {mode:value.mode,include:read(value.include??[],'Թույլտվություններ'),exclude:read(value.exclude??[],'Բացառություններ')};
 }
 export function validatePricing(value){
-  if(!object(value)||!Array.isArray(value.sources)||!value.sources.length||value.sources.length>5||new Set(value.sources).size!==value.sources.length||value.sources.some(s=>!['ws','kp','kpPromo','retail','base'].includes(s)))throw Error('Выберите от 1 до 5 разных колонок цены');
-  if(!['first','min','max'].includes(value.mode))throw Error('Неверный способ выбора цены');
+  if(!object(value)||!Array.isArray(value.sources)||!value.sources.length||value.sources.length>5||new Set(value.sources).size!==value.sources.length||value.sources.some(s=>!['ws','kp','kpPromo','retail','base'].includes(s)))throw Error('Ընտրեք գնի 1-ից 5 տարբեր սյունակ');
+  if(!['first','min','max'].includes(value.mode))throw Error('Գնի ընտրության սխալ եղանակ');
   const adjustmentPercent=value.adjustmentPercent??0,roundTo=value.roundTo??0;
-  if(typeof adjustmentPercent!=='number'||!Number.isFinite(adjustmentPercent)||adjustmentPercent< -90||adjustmentPercent>1000)throw Error('Корректировка цены: от −90 до 1000%');
-  if(![0,1,10,100].includes(roundTo)||typeof value.hideAboveRetail!=='boolean')throw Error('Неверное округление или ограничение по розничной цене');
+  if(typeof adjustmentPercent!=='number'||!Number.isFinite(adjustmentPercent)||adjustmentPercent< -90||adjustmentPercent>1000)throw Error('Գնի ճշգրտում՝ −90-ից 1000%');
+  if(![0,1,10,100].includes(roundTo)||typeof value.hideAboveRetail!=='boolean')throw Error('Սխալ կլորացում կամ մանրածախ գնի սահմանափակում');
   return {sources:[...value.sources],mode:value.mode,adjustmentPercent,roundTo,hideAboveRetail:value.hideAboveRetail};
 }
 export function validateRules(value){
-  if(!object(value)||!object(value.KP)||!object(value.Dealers))throw Error('Нужны настройки обеих групп: KP и Dealers');
+  if(!object(value)||!object(value.KP)||!object(value.Dealers))throw Error('Պահանջվում են երկու խմբերի կարգավորումները՝ KP և Dealers');
   return Object.fromEntries(['KP','Dealers'].map(g=>[g,{pricing:validatePricing(value[g].pricing),access:validateAccess(value[g].access)}]));
 }
 export function effectiveRules(value){

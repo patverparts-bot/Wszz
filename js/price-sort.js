@@ -1,8 +1,8 @@
 function configureSortPrices(){
  const select=document.getElementById('sortPrice');select.replaceChildren();
- const options=[['wholesale',isAdminUser()?'WS Price':'Ваша цена'],['retail','Розничная цена']];
- if(isAdminUser())options.push(['kpPrice','KP Price']);
- if(serverIdentity?.allowResale)options.push(['resaleWholesale','Цена перепродажи']);
+ const options=[['wholesale',isAdminUser()?'Մեծածախ գին':'Ձեր գինը'],['retail','Մանրածախ գին']];
+ if(isAdminUser())options.push(['kpPrice','KP գին']);
+ if(serverIdentity?.allowResale)options.push(['resaleWholesale','Վերավաճառքի գին']);
  for(const [value,text] of options){const opt=document.createElement('option');opt.value=value;opt.textContent=text;select.append(opt);}
 }
 function compareProductPrices(a,b,field,direction){

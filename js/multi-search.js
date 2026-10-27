@@ -30,7 +30,7 @@
   for(const part of result.parts){mirrorText.append(document.createTextNode(result.raw.slice(offset,part.start)));const span=document.createElement('span');span.textContent=result.raw.slice(part.start,part.end);if(!part.found)span.className='search-query-missing';mirrorText.append(span);offset=part.end;}
   mirrorText.append(document.createTextNode(result.raw.slice(offset)));const errors=result.missing.length>0;
   input.classList.toggle('search-highlight-active',errors);input.setAttribute('aria-invalid',String(errors));mirror.hidden=!errors;position();
-  status.hidden=!result.raw.trim();status.replaceChildren();if(result.raw.trim()){const summary=document.createElement('span');summary.textContent='Запросов: '+result.parts.length+' · найдено товаров: '+result.matches.size;status.append(summary);if(errors){const missing=document.createElement('strong');missing.textContent='Не найдены: '+result.missing.map(p=>p.text).join(', ');status.append(missing);}}
+  status.hidden=!result.raw.trim();status.replaceChildren();if(result.raw.trim()){const summary=document.createElement('span');summary.textContent='Հարցումներ՝ '+result.parts.length+' · գտնված ապրանքներ՝ '+result.matches.size;status.append(summary);if(errors){const missing=document.createElement('strong');missing.textContent='Չեն գտնվել՝ '+result.missing.map(p=>p.text).join(', ');status.append(missing);}}
  }
  window.ZZWS_MULTI_SEARCH={compile,highlight};
 })();

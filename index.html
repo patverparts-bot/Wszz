@@ -15,7 +15,7 @@
 try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.classList.toggle('dark', __t ? __t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches); } catch (e) {}</script>
 <!-- SheetJS (XLSX reader/writer) -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="styles.css?v=4.3-sticky">
+<link rel="stylesheet" href="styles.css?v=4.4-hy">
 <style>
 .auth-entry-card {
   opacity: 1;
@@ -33,14 +33,14 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 min-h-screen flex flex-col relative transition-colors duration-200">
-<div id="sessionLoader" class="session-loader" role="status" aria-live="polite"><div class="session-loader-card"><img class="session-loader-logo" src="logo.svg" alt="ZIGZAG" width="198" height="46"><img class="session-loader-logo-dark" src="logo-dark.svg" alt="" aria-hidden="true" width="198" height="46"><div id="sessionSpinner" class="session-spinner" aria-hidden="true"></div><p id="sessionLoadingText">Обновляем данные…</p><div id="sessionRetryActions" hidden><button type="button" onclick="location.reload()">Повторить загрузку</button><button type="button" onclick="ZZWS.clearSession();lockCatalog()">Выйти</button></div></div></div>
+<div id="sessionLoader" class="session-loader" role="status" aria-live="polite"><div class="session-loader-card"><img class="session-loader-logo" src="logo.svg" alt="ZIGZAG" width="198" height="46"><img class="session-loader-logo-dark" src="logo-dark.svg" alt="" aria-hidden="true" width="198" height="46"><div id="sessionSpinner" class="session-spinner" aria-hidden="true"></div><p id="sessionLoadingText">Տվյալները թարմացվում են…</p><div id="sessionRetryActions" hidden><button type="button" onclick="location.reload()">Կրկին բեռնել</button><button type="button" onclick="ZZWS.clearSession();lockCatalog()">Ելք</button></div></div></div>
 
 <!-- EKRAN AVTORIZACII -->
 <div id="authScreen" class="fixed inset-0 bg-cover bg-center bg-no-repeat z-50 flex items-center justify-center p-4" style="background-image: url('bg-warehouse-login.webp');">
   <div class="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/70"></div>
 
   <div class="relative z-10 bg-white/50 dark:bg-gray-900/80 backdrop-blur-md rounded-2xl max-w-md w-full p-8 shadow-2xl border border-white/60 dark:border-gray-800 text-center auth-entry-card">
-    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Сборка v2.65</span>
+    <span id="version-badge" class="inline-block px-2.5 py-0.5 bg-blue-600 text-white font-mono text-[10px] rounded-full mb-3 font-bold shadow transition-opacity duration-500">Տարբերակ v2.65</span>
     
     <h2 class="text-2xl font-black text-gray-900 dark:text-white mb-2 drop-shadow-md">Մուտքագրեք գաղտնաբառը</h2>
     <p class="text-xs font-bold text-gray-800 dark:text-gray-300 mb-6 drop-shadow" id="auth-status">Առաջին մուտքի ժամանակ նշեք միայն լոգինը և սահմանեք ձեր գաղտնաբառը։</p>
@@ -93,7 +93,7 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
  <div class="catalog-brand"><img src="logo.svg" alt="ZIGZAG" width="198" height="46" class="dark:hidden"><img src="logo-dark.svg" alt="" aria-hidden="true" width="198" height="46" class="hidden dark:block"><h1>Մեծածախ ապրանքների կատալոգ</h1></div>
  <nav class="catalog-header-actions" aria-label="Կատալոգի գործողություններ">
   <button type="button" onclick="toggleTheme()" class="header-icon" aria-label="Թեմա" title="Մութ / լուսավոր թեմա">◐</button>
-  <button type="button" onclick="ZZWS_ORDERS.notifications()" class="header-secondary header-notifications">Уведомления <span id="orderNotificationsCount" hidden>0</span></button>
+  <button type="button" onclick="ZZWS_ORDERS.notifications()" class="header-secondary header-notifications">Ծանուցումներ <span id="orderNotificationsCount" hidden>0</span></button>
   <button type="button" onclick="openPersonalCabinet()" class="header-secondary">Անձնական հաշիվ</button>
   <button type="button" onclick="downloadFullPriceList()" class="header-secondary">Ներբեռնել գնացուցակը</button>
   <button type="button" onclick="openOrderModal()" class="header-primary">Զամբյուղ <span id="headerCartBadgeDesktop" class="header-cart-count hidden">0</span></button>
@@ -110,7 +110,7 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 <div id="stickySearchBar" class="sticky top-0 z-40 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-2.5 shadow-sm transition-colors duration-200">
   <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-stretch gap-2">
     <div class="relative w-full min-w-0">
-      <input type="text" id="searchInput" placeholder="Артикулы или модели — через пробел или запятую" aria-label="Որոնել ապրանք կամ արտիկուլ"
+      <input type="text" id="searchInput" placeholder="Արտիկուլներ կամ մոդելներ՝ բացատով կամ ստորակետով" aria-label="Որոնել ապրանք կամ արտիկուլ"
       class="w-full pl-3 pr-8 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
       <button id="clearSearchBtn" onclick="clearSearch()" aria-label="Մաքրել որոնումը" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 font-bold text-sm">✕</button>
     </div>
@@ -191,7 +191,7 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
           <input type="checkbox" id="promoOnlyFilter" onchange="resetAndRender()" aria-label="Միայն ակցիաներ" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600">
           <span>🔥 Միայն ակցիաներ / PROMO</span>
         </label>
-        <!-- Специфичный фильтр только для Администратора -->
+        <!-- Специфичный фильтр только для Ադմինիստրատորа -->
         <label id="wholesaleOnlyFilterLabel" class="hidden flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-300">
           <input type="checkbox" id="wholesaleOnlyFilter" onchange="resetAndRender()" aria-label="Միայն մեծածախ գին ունեցող ապրանքները" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600">
           <span>💰 Միայն մեծածախ գնով ապրանքներ</span>
@@ -298,9 +298,9 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 <div id="modalBody" class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden order-modal-body">
 
 <details id="savedCartsPanel" class="saved-carts-panel">
-<summary><span>Сохранённые корзины</span><span id="savedCartsCount" class="saved-count">0 / 10</span></summary>
-<div class="saved-carts-content"><p class="saved-help">Текущая корзина сохраняется автоматически. Сохраните отдельный вариант, чтобы вернуться к нему позже.</p>
-<form id="saveCartForm" class="saved-cart-form" onsubmit="event.preventDefault();ZZWS_MEMORY.saveNamed()"><label for="savedCartTitle">Название корзины<input id="savedCartTitle" maxlength="80" required placeholder="Например: закупка на ноябрь" autocomplete="off"></label><button type="submit" class="saved-primary">Сохранить текущую</button><button type="button" onclick="ZZWS_MEMORY.savedList()" class="saved-secondary">Обновить</button></form>
+<summary><span>Պահպանված զամբյուղներ</span><span id="savedCartsCount" class="saved-count">0 / 10</span></summary>
+<div class="saved-carts-content"><p class="saved-help">Ընթացիկ զամբյուղը պահպանվում է ինքնաբերաբար։ Պահպանեք առանձին տարբերակ՝ դրան ավելի ուշ վերադառնալու համար։</p>
+<form id="saveCartForm" class="saved-cart-form" onsubmit="event.preventDefault();ZZWS_MEMORY.saveNamed()"><label for="savedCartTitle">Զամբյուղի անվանում<input id="savedCartTitle" maxlength="80" required placeholder="Օրինակ՝ նոյեմբերի գնումներ" autocomplete="off"></label><button type="submit" class="saved-primary">Պահպանել ընթացիկը</button><button type="button" onclick="ZZWS_MEMORY.savedList()" class="saved-secondary">Թարմացնել</button></form>
 <div id="savedCartsList" aria-live="polite"></div></div></details>
 
 <div class="order-modal-body-grid">
@@ -396,14 +396,14 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 
 
 
-<details class="order-alternatives print-hidden"><summary>Другие способы</summary><div><button onclick="printOrder()" aria-label="Տպել պատվերը" class="px-3.5 py-2.5 bg-slate-700 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow transition flex items-center gap-1.5 print-hidden" title="Տպել պատվերը">
+<details class="order-alternatives print-hidden"><summary>Այլ եղանակներ</summary><div><button onclick="printOrder()" aria-label="Տպել պատվերը" class="px-3.5 py-2.5 bg-slate-700 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow transition flex items-center gap-1.5 print-hidden" title="Տպել պատվերը">
 <span>🖨️</span> Տպել
 </button><button onclick="sendViaViber()" aria-label="Ուղարկել Viber-ով" class="px-3.5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold shadow transition flex items-center gap-1.5 print-hidden" title="Ուղարկել Viber-ով">
 <span>📱</span> Viber
 </button><button onclick="sendViaEmail()" aria-label="Ուղարկել Էլ. փոստով" class="px-3.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition flex items-center gap-1.5 print-hidden" title="Ուղարկել Էլ․ փոստով">
 <span>✉️</span> Email
 </button></div></details>
-<button id="submitServerOrder" type="button" onclick="ZZWS_ORDERS.submit()" class="submit-server-order print-hidden">Отправить заказ</button>
+<button id="submitServerOrder" type="button" onclick="ZZWS_ORDERS.submit()" class="submit-server-order print-hidden">Ուղարկել պատվերը</button>
 <button onclick="downloadOrderExcel()" aria-label="Ներբեռնել Excel ֆայլով" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs shadow transition flex items-center gap-1.5 print-hidden">
 <span>📥</span> Excel
 </button>
@@ -426,18 +426,18 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 
   <div class="bg-indigo-50 dark:bg-indigo-950/40 p-3 rounded-xl border border-indigo-200 dark:border-indigo-900 mb-3 flex flex-col sm:flex-row justify-between items-center gap-2.5 flex-shrink-0">
     <div class="text-xs text-indigo-900 dark:text-indigo-300">
-      <p class="font-bold">История заказов доступна с любого устройства</p>
-      <p class="text-[11px] text-indigo-700 dark:text-indigo-400">Здесь отображаются отправленные заказы и их текущие статусы. «Новый» означает, что заказ получен и ожидает подтверждения.</p>
+      <p class="font-bold">Պատվերների պատմությունը հասանելի է ցանկացած սարքից</p>
+      <p class="text-[11px] text-indigo-700 dark:text-indigo-400">Այստեղ ցուցադրվում են ուղարկված պատվերներն ու ընթացիկ կարգավիճակները։ «Նոր» նշանակում է, որ պատվերը ստացվել է և սպասում է հաստատման։</p>
     </div>
 
   </div>
 
-  <div class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Оформленные заказы и их состав</div>
-  <button type="button" class="cabinet-notifications-link" onclick="ZZWS_ORDERS.notifications()">Показать изменения заказов</button><div class="server-orders-scroll"><div id="orderNotificationList" class="order-notification-list" hidden></div><div id="serverOrdersList"></div><button id="moreServerOrders" type="button" hidden onclick="ZZWS_ORDERS.load(true)">Показать предыдущие заказы</button><details class="legacy-order-history"><summary>Прежние выгрузки Excel / Viber / Email</summary><div id="cabinetHistoryList" class="space-y-3"></div></details></div>
+  <div class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Ուղարկված պատվերներն ու դրանց կազմը</div>
+  <button type="button" class="cabinet-notifications-link" onclick="ZZWS_ORDERS.notifications()">Ցույց տալ պատվերների փոփոխությունները</button><div class="server-orders-scroll"><div id="orderNotificationList" class="order-notification-list" hidden></div><div id="serverOrdersList"></div><button id="moreServerOrders" type="button" hidden onclick="ZZWS_ORDERS.load(true)">Ցույց տալ նախորդ պատվերները</button><details class="legacy-order-history"><summary>Նախկին արտահանումներ՝ Excel / Viber / Email</summary><div id="cabinetHistoryList" class="space-y-3"></div></details></div>
 
   <div class="border-t dark:border-gray-700 pt-3 mt-3 flex justify-between items-center flex-shrink-0">
     <button onclick="clearOrderHistory()" aria-label="Մաքրել պատմությունը" class="px-3.5 py-2 bg-red-50 dark:bg-red-950/50 hover:bg-red-100 text-red-600 dark:text-red-400 rounded-lg text-xs font-semibold transition">
-      Очистить историю выгрузок
+      Մաքրել արտահանումների պատմությունը
     </button>
     <button onclick="closePersonalCabinet()" aria-label="Փակել" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-semibold transition">
       Փակել
@@ -500,24 +500,24 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
   </div>
 </dialog>
 
-<script src="js/product-photos.js?v=4.3-sticky"></script>
-<script src="js/api-config.js?v=4.3-sticky"></script>
-<script src="js/api-client.js?v=4.3-sticky"></script>
-<script src="js/core.js?v=4.3-sticky"></script>
-<script src="js/photo-preview.js?v=4.3-sticky"></script>
-<script src="js/password-setup.js?v=4.3-sticky"></script>
-<script src="js/price-sort.js?v=4.3-sticky"></script>
-<script src="js/auth-data.js?v=4.3-sticky"></script>
-<script src="js/multi-search.js?v=4.3-sticky"></script>
-<script src="js/catalog.js?v=4.3-sticky"></script>
-<script src="js/order-state.js?v=4.3-sticky"></script>
-<script src="js/bulk-add.js?v=4.3-sticky"></script>
-<script src="js/order-submit.js?v=4.3-sticky"></script>
-<script src="js/user-memory.js?v=4.3-sticky"></script>
-<script src="js/order-comparison.js?v=4.3-sticky"></script>
-<script src="js/server-orders.js?v=4.3-sticky"></script>
-<script src="js/sticky-controls.js?v=4.3-sticky"></script>
-<script src="js/user-guide.js?v=4.3-sticky"></script>
+<script src="js/product-photos.js?v=4.4-hy"></script>
+<script src="js/api-config.js?v=4.4-hy"></script>
+<script src="js/api-client.js?v=4.4-hy"></script>
+<script src="js/core.js?v=4.4-hy"></script>
+<script src="js/photo-preview.js?v=4.4-hy"></script>
+<script src="js/password-setup.js?v=4.4-hy"></script>
+<script src="js/price-sort.js?v=4.4-hy"></script>
+<script src="js/auth-data.js?v=4.4-hy"></script>
+<script src="js/multi-search.js?v=4.4-hy"></script>
+<script src="js/catalog.js?v=4.4-hy"></script>
+<script src="js/order-state.js?v=4.4-hy"></script>
+<script src="js/bulk-add.js?v=4.4-hy"></script>
+<script src="js/order-submit.js?v=4.4-hy"></script>
+<script src="js/user-memory.js?v=4.4-hy"></script>
+<script src="js/order-comparison.js?v=4.4-hy"></script>
+<script src="js/server-orders.js?v=4.4-hy"></script>
+<script src="js/sticky-controls.js?v=4.4-hy"></script>
+<script src="js/user-guide.js?v=4.4-hy"></script>
 <script>
 (() => {
   const screen = document.getElementById('authScreen');
@@ -548,5 +548,5 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
   showAuthCard();
 })();
 </script>
-</body>
+<script src="js/ui-language.js?v=4.4-hy"></script></body>
 </html>

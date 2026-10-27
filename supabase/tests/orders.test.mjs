@@ -34,7 +34,7 @@ test('merged Zigzag sales report stops before warranty table and reconciles cont
  const line=Array(21).fill(null);Object.assign(line,{0:'27.10.2026',3:'001',4:'Product',7:'1,000',11:'10 %',14:'1',15:'900'});
  const rows=[top,values,[],header,sub,line,[],['Կոդ','Մոդել',null,null,null,null,'Երաշխիքային քարտի N'],['001','Product',null,null,null,null,'Warranty']];
  const parsed=parseConfirmation(rows);assert.equal(parsed.lines.length,1);assert.equal(parsed.lines[0].unitPrice,900);assert.equal(parsed.delivery.date,'2026-01-02');assert.equal(parsed.delivery.paymentDeadline,'2026-01-03');
- values[13]='901';assert.throws(()=>parseConfirmation(rows),/Итог/);
+ values[13]='901';assert.throws(()=>parseConfirmation(rows),/ընդհանուր գումար/);
 });
 test('plain tables preserve leading zeros and accept formatted numbers',()=>{
  const result=parsePastedConfirmation('Артикул\tКоличество\tЦена\n001\t2\t1,300.50');assert.equal(result.lines[0].articul,'001');assert.equal(result.lines[0].unitPrice,1300.5);

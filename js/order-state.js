@@ -195,7 +195,7 @@ function updateOrderPanel() {
   if (totalCount > 0) {
     orderPanel.classList.remove('hidden');
     document.getElementById('orderCount').innerText = `${totalCount} ապրանք`;
-    document.getElementById('orderSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
+    document.getElementById('orderSum').innerText = totalSum.toLocaleString('hy-AM') + ' ֏';
     if (badgeDesk) { badgeDesk.innerText = totalCount; badgeDesk.classList.remove('hidden'); }
   } else {
     orderPanel.classList.add('hidden');
@@ -279,8 +279,8 @@ function renderModalItems() {
 
     let priceDiffNotice = '';
     if (item.addedPrice && item.addedPrice !== currentPrice && currentPrice > 0) {
-      const wasPriceStr = item.addedPrice.toLocaleString('ru-RU');
-      const isPriceStr = currentPrice.toLocaleString('ru-RU');
+      const wasPriceStr = item.addedPrice.toLocaleString('hy-AM');
+      const isPriceStr = currentPrice.toLocaleString('hy-AM');
       const diffColor = currentPrice > item.addedPrice ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900' : 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-900';
       priceDiffNotice = `<button type="button" data-act="ack-price" data-art="${escapeHtml(articul)}" class="px-2 py-0.5 text-[10px] font-bold rounded border ${diffColor} whitespace-nowrap">Գինը փոխվել է: ${wasPriceStr} ֏ → ${isPriceStr} ֏ ✕</button>`;
     }
@@ -293,13 +293,13 @@ function renderModalItems() {
         ${priceDiffNotice ? `<div class="basket-price-notice">${priceDiffNotice}</div>` : ''}
       </div>
       <div class="basket-item-details">
-        <div class="basket-unit-price"><span class="basket-field-label">Միավորի գին${isAdminUser() ? ` (${escapeHtml(getOrderPriceLabel())})` : ''}</span><strong>${currentPrice > 0 ? currentPrice.toLocaleString('ru-RU') + ' ֏' : 'Գին չկա'}</strong></div>
+        <div class="basket-unit-price"><span class="basket-field-label">Միավորի գին${isAdminUser() ? ` (${escapeHtml(getOrderPriceLabel())})` : ''}</span><strong>${currentPrice > 0 ? currentPrice.toLocaleString('hy-AM') + ' ֏' : 'Գին չկա'}</strong></div>
         <div class="basket-quantity"><span class="basket-field-label">Քանակ (հատ)</span><div class="basket-quantity-control print-hidden">
           <button type="button" data-act="mqty" data-delta="-1" data-art="${escapeHtml(articul)}" aria-label="Նվազեցնել քանակը">−</button>
           <input type="number" data-act="mqty-input" data-art="${escapeHtml(articul)}" value="${item.qty}" min="1" max="9999" aria-label="Ապրանքի քանակ">
           <button type="button" data-act="mqty" data-delta="1" data-art="${escapeHtml(articul)}" aria-label="Ավելացնել քանակը">+</button>
         </div><span class="print-only">${item.qty}</span></div>
-        <div class="basket-line-total"><span class="basket-field-label">Ընդհանուր գումար</span><strong>${sum.toLocaleString('ru-RU')} ֏</strong></div>
+        <div class="basket-line-total"><span class="basket-field-label">Ընդհանուր գումար</span><strong>${sum.toLocaleString('hy-AM')} ֏</strong></div>
         <label class="basket-payment print-hidden"><span class="basket-field-label">Վճարման եղանակ</span><select data-act="pay" data-art="${escapeHtml(articul)}" aria-label="Վճարման եղանակ ապրանքի համար">
           <option value="Բանկային փոխանցումով" ${item.paymentMethod === 'Բանկային փոխանցումով' ? 'selected' : ''}>Բանկային փոխանցումով</option>
           <option value="Կանխիկ" ${item.paymentMethod === 'Կանխիկ' ? 'selected' : ''}>Կանխիկ</option>
@@ -309,7 +309,7 @@ function renderModalItems() {
   });
 
   if (bodyEl) bodyEl.scrollTop = prevScroll;
-  document.getElementById('modalTotalSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
+  document.getElementById('modalTotalSum').innerText = totalSum.toLocaleString('hy-AM') + ' ֏';
 }
 
 function openOrderModal() {
@@ -404,7 +404,7 @@ function saveOrderToHistory(cartItems, orgName, totalSum, actionType = 'Excel') 
 
     const newOrder = {
       id: 'ORD-' + Date.now(),
-      date: new Date().toLocaleString('ru-RU'),
+      date: new Date().toLocaleString('hy-AM'),
       organization: orgName || authorizedClient,
       totalSum: totalSum,
       itemsCount: Object.keys(cartItems).length,
@@ -447,7 +447,7 @@ function renderOrderHistoryList() {
   if (history.length === 0) {
     container.innerHTML = `
       <div class="p-8 text-center text-gray-400 dark:text-gray-500 text-xs sm:text-sm">
-        <div class="history-empty-icon">📋</div><strong>Оформленных заказов пока нет</strong><p>После выгрузки заказа в Excel или подготовки отправки он появится здесь с датой, суммой и составом.</p>
+        <div class="history-empty-icon">📋</div><strong>Ուղարկված պատվերներ դեռ չկան</strong><p>Պատվերը Excel արտահանելուց կամ ուղարկման պատրաստելուց հետո այն այստեղ կերևա ամսաթվով, գումարով և կազմով։</p>
       </div>`;
     return;
   }
@@ -465,7 +465,7 @@ function renderOrderHistoryList() {
         const price = item.price || (prod ? prod.wholesale : (item.addedPrice || 0));
         return `<div class="text-[11px] text-gray-600 dark:text-gray-300 flex justify-between gap-2 border-b border-gray-100 dark:border-gray-700/50 py-0.5">
           <span class="truncate">🔹 <strong class="font-mono">${escapeHtml(item.articul)}</strong> - ${escapeHtml(name)}</span>
-          <span class="whitespace-nowrap font-medium">${item.qty} հատ × ${price.toLocaleString('ru-RU')} ֏</span>
+          <span class="whitespace-nowrap font-medium">${item.qty} հատ × ${price.toLocaleString('hy-AM')} ֏</span>
         </div>`;
       }).join('');
     }
@@ -485,11 +485,11 @@ function renderOrderHistoryList() {
           </div>
           <div class="text-right">
             <div class="text-xs text-gray-500 dark:text-gray-400">Ընդհանուր՝</div>
-            <div class="text-sm font-black text-green-600 dark:text-green-400">${Number(ord.totalSum).toLocaleString('ru-RU')} ֏</div>
+            <div class="text-sm font-black text-green-600 dark:text-green-400">${Number(ord.totalSum).toLocaleString('hy-AM')} ֏</div>
           </div>
         </div>
 
-        <details class="history-order-items"><summary>Состав заказа · ${Number(ord.itemsCount) || 0} поз.</summary><div class="history-items-scroll">${itemsHtml}</div></details>
+        <details class="history-order-items"><summary>Պատվերի կազմ · ${Number(ord.itemsCount) || 0} դիրք</summary><div class="history-items-scroll">${itemsHtml}</div></details>
 
         <div class="flex justify-end pt-1">
           <button data-act="restore-history" data-id="${escapeHtml(ord.id)}" aria-label="Կրկնել պատվերը" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition whitespace-nowrap">

@@ -91,7 +91,7 @@ test('passwords require at least six ASCII digits, including leading zeroes',()=
 test('three complete contact variants retain their associations',()=>{
  const rows=[1,2,3].map(i=>({organization:'Company '+i,address:'Address '+i,contact:'Phone '+i}));
  assert.deepEqual(validateProfile({login:'client',client:'Client',rowsList:rows}).profile.rowsList,rows);
- assert.throws(()=>validateContacts([...rows,rows[0]],'Client'),/трёх/);
+ assert.throws(()=>validateContacts([...rows,rows[0]],'Client'),/երեք/);
 });
 test('unused contact variants are omitted without inventing additional options',()=>{
  assert.deepEqual(validateContacts([{organization:'First',address:'Address',contact:'Phone'},{organization:'',address:'',contact:''}],'Client'),[{organization:'First',address:'Address',contact:'Phone'}]);
