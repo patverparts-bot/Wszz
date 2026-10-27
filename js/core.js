@@ -404,7 +404,7 @@ function getProductImageHtml(articul, productName) {
   const a2 = cleanArt.charAt(1) || '0';
   const initialUrl = `https://www.zigzag.am/media/catalog/product/${encodeURIComponent(a1)}/${encodeURIComponent(a2)}/${encodeURIComponent(cleanArt)}.jpg`;
   const photoSuffix = window.ZZWS_PRODUCT_PHOTO_PATHS?.[cleanArt];
-  const photoUrl = photoSuffix ? `https://www.zigzag.am${window.ZZWS_PRODUCT_PHOTO_PREFIX}${photoSuffix}` : '';
+  const photoUrl = photoSuffix ? (photoSuffix.startsWith('https://www.zigzag.am/') ? photoSuffix : `https://www.zigzag.am${window.ZZWS_PRODUCT_PHOTO_PREFIX}${photoSuffix}`) : '';
 
   return `
     <div class="product-img-container">
