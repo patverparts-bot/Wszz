@@ -41,3 +41,5 @@ test('vendored SheetJS round trips Unicode XLSX',()=>{
  const raw=XLSX.write(book,{type:'array',bookType:'xlsx'});const restored=XLSX.read(raw,{type:'array'});
  assert.equal(parsePrice(XLSX.utils.sheet_to_json(restored.Sheets.Price,{header:1})).length,4);
 });
+
+test('legacy KP brand permissions preserve Cyrillic identity without widening visibility',()=>{const raw=parsePrice(rows()).slice(0,1);raw[0].brand='Самсунг';const kp={...user('KP'),brands:['Бош']};assert.equal(project(raw,kp).length,0);kp.brands=['самсунг'];assert.equal(project(raw,kp).length,1);});

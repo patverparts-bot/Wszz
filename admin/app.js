@@ -26,7 +26,7 @@ function table(headers, rows) {
   return table;
 }
 function button(label, callback) { const b = document.createElement('button'); b.type='button'; b.textContent = label; b.onclick = () => run(callback); return b; }
-async function run(fn) { try { await fn(); } catch(e) { status(e.message, true); } }
+async function run(fn) { try { await fn(); } catch(e) { status(ZZWS.message(e), true); } }
 const adminTabs=['dashboard','orders','price','users','rules','audit','storage'];
 function rememberedAdminTab(){
   const linked=new URLSearchParams(location.hash.slice(1)).get('tab');if(adminTabs.includes(linked))return linked;
@@ -61,7 +61,7 @@ document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => run(()=>s
 el('priceForm').onsubmit = e => { e.preventDefault(); run(async () => {
   draft = null; el('preview').hidden = true; status('Ֆայլը ստուգվում է…');
   const d = await api('admin/price/preview',{method:'POST',body:new FormData(e.target)});
-  draft = d.draft;const difference=d.difference;el('priceDifference').textContent=difference?'Ավելացված՝ '+difference.added+' · հեռացված՝ '+difference.removed+' · գինը փոխված՝ '+difference.changed+' · անփոփոխ՝ '+difference.unchanged:'';el('priceWarnings').replaceChildren(...(difference?.warnings||[]).map(w=>{const p=document.createElement('p');p.textContent=w.articul+' · '+w.name+' · '+w.source+': '+w.before+' → '+w.after+' ('+w.percent+'%)';return p;})); el('summary').textContent = `Ստուգված ապրանքներ՝ ${d.count}։ Առաջին հինգ տողերը՝`;
+  draft = d.draft;const difference=d.difference;el('priceDifference').textContent=difference?'Ավելացված՝ '+difference.added+' · հեռացված՝ '+difference.removed+' · գինը փոխված՝ '+difference.changed+' · անփոփոխ՝ '+difference.unchanged:'';el('priceWarnings').replaceChildren(...(difference?.warnings||[]).map(w=>{const p=document.createElement('p');p.textContent=w.articul+' · '+w.name+' · '+({ws:'Մեծածախ գին',kp:'KP գին',kpPromo:'KP ակցիոն գին',retail:'Զեղչված մանրածախ գին',base:'Հիմնական մանրածախ գին'}[w.source]||'Գին')+': '+w.before+' → '+w.after+' ('+w.percent+'%)';return p;})); el('summary').textContent = `Ստուգված ապրանքներ՝ ${d.count}։ Առաջին հինգ տողերը՝`;
   el('sample').replaceChildren(table(['Արտիկուլ','Բրենդ','Անվանում','WS','KP'],d.sample.map(p => [p.articul,p.brand,p.name,p.ws,p.kpPromo||p.kp])));
   el('preview').hidden = false; status('Ֆայլը ստուգված է։ Գործող գնացուցակը դեռ չի փոխվել։');
 }); };

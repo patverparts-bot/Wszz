@@ -21,7 +21,7 @@ export async function orderRoutes(c){
   const p=await body(req),o=await order(p.id);const events=await query(table('order_events').select('id,detail,created,revision').eq('order_id',o.id).eq('user_id',user.id).order('revision',{ascending:false}).limit(10));return json({order:o,events});
  }
  if(path==='orders/read'&&req.method==='POST'){
-  const p=await body(req);await order(p.orderId);await query(table('order_events').update({read_at:new Date().toISOString()}).eq('user_id',user.id).eq('order_id',p.orderId).is('read_at',null));return json({ok:true});
+  const p=await body(req),o=await order(p.orderId);if(!Number.isSafeInteger(p.revision)||p.revision<1||p.revision>o.revision)fail(400,'Ստուգեք դիտված պատվերի տարբերակը');await query(table('order_events').update({read_at:new Date().toISOString()}).eq('user_id',user.id).eq('order_id',p.orderId).lte('revision',p.revision).is('read_at',null));return json({ok:true});
  }
  if(!path.startsWith('admin/orders'))return null;
  if(user.role!=='admin')fail(403,'Հասանելիությունն արգելված է');
@@ -48,10 +48,11 @@ export async function orderRoutes(c){
   const o=await order(orderId,true);if(revision!==o.revision)fail(409,'Պատվերն արդեն փոխվել է։ Վերաբացեք այն');
   const lines=await prepare(o,parsed.lines),changes=changesBetween(o.lines,lines);
   const d=await query(table('drafts').insert({actor:user.id,kind:'order',payload:{orderId:o.id,revision:o.revision,lines,changes,filename,metadata:parsed.metadata,delivery:parsed.delivery}}).select('id').single());
-  return json({draft:d.id,lines,changes,total:totalOf(lines),orderNumber:o.number,metadata:parsed.metadata,delivery:parsed.delivery});
+  return json({draft:d.id,lines,changes,total:totalOf(lines),orderNumber:o.number,orderId:o.id,revision:o.revision,metadata:parsed.metadata,delivery:parsed.delivery});
  }
  if(req.method==='POST'&&['admin/orders/update','admin/orders/apply'].includes(path)){
   const p=await body(req),d=path.endsWith('/apply')?await draft(p.draft,user.id,'order'):null;
+  if(d&&(p.orderId!==d.payload.orderId||p.revision!==d.payload.revision))fail(409,'Նախադիտումը վերաբերում է այլ պատվերի կամ տարբերակի։ Կրկին ստուգեք ֆայլը');
   const o=await order(d?.payload.orderId||p.id,true),revision=d?.payload.revision??p.revision;
   if(revision!==o.revision)fail(409,'Պատվերն արդեն փոխվել է։ Վերաբացեք պատվերը');
   const status=d?'confirmed':p.status;if(!statuses[status])fail(400,'Անհայտ կարգավիճակ');

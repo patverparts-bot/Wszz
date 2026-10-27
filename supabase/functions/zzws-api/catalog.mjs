@@ -1,5 +1,5 @@
 import { effectiveRules, permits, selectPrice, validateAccess, validateContacts } from './rules.mjs';
-export const norm = v => String(v??'').toLowerCase().replace(/[^a-z0-9\u0531-\u058f]/g,'');
+export const norm = v => String(v??'').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');
 const number = v => { const n=Number(v||0); if(!Number.isFinite(n)||n<0) throw Error('Սխալ գին կամ մնացորդ'); return n; };
 export function parsePrice(rows) {
   const hi=rows.slice(0,25).findIndex(r=>r.some(c=>/artikul|артикул|արտիկուլ/i.test(String(c??''))));
@@ -10,7 +10,7 @@ export function parsePrice(rows) {
     name:find('name','наименование','номенклатура','անվանում'),retail:find('Զեղչված','discount'),base:find('roznich','розница','մանրածախ'),
     ws:find('wholesale','опт','մեծածախ'),kp:find("Key Partner's AMD"),kpPromo:find("Key Partner's promo AMD")};
   if(c.retail<0)c.retail=c.base;
-  for(const key of ['art','brand','category','name','retail','ws'])if(c[key]<0)throw Error('Բացակայում է պարտադիր սյունակը՝ '+key);
+  for(const key of ['art','brand','category','name','retail','ws'])if(c[key]<0)throw Error('Բացակայում է պարտադիր սյունակը՝ '+({art:'Արտիկուլ',brand:'Բրենդ',category:'Կատեգորիա',name:'Անվանում',retail:'Մանրածախ գին',ws:'Մեծածախ գին'}[key]));
   const stocks=headers.map((h,i)=>({h,i})).filter(v=>/^\d{3}$/.test(v.h));
   if(!stocks.length)throw Error('Պահեստների սյունակները չեն գտնվել');
   const result=[], seen=new Set();

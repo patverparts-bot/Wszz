@@ -20,5 +20,5 @@
     if(path==='logout')sessionStorage.removeItem(key);
     return data;
   }
-  window.ZZWS=Object.freeze({request,json,clearSession:()=>sessionStorage.removeItem(key)});
+  window.ZZWS=Object.freeze({request,json,message:error=>typeof error?.message==='string'&&/[\u0531-\u058f]/u.test(error.message)?error.message:'Գործողությունը չի կատարվել։ Կրկին փորձեք։',clearSession:()=>sessionStorage.removeItem(key)});
 })();

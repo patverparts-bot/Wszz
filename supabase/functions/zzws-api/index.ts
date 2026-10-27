@@ -1,3 +1,5 @@
+import { publicError } from './public-error.mjs';
+import { assertXlsxArchive } from './xlsx-validation.mjs';
 import { priceDifference,scopePermissions,canAccess } from './operations.mjs';
 import { createClient } from 'npm:@supabase/supabase-js@2.95.0';
 import XLSX from './vendor/xlsx.mjs';
@@ -24,21 +26,7 @@ const table=(name:string)=>service.from('zzws_'+name);
 async function audit(actor:string|null,action:string,detail=''){await query(table('audit').insert({actor,action,detail}));}
 
 function rowsFromBuffer(raw:ArrayBuffer){
-  if(raw.byteLength>10_000_000)fail(413,'Թույլատրվում է մինչև 10 ՄԲ XLSX');
-  // Check ZIP central directory sizes before handing the file to the XLSX parser.
-  const data=new DataView(raw);let end=-1;
-  for(let i=raw.byteLength-22;i>=Math.max(0,raw.byteLength-65557);i--)if(data.getUint32(i,true)===0x06054b50){end=i;break;}
-  if(end<0)fail(400,'Սխալ XLSX');
-  const count=data.getUint16(end+10,true);let offset=data.getUint32(end+16,true),total=0;
-  if(count>3000||offset>=raw.byteLength)fail(400,'Չափազանց բարդ XLSX');
-  for(let i=0;i<count;i++){
-    if(offset+46>raw.byteLength||data.getUint32(offset,true)!==0x02014b50)fail(400,'Վնասված ZIP');
-    total+=data.getUint32(offset+24,true);if(total>60_000_000)fail(400,'Ապափաթեթավորված XLSX-ը չափազանց մեծ է');
-    const nameLength=data.getUint16(offset+28,true);
-    const name=new TextDecoder().decode(new Uint8Array(raw,offset+46,nameLength));
-    if(/vbaProject|externalLinks/i.test(name))fail(400,'Մակրոներն ու արտաքին հղումներն արգելված են');
-    offset+=46+nameLength+data.getUint16(offset+30,true)+data.getUint16(offset+32,true);
-  }
+  assertXlsxArchive(raw);
   try{
     const book=XLSX.read(raw,{type:'array',cellFormula:true,cellDates:false});
     const sheet=book.Sheets[book.SheetNames[0]];
@@ -157,7 +145,7 @@ export async function handle(req:Request){
       const row=await query(table('users').select('*').eq('id',auth.data.user.id).eq('active',true).maybeSingle());
       if(!row)fail(401,'Սխալ մուտքանուն կամ գաղտնաբառ');
       let factor=null;if(row.profile.role==='admin'){const factors=await client.auth.mfa.listFactors();if(factors.error)fail(500,'Չհաջողվեց ստուգել երկրորդ գործոնը');factor=factors.data.totp.find((f:any)=>f.status==='verified');}
-      if(row.profile.role==='admin'&&factor)return json(await security.stage(row,auth.data.session,'login',factor.id));
+      if(row.profile.role==='admin'&&factor)return json(await security.stage(row,auth.data.session,'login',factor.id,attempt));
       await client.auth.signOut({scope:'local'});
       const result=await security.session(row);
       await query(table('attempts').delete().eq('id',attempt));await audit(row.id,'login');
@@ -355,6 +343,6 @@ export async function handle(req:Request){
       return json({ok:true});
     }
     fail(404,'Չի գտնվել');
-  }catch(e:any){const status=e.code&&Number.isInteger(e.code)?e.code:400;return json({error:status===500?'Գործողությունը չի կատարվել։ Փորձեք ավելի ուշ':(e.message||'Սխալ հարցում')},status);}
+  }catch(e:any){const error=publicError(e);return json({error:error.message},error.status);}
 }
 Deno.serve(handle);

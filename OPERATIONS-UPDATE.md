@@ -34,4 +34,17 @@ Rebuild CSS using the official Tailwind 3.4.17 CLI with scripts/tailwind.config.
 
 ## Validation
 
-68 automated tests, JavaScript syntax checks, mocked browser checks of cart/reorder/help/CSP/dashboard/admin/scoped navigation, live unauthenticated API denial checks and local encrypted backup verification. Actual TOTP activation must be completed by each administrator. Supabase leaked-password checking remains a plan/configuration limitation; MFA is not automatically activated for existing accounts.
+79 automated tests, JavaScript syntax checks, mocked browser checks of cart/reorder/help/CSP/dashboard/admin/scoped navigation, live unauthenticated API denial checks and local encrypted backup verification. Actual TOTP activation must be completed by each administrator. Supabase leaked-password checking remains a plan/configuration limitation; MFA is not automatically activated for existing accounts.
+
+
+## Post-review corrections (5.1)
+
+- Confirmation previews are bound to an immutable order ID and revision. Switching/closing during a mutation is blocked; obsolete responses are discarded after reset. The API rejects drafts applied with another/missing order context. A successful bound apply is covered by both route and browser regression tests.
+- Search and detail requests use generation guards, so older responses cannot replace a newer query or selected order.
+- Viewer controls stay disabled after row rendering, deletion controls are absent, and handlers additionally reject read-only mutations. Server scope enforcement remains in place.
+- Notification acknowledgement requires the displayed revision and only marks events up to that revision. Later concurrent events stay unread.
+- Normal MFA login preserves other devices' opaque sessions and removes only its own successful login-gate attempt. MFA enrollment still revokes older sessions. Invitation/password reset protections are unchanged.
+- Legacy brand identity normalization retains Unicode letters and numbers. This corrects Cyrillic brand isolation without modifying group price selection or stored policies/profiles.
+- Native request and ZIP parser failures are converted into Armenian public messages. ZIP directory entry bounds are checked before creating typed arrays. Price-source and delivery-field labels in previews are Armenian.
+
+Validation: 79 Node tests, including MFA/session/throttle behavior, Cyrillic brand isolation, notification revision races, bound confirmation routes, malformed archives and public error localization. Browser regression scenarios cover delayed searches/details, preview switching/reset, successful confirmation apply, viewer controls and Armenian labels. Run `node --test supabase/tests/*.test.mjs`. Run `node tests/ui/order-races.cjs` with Playwright installed, or set ZZWS_PLAYWRIGHT to the Playwright module path; ZZWS_TEST_URL defaults to the local preview. All fixtures use invented users and orders; business records are not modified by these tests.

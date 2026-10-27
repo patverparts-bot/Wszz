@@ -8,7 +8,7 @@ function setup(){
   upsert:async value=>{writes.push({name,value});return {data:[]};},
   select(){return this;},eq(){return this;},
   single:async()=>({data:{id:'user',active:true,profile:{role:'admin'}}}),
-  delete(){return {lt:async()=>({data:[]}),eq(){return {
+  delete(){writes.push({name,operation:"delete"});return {lt:async()=>({data:[]}),eq(key,value){writes.push({name,operation:"delete-filter",key,value});return {
    select:async()=>({data:consumed?[]:(consumed=true,[{hash:'h'}])}),
    then(resolve){resolve({data:[]});}
   };}};}
@@ -22,4 +22,8 @@ function setup(){
  return {writes,tools:securityTools({service,table,query,digest,random:()=>crypto.randomUUID().replaceAll('-','').repeat(2),fail:(code,message)=>{throw Object.assign(new Error(message),{code});},authClient,cleanUser:u=>({id:u.id,...u.profile}),audit:async()=>{}})};
 }
 test('invitation storage contains a hash and expires in 48 hours',async()=>{const t=setup(),s=await t.tools,r=await s.invite('user','actor');assert.equal(t.writes[0].value.hash,await digest(r.code));assert.notEqual(t.writes[0].value.hash,r.code);assert.ok(new Date(r.expires)-Date.now()>47*3600000);});
-test('MFA challenge encrypts Auth tokens; verification consumes the challenge',async()=>{const t=setup(),s=await t.tools,r=await s.stage({id:'user'},{access_token:'private-test-jwt',refresh_token:'private-refresh'},'enroll');assert.equal(r.mfaRequired,true);const stored=t.writes.find(w=>w.name==='auth_challenges');assert.ok(!JSON.stringify(stored).includes('private-test-jwt'));const result=await s.verify(r.challengeToken,'123456');assert.equal(result.role,'admin');assert.equal(t.writes.find(w=>w.name==='sessions').value.mfa_verified,true);await assert.rejects(()=>s.verify(r.challengeToken,'123456'));});
+test('MFA challenge encrypts Auth tokens; verification consumes the challenge',async()=>{const t=setup(),s=await t.tools,r=await s.stage({id:'user'},{access_token:'private-test-jwt',refresh_token:'private-refresh'},'enroll');assert.equal(r.mfaRequired,true);const stored=t.writes.find(w=>w.name==='auth_challenges');assert.ok(!JSON.stringify(stored).includes('private-test-jwt'));const result=await s.verify(r.challengeToken,'123456');assert.equal(result.role,'admin');assert.equal(t.writes.find(w=>w.name==='sessions'&&!w.operation).value.mfa_verified,true);await assert.rejects(()=>s.verify(r.challengeToken,'123456'));});
+
+test('ordinary MFA login preserves other device sessions and clears only its successful login attempt',async()=>{const t=setup(),s=await t.tools,r=await s.stage({id:'user'},{access_token:'synthetic',refresh_token:'synthetic'},'login','factor','attempt-1');await s.verify(r.challengeToken,'123456');assert.ok(!t.writes.some(w=>w.name==='sessions'&&w.operation==='delete'));assert.ok(t.writes.some(w=>w.name==='attempts'&&w.operation==='delete-filter'&&w.key==='id'&&w.value==='attempt-1'));});
+
+test('MFA enrollment still revokes older sessions',async()=>{const t=setup(),s=await t.tools,r=await s.stage({id:'user'},{access_token:'synthetic',refresh_token:'synthetic'},'enroll');await s.verify(r.challengeToken,'123456');assert.ok(t.writes.some(w=>w.name==='sessions'&&w.operation==='delete'));assert.ok(!t.writes.some(w=>w.name==='attempts'&&w.operation==='delete'));});
