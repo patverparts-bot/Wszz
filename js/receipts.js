@@ -14,10 +14,11 @@
  function showPending(){closeOrderModal();el('pendingReceiptOnly').checked=true;openPersonalCabinet();ZZWS_ORDERS.load();}
  function render(order,root){
   if(order.received_at){const proof=node('div',null,'receipt-proof');proof.append(node('strong','Ստացումն արդեն հաստատված է'),node('p',order.receipt?.statement||'Ապրանքներն ամբողջությամբ և առանց վնասվածքների ստացված են։'),node('small',new Date(order.received_at).toLocaleString('hy-AM',{timeZone:'Asia/Yerevan'})));root.append(proof);return;}
+  if(!['confirmed','in_progress','completed'].includes(order.status)){root.append(node('p',order.status==='new'?'Ստացումը կարող եք հաստատել ադմինիստրատորի կողմից պատվերը հաստատելուց հետո։':order.status==='rejected'?'Մերժված պատվերի ստացումը չի հաստատվում։':'Այս կարգավիճակով ստացման հաստատումը հասանելի չէ։','order-info'));return;}
   const button=node('button','Հաստատել ապրանքների ստացումը','confirm-receipt-button');button.type='button';button.onclick=()=>confirmReceipt(order).catch(e=>alert(ZZWS.message(e)));root.append(button);
  }
  async function confirmReceipt(order){
-  const who=owner,opener=document.activeElement;if(!who||el('receiptConfirmationDialog'))return;const current=await refresh()||state;if(owner!==who||!current||el('receiptConfirmationDialog'))return;
+  const who=owner,opener=document.activeElement;if(!who||!['confirmed','in_progress','completed'].includes(order.status)||el('receiptConfirmationDialog'))return;const current=await refresh()||state;if(owner!==who||!current||el('receiptConfirmationDialog'))return;
   let confirming=false;
   const dialog=node('dialog'),form=node('form'),title=node('h2','Հաստատո՞ւմ եք ստացումը · պատվեր №'+order.number),question=node('p','Վստա՞հ եք, որ այս պատվերի բոլոր ապրանքները ստացել եք ամբողջությամբ և առանց վնասվածքների։'),statement=node('p',current.statement,'receipt-confirmation-statement'),actions=node('div',null,'receipt-confirmation-actions'),submit=node('button','Այո, հաստատում եմ'),cancel=node('button','Ոչ, չեղարկել'),error=node('p');
   dialog.id='receiptConfirmationDialog';title.id='receiptConfirmationTitle';question.id='receiptConfirmationQuestion';statement.id='receiptConfirmationStatement';dialog.setAttribute('aria-labelledby',title.id);dialog.setAttribute('aria-describedby',question.id+' '+statement.id);submit.type='submit';cancel.type='button';cancel.autofocus=true;error.setAttribute('role','alert');
