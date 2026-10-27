@@ -148,6 +148,7 @@ function clearSearch() {
 
 function filterProducts() {
 const searchQuery = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+const multiSearch=ZZWS_MULTI_SEARCH.compile(document.getElementById('searchInput').value,allProducts);ZZWS_MULTI_SEARCH.highlight(multiSearch);
 const sortBy = document.getElementById('sortBy').value;
 const favOnly = document.getElementById('favOnlyFilter').checked;
 const promoOnly = document.getElementById('promoOnlyFilter').checked;
@@ -160,7 +161,7 @@ document.getElementById('clearSearchBtn').classList.toggle('hidden', searchQuery
 filteredProducts = allProducts.filter(p => {
   const matchBrand = !selectedBrands.length || selectedBrands.some(b => p.brand.toLowerCase() === b.toLowerCase());
   const matchCategory = !selectedCategories.length || selectedCategories.some(c => p.category.toLowerCase() === c.toLowerCase());
-  const matchSearch = !searchQuery || (p.name || '').toLowerCase().includes(searchQuery) || (p.articul || '').toLowerCase().includes(searchQuery);
+  const matchSearch = !searchQuery || multiSearch.matches.has(p.articul);
   const matchFav = !favOnly || favoritesSet.has(p.articul);
   const matchPromo = !promoOnly || (p.isPromo || p.isWholesalePromo || p.kpIsPromo);
   const matchStock = !stockOnly || p.targetWarehousesStock > 0;

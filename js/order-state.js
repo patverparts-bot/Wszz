@@ -426,6 +426,7 @@ function openPersonalCabinet() {
   }
   document.getElementById('cabinetUserSubtitle').innerText = `Օգտատեր: ${authorizedClient} (${userSheetType})`;
   renderOrderHistoryList();
+  ZZWS_ORDERS.load();
   document.getElementById('cabinetModal').classList.remove('hidden');
 }
 

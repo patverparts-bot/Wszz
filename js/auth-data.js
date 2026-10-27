@@ -1,10 +1,18 @@
 // Authentication and permissions are issued by the server, never restored from localStorage.
 let serverIdentity = null;
+function finishSessionLoading(){document.documentElement.removeAttribute('data-session-pending');}
+function sessionLoadFailed(message){
+  document.documentElement.setAttribute('data-session-pending','true');
+  document.getElementById('sessionLoadingText').textContent=message||'Не удалось обновить данные. Проверьте соединение.';
+  document.getElementById('sessionSpinner').hidden=true;document.getElementById('sessionRetryActions').hidden=false;
+}
 async function secureApi(path, options = {}) {
   try { return await ZZWS.json(path, options); }
   catch(e) { if (e.status === 401) lockCatalog(); throw e; }
 }
 function lockCatalog() {
+  finishSessionLoading();
+  window.ZZWS_ORDERS?.stop();
   window.ZZWS_MEMORY?.capture();window.ZZWS_MEMORY?.stop();
   serverIdentity = null;
   authorizedClient = ''; userSheetType = ''; clientRowsData = []; allProducts = []; filteredProducts = [];
@@ -17,10 +25,11 @@ function lockCatalog() {
   for (const id of ['orderModal','cabinetModal','bulkAddModal']) document.getElementById(id)?.classList.add('hidden');
 }
 async function acceptIdentity(user) {
-  if(user.needsPasswordSetup){user=await requirePasswordSetup(user);if(!user)return;}
+  if(user.needsPasswordSetup){user=await requirePasswordSetup(user);if(!user){finishSessionLoading();return;}}
   serverIdentity = user; authorizedClient = user.client; userSheetType = user.sheet; clientRowsData = user.rowsList;
   configureSortPrices();
   await ZZWS_MEMORY.start(user);
+  ZZWS_ORDERS.start(user);
   document.getElementById('authScreen').classList.add('hidden');
   document.getElementById('passwordInput').value = '';
   showPriceUpdatePopupAndStart();
@@ -266,7 +275,8 @@ updateStickyOffsets();
 document.addEventListener('DOMContentLoaded', async () => {
 hideVersionBadge();
 try { await acceptIdentity(await secureApi('me')); } catch(e) {
-  if (!e.message.includes('Войдите')) document.getElementById('auth-status').textContent = 'Սերվերը հասանելի չէ։';
+  if(sessionStorage.getItem('zzws_session_v3'))sessionLoadFailed(e.message);
+  else{finishSessionLoading();if (!e.message.includes('Войдите')) document.getElementById('auth-status').textContent = 'Սերվերը հասանելի չէ։';}
 }
 
 const pwdInput = document.getElementById('passwordInput');
@@ -379,6 +389,7 @@ async function loadPriceData() {
     notifyIfPriceChanged();
     fetchPriceStamp().then(st => { lastPriceStamp = st; });
   } catch (error) {
+    finishSessionLoading();
     console.error(error);
     skeleton.classList.add('hidden');
     errorBox.classList.remove('hidden');
@@ -398,6 +409,7 @@ function finalizeDataLoad() {
   productIndex = new Map();
   allProducts.forEach(p => { if (!productIndex.has(p.articul)) productIndex.set(p.articul, p); });
   catalogLoaded = true;
+  finishSessionLoading();
   reconcileCart();
 
   initFilters();

@@ -1,0 +1,62 @@
+import {statuses,normalizeLines,totalOf,deliverySnapshot,changesBetween,parseConfirmation,parsePastedConfirmation} from './orders.mjs';
+export async function orderRoutes(c){
+ const {path,req,user,service,table,query,body,json,file,current,project,rowsFromBuffer,draft,fail}=c;
+ const rpc=async(name,args)=>{const r=await service.rpc(name,args);if(r.error){if(r.error.code==='PT409')fail(409,'Заказ уже изменён или предпросмотр истёк. Откройте заказ заново');if(r.error.code==='PT404')fail(404,'Заказ не найден');console.error('Order operation',r.error.code);fail(500,'Не удалось сохранить заказ');}return r.data;};
+ const order=async(id,admin=false)=>{let q=table('orders').select('*').eq('id',id);if(!admin)q=q.eq('user_id',user.id);const row=await query(q.maybeSingle());if(!row)fail(404,'Заказ не найден');return row;};
+ if(path==='orders'&&req.method==='POST'){
+  const p=await body(req);if(!/^[a-f0-9-]{36}$/.test(p.requestId))fail(400,'Неверный идентификатор отправки');
+  const existing=await query(table('orders').select('*').eq('user_id',user.id).eq('request_id',p.requestId).maybeSingle());if(existing)return json(existing);
+  const v=await current(),products=project(v.products,user,v.rules),lines=normalizeLines(p.lines,products,[],false,user.role==='admin'&&p.priceMode==='KP'?'KP':'WS');if(!lines.length)fail(400,'Корзина пуста');
+  if(lines.some((line,i)=>Number(p.lines[i].unitPrice)!==line.unitPrice))fail(409,'Цены изменились. Обновите корзину и проверьте сумму перед отправкой');
+  return json(await rpc('zzws_submit_order',{p_user:user.id,p_request:p.requestId,p_customer:{id:user.id,login:user.login,client:user.client},p_delivery:deliverySnapshot(p.delivery,user),p_lines:lines,p_total:totalOf(lines)}));
+ }
+ if(path==='orders'&&req.method==='GET'){
+  const before=new URL(req.url).searchParams.get('before');let q=table('orders').select('*').eq('user_id',user.id).order('number',{ascending:false}).limit(50);if(before&&/^\d+$/.test(before))q=q.lt('number',before);return json({orders:await query(q)});
+ }
+ if(path==='orders/notifications'&&req.method==='GET'){
+  const events=await query(table('order_events').select('id,order_id,revision,detail,created').eq('user_id',user.id).is('read_at',null).order('created',{ascending:false}).limit(50));
+  return json({events:events.map(e=>({...e,detail:{...e.detail,changesCount:e.detail.changes?.length||0,changes:(e.detail.changes||[]).slice(0,12)}}))});
+ }
+ if(path==='orders/detail'&&req.method==='POST'){
+  const p=await body(req),o=await order(p.id);const events=await query(table('order_events').select('id,detail,created,revision').eq('order_id',o.id).eq('user_id',user.id).order('revision',{ascending:false}).limit(10));return json({order:o,events});
+ }
+ if(path==='orders/read'&&req.method==='POST'){
+  const p=await body(req);await order(p.orderId);await query(table('order_events').update({read_at:new Date().toISOString()}).eq('user_id',user.id).eq('order_id',p.orderId).is('read_at',null));return json({ok:true});
+ }
+ if(!path.startsWith('admin/orders'))return null;
+ if(user.role!=='admin')fail(403,'Доступ запрещён');
+ if(path==='admin/orders'&&req.method==='GET'){
+  const params=new URL(req.url).searchParams,status=params.get('status'),before=params.get('before');let q=table('orders').select('*').order('number',{ascending:false}).limit(100);if(status&&statuses[status])q=q.eq('status',status);if(before&&/^\d+$/.test(before))q=q.lt('number',before);return json({orders:await query(q)});
+ }
+ if(path==='admin/orders/template'&&req.method==='GET')return file([['Артикул','Количество','Цена','Оплата'],['014676',1,'','Безналичный']],'Final-order-template.xlsx');
+ if(path==='admin/orders/detail'&&req.method==='POST'){const p=await body(req),o=await order(p.id,true);return json({...o,events:await query(table('order_events').select('detail,created,revision').eq('order_id',o.id).order('revision',{ascending:false}).limit(50))});}
+ if(path==='admin/orders/export'&&req.method==='POST'){
+  const p=await body(req),o=await order(p.id,true);return file([['Заказ',o.number,'Статус',statuses[o.status]],['Артикул','Название','Количество','Цена','Сумма','Оплата'],...o.lines.map(row=>[row.articul,row.name,row.qty,row.unitPrice,row.qty*row.unitPrice,row.paymentMethod]),['Итого','','','',o.total]],'Order-'+o.number+'.xlsx');
+ }
+ const prepare=async(o,raw)=>{
+  const customer=o.user_id?await query(table('users').select('*').eq('id',o.user_id).maybeSingle()):null;
+  const v=await current(),products=customer?project(v.products,{...customer.profile,id:customer.id},v.rules):[];
+  return normalizeLines(raw,products,o.lines,true);
+ };
+ if(path==='admin/orders/preview'&&req.method==='POST'){
+  let orderId,revision,parsed,filename;
+  if((req.headers.get('content-type')||'').includes('application/json')){const p=await body(req);orderId=p.orderId;revision=p.revision;parsed=parsePastedConfirmation(p.text);filename='Вставленная таблица';}
+  else{const form=await req.formData(),upload=form.get('file');orderId=form.get('orderId');revision=Number(form.get('revision'));if(!(upload instanceof File)||!upload.name.toLowerCase().endsWith('.xlsx'))fail(400,'Выберите XLSX');parsed=parseConfirmation(rowsFromBuffer(await upload.arrayBuffer()));filename=upload.name.slice(0,300);}
+  const o=await order(orderId,true);if(revision!==o.revision)fail(409,'Заказ уже изменён. Откройте заново');
+  const lines=await prepare(o,parsed.lines),changes=changesBetween(o.lines,lines);
+  const d=await query(table('drafts').insert({actor:user.id,kind:'order',payload:{orderId:o.id,revision:o.revision,lines,changes,filename,metadata:parsed.metadata,delivery:parsed.delivery}}).select('id').single());
+  return json({draft:d.id,lines,changes,total:totalOf(lines),orderNumber:o.number,metadata:parsed.metadata,delivery:parsed.delivery});
+ }
+ if(req.method==='POST'&&['admin/orders/update','admin/orders/apply'].includes(path)){
+  const p=await body(req),d=path.endsWith('/apply')?await draft(p.draft,user.id,'order'):null;
+  const o=await order(d?.payload.orderId||p.id,true),revision=d?.payload.revision??p.revision;
+  if(revision!==o.revision)fail(409,'Заказ уже изменён. Откройте его заново');
+  const status=d?'confirmed':p.status;if(!statuses[status])fail(400,'Неизвестный статус');
+  const lines=d?d.payload.lines:await prepare(o,p.lines);if(!lines.length&&status!=='rejected')fail(400,'Пустой заказ можно только отклонить');
+  const comment=String(p.comment||'').trim().slice(0,2000),changes=changesBetween(o.lines,lines);
+  if(d&&p.confirmCustomer!==true)fail(400,'Подтвердите, что таблица относится к выбранному заказу');
+  const delivery=d&&p.applyDelivery?{...o.delivery,...d.payload.delivery}:null;
+  return json(await rpc('zzws_update_order',{p_order:o.id,p_revision:revision,p_lines:lines,p_status:status,p_comment:comment,p_total:totalOf(lines),p_detail:{number:o.number,changes,source:d?'confirmation':'manual',deliveryChanged:!!delivery&&JSON.stringify(delivery)!==JSON.stringify(o.delivery)},p_actor:user.id,p_draft:d?.id||null,p_delivery:delivery,p_confirmation:d?{...d.payload.metadata,filename:d.payload.filename}:null}));
+ }
+ return null;
+}

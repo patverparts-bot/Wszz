@@ -38,6 +38,7 @@
    const table=node('table'),thead=table.createTHead().insertRow();for(const name of ['Раздел','Объём','Записей',''])thead.append(node('th',name));
    const body=table.createTBody();
    for(const [key,label] of Object.entries(labels)){const section=user.sections[key]||{bytes:0,count:0},row=body.insertRow();row.insertCell().textContent=label;const size=row.insertCell();size.textContent=bytes(section.bytes);size.title=Number(section.bytes).toLocaleString('ru-RU')+' байт';row.insertCell().textContent=section.count;const b=action('Очистить',()=>clear(user,key),'storage-clear');b.disabled=working||!section.bytes;row.insertCell().append(b);}
+   for(const [key,label] of [['orders','Заказы на сервере'],['orderNotifications','История изменений заказов']]){const section=user.sections[key]||{bytes:0,count:0},row=body.insertRow();row.insertCell().textContent=label;row.insertCell().textContent=bytes(section.bytes);row.insertCell().textContent=section.count;row.insertCell().textContent='Учётные записи заказов сохраняются';}
    const row=body.insertRow();row.insertCell().textContent='Профиль и права доступа';row.insertCell().textContent=bytes(user.accountBytes);row.insertCell().textContent='1';row.insertCell().textContent='Сохраняются при очистке';
    const wrap=node('div',null,'storage-user-table');wrap.append(table);
    const details=node('details',null,'storage-user-details');details.open=!!q||Object.values(user.sections).some(s=>s.bytes>0);details.append(node('summary','Данные по разделам'),wrap);card.append(details);root.append(card);
@@ -45,7 +46,7 @@
  }
  async function clear(user,section){
   const name=section==='all'?'все рабочие данные (включая сохранённые корзины)':labels[section].toLocaleLowerCase('ru');
-  if(!confirm('Очистить '+name+' пользователя «'+user.login+'»? Действие необратимо. Профиль, пароль и права доступа сохранятся.'))return;
+  if(!confirm('Очистить '+name+' пользователя «'+user.login+'»? Действие необратимо. Профиль, пароль, права доступа и отправленные заказы сохранятся.'))return;
   working=true;renderUsers();el('storageRefresh').disabled=true;
   try{await ZZWS.json('admin/storage/clear',{method:'POST',body:JSON.stringify({targetId:user.id,section,revision:user.revision,confirm:true})});await load();el('storageStatus').textContent='Данные очищены: '+user.login+'. Размеры обновлены.';}
   finally{working=false;el('storageRefresh').disabled=false;renderUsers();}

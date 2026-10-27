@@ -1,4 +1,6 @@
 const el = id => document.getElementById(id);
+function finishSessionLoading(){document.documentElement.removeAttribute('data-session-pending');}
+function sessionLoadFailed(message){document.documentElement.setAttribute('data-session-pending','true');el('sessionLoadingText').textContent=message||'Не удалось обновить данные. Проверьте соединение.';el('sessionSpinner').hidden=true;el('sessionRetryActions').hidden=false;}
 let draft = null, userDraft = null, users = [];
 let catalogPairs=[],userAccessEditor=null,groupEditors={},groupRevision=null;
 let editingUserId=null,auditEntries=[];
@@ -8,7 +10,9 @@ async function api(path, options = {}) {
   catch(e) { if(e.status === 401) showLogin(); throw e; }
 }
 function showLogin() {
+  finishSessionLoading();
   window.ZZWS_STORAGE?.reset();
+  window.ZZWS_ADMIN_ORDERS?.reset();
   el('workspace').hidden=true;el('login').hidden=false;el('logout').hidden=true;draft=null;userDraft=null;
   users=[];catalogPairs=[];groupEditors={};groupRevision=null;userAccessEditor=null;editingUserId=null;auditEntries=[];
   for(const id of ['userList','groupRulesEditors','events','userAccessEditor','userAccessPreview','groupRulesPreview','sample','usersChanges','versions'])el(id).replaceChildren();
@@ -23,21 +27,35 @@ function table(headers, rows) {
 }
 function button(label, callback) { const b = document.createElement('button'); b.type='button'; b.textContent = label; b.onclick = () => run(callback); return b; }
 async function run(fn) { try { await fn(); } catch(e) { status(e.message, true); } }
+const adminTabs=['orders','price','users','rules','audit','storage'];
+function rememberedAdminTab(){
+  const linked=new URLSearchParams(location.hash.slice(1)).get('tab');if(adminTabs.includes(linked))return linked;
+  try{const saved=sessionStorage.getItem('zzws_admin_tab_v1');if(adminTabs.includes(saved))return saved;}catch{}
+  return 'price';
+}
+async function selectAdminTab(name){
+  if(!adminTabs.includes(name))name='price';
+  for(const section of adminTabs)el(section).hidden=section!==name;
+  document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('admin-tab-active',b.dataset.tab===name);b.setAttribute('aria-current',b.dataset.tab===name?'page':'false');});
+  try{sessionStorage.setItem('zzws_admin_tab_v1',name);}catch{}
+  history.replaceState(null,'',location.pathname+location.search+'#tab='+name);
+  if(name==='audit')await loadAudit();
+  if(name==='storage')await ZZWS_STORAGE.load();
+  if(name==='orders')await ZZWS_ADMIN_ORDERS.load();
+}
 async function enter() {
   let user = await api('me');
   if(user.needsPasswordSetup){user=await requirePasswordSetup(user);if(!user){showLogin();return;}}
-  if (user.role !== 'admin') { showLogin();throw new Error('Нужна учётная запись администратора'); }
+  if (user.role !== 'admin') { showLogin();const e=new Error('Нужна учётная запись администратора');e.status=403;throw e; }
+  const activeTab=rememberedAdminTab();for(const section of adminTabs)el(section).hidden=section!==activeTab;
   el('login').hidden = true; el('workspace').hidden = false; el('logout').hidden = false;
   catalogPairs=(await api('admin/catalog-options')).pairs;
-  await Promise.all([loadVersions(), loadUsers(),loadGroupRules()]); status('Вы вошли как ' + user.client);
+  ZZWS_ADMIN_ORDERS.start();
+  await Promise.all([loadVersions(), loadUsers(),loadGroupRules()]);await selectAdminTab(activeTab);finishSessionLoading(); status('Вы вошли как ' + user.client);
 }
 el('loginForm').onsubmit = e => { e.preventDefault(); run(async () => { await api('login', {method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(e.target)))}); e.target.reset(); await enter(); }); };
 el('logout').onclick = () => run(async () => { await api('logout',{method:'POST'}); showLogin(); status('Вы вышли'); });
-document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => run(async () => {
-  for (const name of ['price','users','rules','audit','storage']) el(name).hidden = name !== b.dataset.tab;
-  if (b.dataset.tab === 'audit') await loadAudit();
-  if (b.dataset.tab === 'storage') await ZZWS_STORAGE.load();
-}));
+document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => run(()=>selectAdminTab(b.dataset.tab)));
 el('priceForm').onsubmit = e => { e.preventDefault(); run(async () => {
   draft = null; el('preview').hidden = true; status('Проверяю файл…');
   const d = await api('admin/price/preview',{method:'POST',body:new FormData(e.target)});
@@ -178,9 +196,9 @@ el('groupRulesForm').onsubmit=e=>{e.preventDefault();run(async()=>{
 const setupToken = new URLSearchParams(location.hash.slice(1)).get('setup');
 if (setupToken) {
   history.replaceState(null, '', location.pathname);
-  el('login').hidden = true; el('setup').hidden = false;
+  finishSessionLoading();el('login').hidden = true; el('setup').hidden = false;
 } else {
-  run(async () => { try { await enter(); } catch(e) { showLogin(); if (!e.message.includes('Войдите')) status(e.message,true); } });
+  run(async () => { try { await enter(); } catch(e) { if(sessionStorage.getItem('zzws_session_v3')&&e.status!==403)sessionLoadFailed(e.message);else{showLogin();if (!e.message.includes('Войдите'))status(e.message,true);} } });
 }
 el('setupForm').onsubmit = e => { e.preventDefault(); run(async () => {
   const p = Object.fromEntries(new FormData(e.target));

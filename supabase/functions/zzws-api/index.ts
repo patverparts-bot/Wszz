@@ -3,6 +3,7 @@ import XLSX from './vendor/xlsx.mjs';
 import { parsePrice, project, validateProfile, parseUsers } from './catalog.mjs';
 import { defaultRules, effectiveRules, validateRules, validPassword } from './rules.mjs';
 import { validateMemory } from './memory.mjs';
+import { orderRoutes } from './order-routes.mjs';
 
 const PROJECT_URL = Deno.env.get('SUPABASE_URL')!;
 const envKey=(name:string,legacy:string)=>JSON.parse(Deno.env.get(name)||'{}').default||Deno.env.get(legacy)!;
@@ -166,6 +167,8 @@ export async function handle(req:Request){
       await audit(user.id,'password_setup');return json({...user,needsPasswordSetup:false,sessionToken:token});
     }
     if(user.needsPasswordSetup||setupOnly)fail(403,'Сначала установите новый пароль');
+    const orderResponse=await orderRoutes({path,req,user,service,table,query,body,json,file,current,project,rowsFromBuffer,draft,fail});
+    if(orderResponse)return orderResponse;
     if(req.method==='GET'&&path==='me/state'){
       const row=await query(table('user_memory').select('data,versions').eq('user_id',user.id).maybeSingle());return json(row||{data:{},versions:{}});
     }
