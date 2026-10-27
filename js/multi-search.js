@@ -23,7 +23,7 @@
   if(typeof document==='undefined')return;
   if(!input){input=document.getElementById('searchInput');if(!input)return;
    mirror=document.createElement('div');mirror.className='search-highlight-mirror';mirror.hidden=true;mirror.setAttribute('aria-hidden','true');mirrorText=document.createElement('div');mirrorText.className='search-highlight-text';mirror.append(mirrorText);input.before(mirror);
-   status=document.createElement('div');status.id='multiSearchStatus';status.className='multi-search-status';status.setAttribute('role','status');status.hidden=true;document.getElementById('stickySearchBar').append(status);input.setAttribute('aria-describedby',status.id);input.maxLength=5000;
+   status=document.createElement('div');status.id='multiSearchStatus';status.className='multi-search-status';status.setAttribute('role','status');status.hidden=true;document.getElementById('stickySearchBar').insertBefore(status,document.getElementById('compactFiltersRow'));input.setAttribute('aria-describedby',status.id);input.maxLength=5000;
    input.addEventListener('scroll',position);input.addEventListener('input',()=>{mirror.hidden=true;input.classList.remove('search-highlight-active');});window.addEventListener('resize',()=>requestAnimationFrame(position));
   }
   mirrorText.replaceChildren();let offset=0;

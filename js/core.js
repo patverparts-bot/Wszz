@@ -172,6 +172,7 @@ function updateMobileFilterBadge() {
   if (btnText) {
     btnText.innerText = count > 0 ? `⚙️ Ֆիլտրեր · ${count}` : '⚙️ Ֆիլտրեր';
   }
+  window.ZZWS_STICKY?.refreshSummary();
 }
 
 function toggleMobileFilters(forcedState) {
@@ -192,6 +193,7 @@ function toggleMobileFilters(forcedState) {
   if (authorizedClient) {
     try { localStorage.setItem('zigzag_filters_open_' + userStorageId(), shouldHide ? '0' : '1'); } catch(e) {}
   }
+  window.ZZWS_STICKY?.filtersToggled(!shouldHide);
 }
 
 function toggleDeliveryDetails() {
@@ -296,6 +298,8 @@ function loadSavedFilters() {
     const openState = localStorage.getItem('zigzag_filters_open_' + userStorageId());
     if (openState === '1') {
       toggleMobileFilters(true);
+    } else if (openState === '0') {
+      toggleMobileFilters(false);
     }
   } catch(e) {}
   updateMobileFilterBadge();
