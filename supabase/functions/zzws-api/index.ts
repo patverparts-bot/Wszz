@@ -76,6 +76,9 @@ async function current(){
   return {...version,rules:effectiveRules(state.rules),rulesRevision:state.rules_revision};
 }
 async function saveUser(p:any,actor:string){
+  if(!['create','update'].includes(p.intent))fail(400,'Обновите страницу кабинета перед сохранением пользователя');
+  if(p.intent==='create'&&p.id)fail(400,'Новая учётная запись не должна содержать ID существующего пользователя');
+  if(p.intent==='update'&&!p.id)fail(400,'Не выбрана учётная запись для изменения');
   const validated=validateProfile(p),{login,profile}=validated;
   const old=p.id?await query(table('users').select('*').eq('id',p.id).maybeSingle()):null;
   // An older admin client must not erase restrictions it does not understand.
@@ -98,6 +101,7 @@ async function saveUser(p:any,actor:string){
   }
   try{await query(service.rpc('zzws_save_user',{p_id:uid,p_login:login,p_profile:profile,p_active:p.active!==false,p_actor:actor}));}
   catch(e){if(newAuth)await service.auth.admin.deleteUser(uid);throw e;}
+  if(old&&p.password)await audit(actor,'password_reset',JSON.stringify({target:{id:uid,login,client:profile.client}}));
   return {id:uid};
 }
 
@@ -186,12 +190,12 @@ export async function handle(req:Request){
     if(req.method==='GET'&&path==='admin/users'){const rows=await query(table('users').select('*').order('login'));return json({users:rows.map(cleanUser)});}
     if(req.method==='POST'&&path==='admin/users')return json(await saveUser(await body(req),user.id));
     if(req.method==='POST'&&path==='admin/users/delete'){
-      const p=await body(req),target=await query(table('users').select('id,profile').eq('id',p.id).maybeSingle());
+      const p=await body(req),target=await query(table('users').select('id,login,profile').eq('id',p.id).maybeSingle());
       if(!target)fail(404,'Пользователь не найден');
       if(target.id===user.id||target.profile.role==='admin')fail(403,'Администратора можно только заблокировать другим администратором');
       await query(table('sessions').delete().eq('user_id',target.id));
       const deleted=await service.auth.admin.deleteUser(target.id);if(deleted.error)fail(400,'Не удалось удалить пользователя');
-      await audit(user.id,'user_delete',target.id);return json({ok:true});
+      await audit(user.id,'user_delete',JSON.stringify({target:{id:target.id,login:target.login,client:target.profile.client}}));return json({ok:true});
     }
     if(req.method==='GET'&&path==='admin/audit'){
       const rows=await query(table('audit').select('*').order('id',{ascending:false}).limit(200));

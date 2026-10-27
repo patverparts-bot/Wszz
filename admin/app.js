@@ -1,6 +1,7 @@
 const el = id => document.getElementById(id);
 let draft = null, userDraft = null, users = [];
 let catalogPairs=[],userAccessEditor=null,groupEditors={},groupRevision=null;
+let editingUserId=null,auditEntries=[];
 function status(message, error = false) { el('status').textContent = message; el('status').className = error ? 'error' : ''; }
 async function api(path, options = {}) {
   try { return await ZZWS.json(path, options); }
@@ -8,7 +9,7 @@ async function api(path, options = {}) {
 }
 function showLogin() {
   el('workspace').hidden=true;el('login').hidden=false;el('logout').hidden=true;draft=null;userDraft=null;
-  users=[];catalogPairs=[];groupEditors={};groupRevision=null;userAccessEditor=null;
+  users=[];catalogPairs=[];groupEditors={};groupRevision=null;userAccessEditor=null;editingUserId=null;auditEntries=[];
   for(const id of ['userList','groupRulesEditors','events','userAccessEditor','userAccessPreview','groupRulesPreview','sample','usersChanges','versions'])el(id).replaceChildren();
   el('preview').hidden=true;el('usersPreview').hidden=true;el('userForm').reset();
 }
@@ -32,7 +33,7 @@ el('loginForm').onsubmit = e => { e.preventDefault(); run(async () => { await ap
 el('logout').onclick = () => run(async () => { await api('logout',{method:'POST'}); showLogin(); status('Вы вышли'); });
 document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => run(async () => {
   for (const name of ['price','users','rules','audit']) el(name).hidden = name !== b.dataset.tab;
-  if (b.dataset.tab === 'audit') { const d = await api('admin/audit'); el('events').replaceChildren(table(['Время','Пользователь','Действие','Объект'], d.events.map(r => [new Date(r.created*1000).toLocaleString(),r.actor,r.action,r.detail]))); }
+  if (b.dataset.tab === 'audit') await loadAudit();
 }));
 el('priceForm').onsubmit = e => { e.preventDefault(); run(async () => {
   draft = null; el('preview').hidden = true; status('Проверяю файл…');
@@ -52,11 +53,13 @@ async function loadVersions() {
 }
 async function loadUsers() {
   const d = await api('admin/users'); users = d.users;
-  el('userList').replaceChildren(table(['Логин','Клиент','Цены','Доступ',''], users.map(u => [u.login,u.client,u.sheet,u.active?'Включён':'Заблокирован',button('Изменить', () => editUser(u))])));
+  el('userList').replaceChildren(table(['Логин','Клиент','Роль','Цены','Доступ',''], users.map(u => [u.login,u.client,u.role==='admin'?'Администратор':'Клиент',u.sheet,u.active?'Включён':'Выключен',button('Изменить', () => editUser(u))])));
 }
 function editUser(user = {}) {
   const f = el('userForm'); f.reset(); f.hidden = false;
-  for (const key of ['id','login','client','role','sheet']) if (user[key]) f.elements[key].value = user[key];
+  editingUserId=user.id||null;f.elements.id.value=editingUserId||'';
+  el('userTitle').textContent=editingUserId?'Изменение пользователя: '+user.login:'Новый пользователь';
+  for (const key of ['login','client','role','sheet']) if (user[key]) f.elements[key].value = user[key];
   for (const key of ['active','allowResale']) f.elements[key].checked = key === 'active' ? user.active !== false : !!user[key];
   userAccessEditor=ZZWS_RULES_UI.accessEditor(el('userAccessEditor'),ZZWS_RULES_UI.legacyAccess({...user,sheet:user.sheet||'Dealers'}),catalogPairs);
   el('userAccessPreview').replaceChildren();
@@ -80,6 +83,8 @@ el('importUsers').onclick = () => run(async () => { if (!userDraft) return; el('
 } finally { el('importUsers').disabled=false; } });
 function userPayload(){
   const f = el('userForm'), p = Object.fromEntries(new FormData(f));
+  p.intent=editingUserId?'update':'create';
+  if(editingUserId)p.id=editingUserId;else delete p.id;
   for (const key of ['active','allowResale']) p[key] = f.elements[key].checked;
   p.catalogAccess=userAccessEditor.read();
   const old = users.find(u=>u.id===p.id);
@@ -106,6 +111,24 @@ el('userForm').onsubmit = e => { e.preventDefault(); run(async () => {
   await api('admin/users',{method:'POST',body:JSON.stringify(p)}); e.target.reset(); e.target.hidden = true;
   await loadUsers(); status('Пользователь сохранён. Его прежние сессии отозваны.');
 }); };
+async function loadAudit(){
+  await loadUsers();
+  const [data,versions]=await Promise.all([api('admin/audit'),api('admin/price/versions')]);
+  auditEntries=ZZWS_AUDIT.describe(data.events,users,versions.versions);renderAudit();
+}
+function renderAudit(){
+  const search=el('auditSearch').value.trim().toLocaleLowerCase('ru'),group=el('auditGroup').value;
+  const entries=auditEntries.filter(e=>(!group||e.group===group)&&(!search||[e.actor,e.action,e.description].join(' ').toLocaleLowerCase('ru').includes(search)));
+  el('auditCount').textContent=`Показано событий: ${entries.length} из ${auditEntries.length}`;
+  if(!entries.length){const empty=document.createElement('p');empty.textContent='По выбранным условиям событий нет.';el('events').replaceChildren(empty);return;}
+  el('events').replaceChildren(table(['Когда · Ереван','Кто','Что сделал','Подробности'],entries.map(e=>{
+    const details=document.createElement('div'),text=document.createElement('p');text.textContent=e.description;details.append(text);
+    const disclosure=document.createElement('details'),title=document.createElement('summary'),code=document.createElement('pre');
+    title.textContent='Технические сведения';code.textContent=JSON.stringify(e.raw,null,2);disclosure.append(title,code);details.append(disclosure);
+    return [e.time,e.actor,e.action,details];
+  })));
+}
+el('refreshAudit').onclick=()=>run(loadAudit);el('auditSearch').oninput=renderAudit;el('auditGroup').onchange=renderAudit;
 async function loadGroupRules(){
   const data=await api('admin/rules');groupRevision=data.revision;groupEditors={};
   const container=el('groupRulesEditors');container.replaceChildren();el('groupRulesPreview').replaceChildren();

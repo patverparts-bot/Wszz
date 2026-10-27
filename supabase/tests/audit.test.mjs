@@ -1,0 +1,13 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';
+const context={window:{},Intl,Date,Map,JSON,Number,String};vm.runInNewContext(fs.readFileSync('admin/audit.js','utf8'),context);
+const describe=context.window.ZZWS_AUDIT.describe,actor='11111111-1111-1111-1111-111111111111',target='22222222-2222-2222-2222-222222222222';
+const users=[{id:actor,login:'admin',client:'Администратор'},{id:target,login:'client',client:'Клиент'}];
+const row=(action,detail='')=>({id:1,actor,action,detail,created:Date.parse('2026-10-27T00:00:00Z')/1000});
+test('legacy audit IDs resolve to readable names',()=>{const e=describe([row('user_update',target)],users,[])[0];assert.ok(e.actor.includes('admin'));assert.ok(e.description.includes('Клиент'));assert.ok(!e.description.includes(target));});
+test('created administrators have a clear label and account status',()=>{const e=describe([row('user_update',JSON.stringify({created:true,target:{login:'new-admin',client:'Администратор',role:'admin',active:false}}))],users,[])[0];assert.equal(e.action,'Создан администратор');assert.ok(e.description.includes('new-admin'));assert.ok(e.description.includes('выключен'));});
+test('deleted users retain saved names in new events',()=>{const e=describe([row('user_delete',JSON.stringify({target:{login:'previous',client:'Прежний клиент'}}))],[],[])[0];assert.ok(e.description.includes('previous'));});
+test('legacy deleted users do not expose raw UUIDs in primary text',()=>{const e=describe([row('user_delete',target)],[],[])[0];assert.ok(e.description.includes('больше нет'));assert.ok(!e.description.includes(target));assert.ok(e.raw.detail===target);});
+test('price validation explains that publication is a separate step',()=>{const e=describe([row('price_preview','7237')],users,[])[0];assert.ok(e.description.includes('7237'));assert.ok(e.description.includes('отдельно'));assert.equal(e.group,'price');});
+test('time is consistently displayed for Yerevan',()=>assert.ok(describe([row('login')],users,[])[0].time.includes('04:00:00')));
+test('unknown actions remain understandable without leaking technical codes',()=>{const e=describe([row('future_internal_code','raw')],users,[])[0];assert.equal(e.action,'Другое действие');assert.ok(!e.description.includes('raw'));});
+test('policy JSON is hidden from the main description',()=>{const e=describe([row('rules_update',JSON.stringify({revision:actor,rules:{KP:{}}}))],users,[])[0];assert.ok(e.description.includes('KP / Dealers'));assert.ok(!e.description.includes(actor));});
