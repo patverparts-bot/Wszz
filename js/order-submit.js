@@ -18,10 +18,10 @@ function buildEmailFormattedText() {
     const price = getItemWholesalePrice(item);
     const sum = price * item.qty;
     total += sum;
-    text += `${i}. Արտիկուլ: ${getItemArticul(artKey, item)}\n   Անվանում: ${getItemName(item)}\n   Միավորի գին: ${price.toLocaleString('ru-RU')} ֏ | Քանակ: ${item.qty} հատ\n   Վճարում: ${item.paymentMethod || 'Բանկային փոխանցումով'}\n   Գումար: ${sum.toLocaleString('ru-RU')} ֏\n\n`;
+    text += `${i}. Արտիկուլ: ${getItemArticul(artKey, item)}\n   Անվանում: ${getItemName(item)}\n   Միավորի գին: ${price.toLocaleString('hy-AM')} ֏ | Քանակ: ${item.qty} հատ\n   Գումար: ${sum.toLocaleString('hy-AM')} ֏\n\n`;
     i++;
   });
-  text += `ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏\n`;
+  text += `ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('hy-AM')} ֏\n`;
   text += `Գնացուցակի թարմացում՝ ${cachedPriceDateText || '—'}`;
   return text;
 }
@@ -43,7 +43,7 @@ function buildViberFormattedText() {
   if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
   if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
   if (comment) text += `Մեկնաբանություն: ${comment}\n`;
-  text += `\nԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('ru-RU')} ֏\n`;
+  text += `\nԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('hy-AM')} ֏\n`;
   text += `Գնացուցակի թարմացում՝ ${cachedPriceDateText || '—'}`;
   return text;
 }
@@ -98,54 +98,22 @@ function generateAndDownloadExcel(isFromExternal = false) {
   }
 
   const excelData = [];
-  let cashTotal = 0, bankTotal = 0;
-  const cashItems = [], bankItems = [];
+  excelData.push({'Արտիկուլ':'Արտիկուլ','Անվանում':'Անվանում','Քանակ (հատ)':'Քանակ','Մեծածախ գին (AMD)':'Միավորի գին','Գումար (AMD)':'Գումար'});
+  for(const [key,item] of Object.entries(cart)){const price=getItemWholesalePrice(item);excelData.push({'Արտիկուլ':getItemArticul(key,item),'Անվանում':getItemName(item),'Քանակ (հատ)':item.qty,'Մեծածախ գին (AMD)':price,'Գումար (AMD)':price*item.qty});}
+  excelData.push({'Արտիկուլ':'ԸՆԴԱՄԵՆԸ','Գումար (AMD)':currentTotalSum});
+  excelData.push({ 'Արտիկուլ': 'ՏԵՂԵԿՈՒԹՅՈՒՆՆԵՐ ՊԱՏՎԻՐԱՏՈՒԻ ԵՎ ԱՌԱՔՄԱՆ ՄԱՍԻՆ', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '' });
+  excelData.push({ 'Արտիկուլ': 'Կոնտրագենտ:', 'Անվանում': authorizedClient, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '' });
+  excelData.push({ 'Արտիկուլ': 'Կազմակերպություն:', 'Անվանում': orgName, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '' });
+  excelData.push({ 'Արտիկուլ': 'Առաքման եղանակ:', 'Անվանում': deliveryMethod, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '' });
+  if (isAdminUser()) excelData.push({ 'Արտիկուլ': 'Գնային հաշվարկ:', 'Անվանում': getOrderPriceLabel(), 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '' });
 
-  Object.entries(cart).forEach(([artKey, item]) => {
-    if (item.paymentMethod === 'Կանխիկ') cashItems.push({ key: artKey, ...item });
-    else bankItems.push({ key: artKey, ...item });
-  });
+  if (contactPerson) excelData.push({ 'Արտիկուլ': 'Կոնտակտային անձ:', 'Անվանում': contactPerson, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '' });
+  if (delivDate) excelData.push({ 'Արտիկուլ': 'Ցանկալի առաքման ամսաթիվ:', 'Անվանում': delivDate, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '' });
+  if (delivAddr) excelData.push({ 'Արտիկուլ': 'Առաքման հասցե:', 'Անվանում': delivAddr, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '' });
+  if (comment) excelData.push({ 'Արտիկուլ': 'Մեկնաբանություն:', 'Անվանում': comment, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '' });
 
-  excelData.push({ 'Արտիկուլ': 'ԱՊՐԱՆՔՆԵՐԻ ՑԱՆԿ (ՊԱՏՎԵՐ)', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-  excelData.push({ 'Արտիկուլ': 'Արտիկուլ', 'Անվանում': 'Անվանում', 'Քանակ (հատ)': 'Քանակ', 'Մեծածախ գին (AMD)': 'Գին (միավոր)', 'Գումար (AMD)': 'Գումար', 'Վճարման եղանակ': 'Վճարման եղանակ' });
-
-  if (bankItems.length > 0) {
-    bankItems.forEach(item => {
-      const price = getItemWholesalePrice(item);
-      const sum = price * item.qty;
-      bankTotal += sum;
-      excelData.push({ 'Արտիկուլ': getItemArticul(item.key, item), 'Անվանում': getItemName(item), 'Քանակ (հատ)': item.qty, 'Մեծածախ գին (AMD)': price, 'Գումար (AMD)': sum, 'Վճարման եղանակ': 'Բանկային փոխանցումով' });
-    });
-    excelData.push({ 'Արտիկուլ': '', 'Անվանում': 'ԸՆԴՀԱՆՈՒՐ (ԲԱՆԿԱՅԻՆ)', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': bankTotal, 'Վճարման եղանակ': 'Բանկային փոխանցումով' });
-  }
-
-  if (cashItems.length > 0) {
-    cashItems.forEach(item => {
-      const price = getItemWholesalePrice(item);
-      const sum = price * item.qty;
-      cashTotal += sum;
-      excelData.push({ 'Արտիկուլ': getItemArticul(item.key, item), 'Անվանում': getItemName(item), 'Քանակ (հատ)': item.qty, 'Մեծածախ գին (AMD)': price, 'Գումար (AMD)': sum, 'Վճարման եղանակ': 'Կանխիկ' });
-    });
-    excelData.push({ 'Արտիկուլ': '', 'Անվանում': 'ԸՆԴՀԱՆՈՒՐ (ԿԱՆԽԻԿ)', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': cashTotal, 'Վճարման եղանակ': 'Կանխիկ' });
-  }
-
-  excelData.push({ 'Արտիկուլ': '', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-  excelData.push({ 'Արտիկուլ': 'ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ ԲՈԼՈՐԻ', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': (cashTotal + bankTotal), 'Վճարման եղանակ': '' });
-
-  excelData.push({ 'Արտիկուլ': '', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-  excelData.push({ 'Արտիկուլ': 'ՏԵՂԵԿՈՒԹՅՈՒՆՆԵՐ ՊԱՏՎԻՐԱՏՈՒԻ ԵՎ ԱՌԱՔՄԱՆ ՄԱՍԻՆ', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-  excelData.push({ 'Արտիկուլ': 'Կոնտրագենտ:', 'Անվանում': authorizedClient, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-  excelData.push({ 'Արտիկուլ': 'Կազմակերպություն:', 'Անվանում': orgName, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-  excelData.push({ 'Արտիկուլ': 'Առաքման եղանակ:', 'Անվանում': deliveryMethod, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-  if (isAdminUser()) excelData.push({ 'Արտիկուլ': 'Գնային հաշվարկ:', 'Անվանում': getOrderPriceLabel(), 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-
-  if (contactPerson) excelData.push({ 'Արտիկուլ': 'Կոնտակտային անձ:', 'Անվանում': contactPerson, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-  if (delivDate) excelData.push({ 'Արտիկուլ': 'Ցանկալի առաքման ամսաթիվ:', 'Անվանում': delivDate, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-  if (delivAddr) excelData.push({ 'Արտիկուլ': 'Առաքման հասցե:', 'Անվանում': delivAddr, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-  if (comment) excelData.push({ 'Արտիկուլ': 'Մեկնաբանություն:', 'Անվանում': comment, 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-
-  excelData.push({ 'Արտիկուլ': '', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
-  excelData.push({ 'Արտիկուլ': 'Գնացուցակի թարմացում՝', 'Անվանում': cachedPriceDateText || '—', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '', 'Վճարման եղանակ': '' });
+  excelData.push({ 'Արտիկուլ': '', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '' });
+  excelData.push({ 'Արտիկուլ': 'Գնացուցակի թարմացում՝', 'Անվանում': cachedPriceDateText || '—', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '' });
 
   const worksheet = XLSX.utils.json_to_sheet(excelData, { skipHeader: true });
   
@@ -161,17 +129,6 @@ function generateAndDownloadExcel(isFromExternal = false) {
 
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Պատվեր");
-
-  const sysData = [
-    ['Articul', 'Qty', 'PaymentMethod', 'AdminPriceMode']
-  ];
-  Object.entries(cart).forEach(([artKey, item]) => {
-    sysData.push([getItemArticul(artKey, item), item.qty, item.paymentMethod || 'Բանկային փոխանցումով', '']);
-  });
-  sysData.push(['__ADMIN_PRICE_MODE__', '', '', adminOrderPriceMode]);
-  const sysSheet = XLSX.utils.aoa_to_sheet(sysData);
-  XLSX.utils.book_append_sheet(workbook, sysSheet, "_data");
-  workbook.Workbook = { Sheets: [{ Hidden: 0 }, { Hidden: 1 }] };
 
   const now = new Date();
   const pad = n => String(n).padStart(2, '0');
@@ -228,100 +185,6 @@ function clearCartAndCloseSuccess() {
   document.getElementById('successOverlay').classList.remove('flex');
 }
 
-function importPreviousOrder(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
-
-      const newCart = {};
-      let loadedCount = 0;
-
-      if (workbook.SheetNames.includes('_data')) {
-        const sysRows = XLSX.utils.sheet_to_json(workbook.Sheets['_data'], { header: 1 });
-        const priceModeRow = sysRows.find(r => r && r[0] === '__ADMIN_PRICE_MODE__');
-        if (isAdminUser() && priceModeRow) setAdminOrderPriceMode(priceModeRow[3] || 'WS');
-        sysRows.forEach((r, idx) => {
-          if (idx === 0 || !r || r.length < 2) return;
-          const articul = String(r[0] || '').trim();
-          const qty = Number(r[1]) || 0;
-          const payMethod = String(r[2] || '').trim() || 'Բանկային փոխանցումով';
-          
-          if (articul && qty > 0) {
-            const product = getProduct(articul);
-            if (product) {
-              newCart[articul] = { 
-                articul: articul, 
-                qty: qty, 
-              addedPrice: getItemWholesalePrice({ articul }),
-              addedPriceMode: isAdminUser() ? adminOrderPriceMode : 'WS',
-                paymentMethod: payMethod 
-              };
-              loadedCount++;
-            }
-          }
-        });
-      } else {
-        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
-        rows.forEach(r => {
-          if (!r || r.length === 0) return;
-          let articul = '', qty = 0, payMethod = 'Բանկային փոխանցումով';
-
-          for (let j = 0; j < r.length; j++) {
-            if (String(r[j] || '').includes('ԱՐՊԱՆՔՆԵՐԻ') || String(r[j] || '').includes('ՏԵՂԵԿՈՒԹՅՈՒՆՆԵՐ') || String(r[j] || '').trim() === 'Արտիկուլ') return;
-          }
-
-          const firstCell = String(r[0] || '').trim();
-          if (firstCell && !firstCell.includes('Կոնտրագենտ') && !firstCell.includes('Մեկնաբանություն') && !firstCell.includes('Առաքման') && !firstCell.includes('ԸՆԴՀԱՆՈՒՐ') && !firstCell.includes('Կազմակերպություն') && !firstCell.includes('Կոնտակտային') && !firstCell.includes('Գնացուցակի')) {
-            articul = firstCell;
-            for (let j = 1; j < r.length; j++) {
-              let num = Number(r[j]);
-              if (!isNaN(num) && num > 0 && num < 10000 && (j === 2 || j === 3 || j === 4)) {
-                qty = num;
-                break;
-              }
-            }
-            if (!qty && r.length >= 3) qty = Number(r[2]) || 1;
-            for (let cell of r) {
-              if (String(cell || '').includes('Կանխիկ')) payMethod = 'Կանխիկ';
-            }
-          }
-
-          if (articul && qty > 0) {
-            const product = getProduct(articul);
-            if (product) {
-              newCart[articul] = { 
-                articul: articul, 
-                qty: qty, 
-              addedPrice: getItemWholesalePrice({ articul }),
-              addedPriceMode: isAdminUser() ? adminOrderPriceMode : 'WS',
-                paymentMethod: payMethod 
-              };
-              loadedCount++;
-            }
-          }
-        });
-      }
-
-      if (loadedCount > 0) {
-        cart = newCart;
-        saveCartToStorage();
-        updateOrderPanel();
-        refreshAllActions();
-        alert(`Նախորդ պատվերը հաջողությամբ բեռնվեց: Վերականգնվել է ${loadedCount} ապրանք:`);
-      } else {
-        alert('Ֆայլում հնարավոր չեղավ գտնել ապրանքների ճիշտ տվյալներ։');
-      }
-    } catch (err) {}
-    event.target.value = '';
-  };
-  reader.readAsArrayBuffer(file);
-}
-
 const searchInputEl = document.getElementById('searchInput');
 searchInputEl.oninput = function () {
   document.getElementById('clearSearchBtn').classList.toggle('hidden', searchInputEl.value.trim().length === 0);
@@ -347,8 +210,6 @@ document.addEventListener('click', (e) => {
 });
 
 document.addEventListener('change', (e) => {
-  const el = e.target.closest('[data-act="pay"]');
-  if (el) updateItemPayment(el.dataset.art, el.value);
 
   const qInput = e.target.closest('[data-act="qty-input"], [data-act="mqty-input"]');
   if (qInput) {

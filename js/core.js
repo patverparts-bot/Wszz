@@ -1,3 +1,4 @@
+function userStorageId(){return serverIdentity?.id||authorizedClient;}
 console.log("ZIGZAG Catalog v2.55 loaded successfully");
 
 let allProducts = [];
@@ -80,37 +81,10 @@ async function copyArticul(articul) {
 let cart = {};
 let authorizedClient = '';
 let userSheetType = '';
-let passMap = {};
 let adminOrderPriceMode = 'WS';
 
-function normalizeAccessBrand(value) {
-  return String(value === null || value === undefined ? '' : value)
-    .toLowerCase()
-    .replace(/[^a-z0-9\u0531-\u058F]/g, '');
-}
-
-function parseAllowedBrands(value) {
-  const raw = String(value === null || value === undefined ? '' : value).trim();
-  const normalized = raw.toLowerCase().replace(/\s+/g, ' ').trim();
-  const allLabels = ['all', 'all brands', 'все', 'все бренды', 'բոլորը', 'բոլոր ապրանքանիշերը', 'բոլոր բրենդները'];
-  if (allLabels.includes(normalized)) return { all: true, brands: [] };
-  return {
-    all: false,
-    brands: raw.split(/[;,|\n\r]+/).map(normalizeAccessBrand).filter(Boolean)
-  };
-}
-
-function getAuthorizedPartnerRecord() {
-  const clientKey = String(authorizedClient || '').trim().toLowerCase();
-  return Object.values(passMap).find(record =>
-    record && record.sheet === 'KP' &&
-    String(record.client || '').trim().toLowerCase() === clientKey
-  ) || null;
-}
-
-const ADDITIONAL_ADMIN_NAME = "Աշոտ Մանուկյան";
 function isAdminUser() {
-  return authorizedClient === "Администратор" || authorizedClient === ADDITIONAL_ADMIN_NAME;
+  return !!serverIdentity && serverIdentity.role === 'admin';
 }
 let clientRowsData = [];
 
@@ -142,17 +116,12 @@ function hideVersionBadge() {
   }, 3000);
 }
 
-async function sha256(message) {
-  const msgBuffer = new TextEncoder().encode(message);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
+
 
 function loadFavorites() {
   if (!authorizedClient) return;
   try {
-    const saved = localStorage.getItem('zigzag_favs_' + authorizedClient);
+    const saved = localStorage.getItem('zigzag_favs_' + userStorageId());
     favoritesSet = saved ? new Set(JSON.parse(saved)) : new Set();
   } catch(e) {
     favoritesSet = new Set();
@@ -162,7 +131,7 @@ function loadFavorites() {
 function saveFavorites() {
   if (!authorizedClient) return;
   try {
-    localStorage.setItem('zigzag_favs_' + authorizedClient, JSON.stringify([...favoritesSet]));
+    localStorage.setItem('zigzag_favs_' + userStorageId(), JSON.stringify([...favoritesSet]));
   } catch(e) {}
 }
 
@@ -203,6 +172,7 @@ function updateMobileFilterBadge() {
   if (btnText) {
     btnText.innerText = count > 0 ? `⚙️ Ֆիլտրեր · ${count}` : '⚙️ Ֆիլտրեր';
   }
+  window.ZZWS_STICKY?.refreshSummary();
 }
 
 function toggleMobileFilters(forcedState) {
@@ -221,8 +191,9 @@ function toggleMobileFilters(forcedState) {
   }
 
   if (authorizedClient) {
-    try { localStorage.setItem('zigzag_filters_open_' + authorizedClient, shouldHide ? '0' : '1'); } catch(e) {}
+    try { localStorage.setItem('zigzag_filters_open_' + userStorageId(), shouldHide ? '0' : '1'); } catch(e) {}
   }
+  window.ZZWS_STICKY?.filtersToggled(!shouldHide);
 }
 
 function toggleDeliveryDetails() {
@@ -274,12 +245,14 @@ function saveFiltersToStorage() {
       category: selectedCategories[0] || '', 
       search: document.getElementById('searchInput').value || '',
       sortBy: document.getElementById('sortBy').value || 'default',
+      sortPrice: document.getElementById('sortPrice').value || 'wholesale',
+      sortColumn: document.getElementById('sortColumn').value || 'wholesale',
       favOnly: document.getElementById('favOnlyFilter').checked || false,
       promoOnly: document.getElementById('promoOnlyFilter').checked || false,
       stockOnly: document.getElementById('stockOnlyFilter').checked || false,
       wholesaleOnly: document.getElementById('wholesaleOnlyFilter')?.checked || false
     };
-    localStorage.setItem('zigzag_filters_' + authorizedClient, JSON.stringify(filtersState));
+    localStorage.setItem('zigzag_filters_' + userStorageId(), JSON.stringify(filtersState));
   } catch(e) {}
   updateMobileFilterBadge();
 }
@@ -287,7 +260,7 @@ function saveFiltersToStorage() {
 function loadSavedFilters() {
   if (!authorizedClient) return;
   try {
-    const saved = localStorage.getItem('zigzag_filters_' + authorizedClient);
+    const saved = localStorage.getItem('zigzag_filters_' + userStorageId());
     if (saved) {
       const f = JSON.parse(saved);
       selectedBrands = Array.isArray(f.brands) ? f.brands : (f.brand ? [f.brand] : []);
@@ -302,6 +275,9 @@ function loadSavedFilters() {
         document.getElementById('searchInput').value = f.search;
         document.getElementById('clearSearchBtn').classList.remove('hidden');
       }
+      document.getElementById('sortColumn').value=allowedSortColumns().includes(f.sortColumn)?f.sortColumn:'wholesale';
+      const priceSelect=document.getElementById('sortPrice');
+      priceSelect.value=[...priceSelect.options].some(o=>o.value===f.sortPrice)?f.sortPrice:'wholesale';
       if (f.sortBy) {
         document.getElementById('sortBy').value = f.sortBy;
       }
@@ -319,9 +295,11 @@ function loadSavedFilters() {
       }
     }
 
-    const openState = localStorage.getItem('zigzag_filters_open_' + authorizedClient);
+    const openState = localStorage.getItem('zigzag_filters_open_' + userStorageId());
     if (openState === '1') {
       toggleMobileFilters(true);
+    } else if (openState === '0') {
+      toggleMobileFilters(false);
     }
   } catch(e) {}
   updateMobileFilterBadge();
@@ -339,7 +317,7 @@ function clearAllFilters() {
   document.getElementById('clearSearchBtn').classList.add('hidden');
   
   if (authorizedClient) {
-    try { localStorage.removeItem('zigzag_filters_' + authorizedClient); } catch(e) {}
+    try { localStorage.removeItem('zigzag_filters_' + userStorageId()); } catch(e) {}
   }
   resetAndRender();
 }
@@ -394,7 +372,7 @@ function handleImageError(imgElement) {
     container.innerHTML = `
       <div class="w-full h-full bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg flex flex-col items-center justify-center text-center p-0.5" title="Նկարը բացակայում է">
         <span class="text-[10px]">📦</span>
-        <span class="text-[8px] font-bold text-gray-500 dark:text-gray-400">No photo</span>
+        <span class="text-[8px] font-bold text-gray-500 dark:text-gray-400">Նկար չկա</span>
       </div>`;
   }
 }
@@ -420,3 +398,4 @@ function getProductImageHtml(articul, productName) {
     </div>
   `;
 }
+

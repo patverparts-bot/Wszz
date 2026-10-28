@@ -1,6 +1,6 @@
 function saveCartToStorage() {
   if (!authorizedClient) return;
-  try { localStorage.setItem('zigzag_cart_' + authorizedClient, JSON.stringify(cart)); } catch(e) {}
+  try { localStorage.setItem('zigzag_cart_' + userStorageId(), JSON.stringify(cart)); } catch(e) {}
 }
 
 function normalizeCart(raw) {
@@ -16,7 +16,6 @@ function normalizeCart(raw) {
       qty: qty,
       addedPrice: Number(v.addedPrice) || 0,
       addedPriceMode: v.addedPriceMode === 'KP' ? 'KP' : 'WS',
-      paymentMethod: v.paymentMethod === 'Կանխիկ' ? 'Կանխիկ' : 'Բանկային փոխանցումով'
     };
   });
   return out;
@@ -26,7 +25,7 @@ function loadCartFromStorage(showToast = false) {
   if (!authorizedClient) return;
   pendingRestoreToast = showToast;
   try {
-    const saved = localStorage.getItem('zigzag_cart_' + authorizedClient);
+    const saved = localStorage.getItem('zigzag_cart_' + userStorageId());
     cart = saved ? normalizeCart(JSON.parse(saved)) : {};
   } catch(e) {
     cart = {};
@@ -74,7 +73,6 @@ function addToCart(articul) {
       qty: 1, 
       addedPrice: getItemWholesalePrice({ articul: articul }),
       addedPriceMode: isAdminUser() ? adminOrderPriceMode : 'WS',
-      paymentMethod: globalMethod 
     };
   } else {
     cart[articul].qty = Math.min(cart[articul].qty + 1, MAX_QTY);
@@ -91,7 +89,7 @@ function setDirectQty(articul, newQty) {
     if (!cart[articul]) {
       const p = getProduct(articul);
       if (!p) return;
-      cart[articul] = { articul: articul, qty: newQty, addedPrice: getItemWholesalePrice({ articul: articul }), addedPriceMode: isAdminUser() ? adminOrderPriceMode : 'WS', paymentMethod: 'Բանկային փոխանցումով' };
+      cart[articul] = { articul: articul, qty: newQty, addedPrice: getItemWholesalePrice({ articul: articul }), addedPriceMode: isAdminUser() ? adminOrderPriceMode : 'WS' };
     } else {
       cart[articul].qty = newQty;
     }
@@ -146,7 +144,7 @@ function loadAdminOrderPriceMode() {
   adminOrderPriceMode = 'WS';
   if (isAdminUser()) {
     try {
-      adminOrderPriceMode = localStorage.getItem('zigzag_admin_price_mode_' + authorizedClient) === 'KP' ? 'KP' : 'WS';
+      adminOrderPriceMode = localStorage.getItem('zigzag_admin_price_mode_' + userStorageId()) === 'KP' ? 'KP' : 'WS';
     } catch (e) {}
   }
   document.querySelectorAll('[data-admin-price-mode-select]').forEach(select => { select.value = adminOrderPriceMode; });
@@ -160,7 +158,7 @@ function setAdminOrderPriceMode(mode) {
     item.addedPrice = getItemWholesalePrice(item);
     item.addedPriceMode = adminOrderPriceMode;
   });
-  try { localStorage.setItem('zigzag_admin_price_mode_' + authorizedClient, adminOrderPriceMode); } catch (e) {}
+  try { localStorage.setItem('zigzag_admin_price_mode_' + userStorageId(), adminOrderPriceMode); } catch (e) {}
   document.querySelectorAll('[data-admin-price-mode-select]').forEach(select => { select.value = adminOrderPriceMode; });
   saveCartToStorage();
   updateOrderPanel();
@@ -195,7 +193,7 @@ function updateOrderPanel() {
   if (totalCount > 0) {
     orderPanel.classList.remove('hidden');
     document.getElementById('orderCount').innerText = `${totalCount} ապրանք`;
-    document.getElementById('orderSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
+    document.getElementById('orderSum').innerText = totalSum.toLocaleString('hy-AM') + ' ֏';
     if (badgeDesk) { badgeDesk.innerText = totalCount; badgeDesk.classList.remove('hidden'); }
   } else {
     orderPanel.classList.add('hidden');
@@ -218,11 +216,7 @@ function clearOrder() {
   refreshAllActions();
 }
 
-function applyGlobalPayment(method) {
-  Object.values(cart).forEach(item => item.paymentMethod = method);
-  saveCartToStorage();
-  renderModalItems();
-}
+
 
 function populateOrderModalFields() {
   const orgSelect = document.getElementById('organizationSelect');
@@ -232,7 +226,7 @@ function populateOrderModalFields() {
   clientRowsData.forEach((row, index) => {
     const opt = document.createElement('option');
     opt.value = index;
-    opt.text = row.organization || authorizedClient;
+    opt.text = [`${index+1}. ${row.organization || authorizedClient}`,row.address || '',row.contact || ''].filter(Boolean).join(' — ');
     orgSelect.appendChild(opt);
   });
 
@@ -268,9 +262,6 @@ function renderModalItems() {
     const sum = currentPrice * item.qty;
     totalSum += sum;
 
-    if (!item.paymentMethod) {
-      item.paymentMethod = 'Բանկային փոխանցումով';
-    }
 
     const prod = getProduct(item.articul);
     const stockStatus = (prod && prod.stockStatus) ? prod.stockStatus : 'Առկա է';
@@ -279,54 +270,37 @@ function renderModalItems() {
 
     let priceDiffNotice = '';
     if (item.addedPrice && item.addedPrice !== currentPrice && currentPrice > 0) {
-      const wasPriceStr = item.addedPrice.toLocaleString('ru-RU');
-      const isPriceStr = currentPrice.toLocaleString('ru-RU');
+      const wasPriceStr = item.addedPrice.toLocaleString('hy-AM');
+      const isPriceStr = currentPrice.toLocaleString('hy-AM');
       const diffColor = currentPrice > item.addedPrice ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900' : 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-900';
       priceDiffNotice = `<button type="button" data-act="ack-price" data-art="${escapeHtml(articul)}" class="px-2 py-0.5 text-[10px] font-bold rounded border ${diffColor} whitespace-nowrap">Գինը փոխվել է: ${wasPriceStr} ֏ → ${isPriceStr} ֏ ✕</button>`;
     }
 
     const div = document.createElement('div');
-    div.className = 'p-3 bg-gray-50 dark:bg-gray-900/50 hover:bg-blue-50/30 dark:hover:bg-gray-700/40 rounded-xl border border-gray-200/80 dark:border-gray-700 flex flex-col gap-2.5 transition overflow-hidden';
+    div.className = 'basket-item';
     div.innerHTML = `
-      <div class="flex items-start justify-between gap-2">
-        <div class="flex-grow min-w-0">
-          <div class="flex items-center gap-2 mb-1 flex-wrap">
-            <span class="font-mono text-xs text-blue-600 dark:text-blue-400 font-bold">${escapeHtml(articul)}</span>
-            <span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${escapeHtml(stockStatus)}</span>
-            ${priceDiffNotice}
-          </div>
-          <div class="text-gray-900 dark:text-white font-semibold text-xs sm:text-sm leading-snug break-words">${escapeHtml(name)}</div>
-          <div class="print-only text-xs">Քանակ՝ ${item.qty} հատ | Վճարում՝ ${escapeHtml(item.paymentMethod)}</div>
-        </div>
+      <div class="basket-item-heading">
+        <div><h4>${escapeHtml(name)}</h4><div class="basket-item-meta"><span>Արտիկուլ՝ <strong>${escapeHtml(articul)}</strong></span><span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${escapeHtml(stockStatus)}</span></div></div>
+        ${priceDiffNotice ? `<div class="basket-price-notice">${priceDiffNotice}</div>` : ''}
       </div>
-
-      <div class="flex flex-col gap-2 pt-2 border-t border-gray-200/60 dark:border-gray-700">
-        <div class="flex items-center justify-between text-xs flex-wrap gap-1">
-          <span class="text-gray-500 dark:text-gray-400 font-medium">Միավորի գին${isAdminUser() ? ` (${escapeHtml(getOrderPriceLabel())})` : ''}՝ <span class="text-gray-900 dark:text-gray-200 font-bold">${currentPrice > 0 ? currentPrice.toLocaleString('ru-RU') + ' ֏' : 'Գին չկա'}</span></span>
-          <span class="font-black text-green-600 dark:text-green-400 text-sm">${sum.toLocaleString('ru-RU')} ֏</span>
-        </div>
-
-        <div class="flex items-center justify-between gap-2 pt-1 flex-wrap print-hidden">
-          <select data-act="pay" data-art="${escapeHtml(articul)}" aria-label="Վճարման եղանակ ապրանքի համար" class="w-full sm:w-auto flex-grow px-2 py-1.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-xs font-semibold text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-xs">
-            <option value="Բանկային փոխանցումով" ${item.paymentMethod === 'Բանկային փոխանցումով' ? 'selected' : ''}>🏦 Բանկային փոխանցումով</option>
-            <option value="Կանխիկ" ${item.paymentMethod === 'Կանխիկ' ? 'selected' : ''}>�� Կանխիկ</option>
-          </select>
-
-          <div class="inline-flex items-center border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800 shadow-xs flex-shrink-0 ml-auto">
-            <button data-act="mqty" data-delta="-1" data-art="${escapeHtml(articul)}" aria-label="Նվազեցնել քանակը" class="px-2.5 sm:px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-xs text-gray-700 dark:text-gray-200">-</button>
-            <input type="number" data-act="mqty-input" data-art="${escapeHtml(articul)}" value="${item.qty}" min="1" max="9999" aria-label="Ապրանքի քանակ" class="w-10 sm:w-12 text-center text-xs font-bold text-blue-900 dark:text-blue-200 bg-transparent focus:outline-none focus:bg-white dark:focus:bg-gray-900 focus:ring-1 focus:ring-blue-500 py-1.5">
-            <button data-act="mqty" data-delta="1" data-art="${escapeHtml(articul)}" aria-label="Ավելացնել քանակը" class="px-2.5 sm:px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold text-xs text-gray-700 dark:text-gray-200">+</button>
-          </div>
-        </div>
+      <div class="basket-item-details">
+        <div class="basket-unit-price"><span class="basket-field-label">Միավորի գին${isAdminUser() ? ` (${escapeHtml(getOrderPriceLabel())})` : ''}</span><strong>${currentPrice > 0 ? currentPrice.toLocaleString('hy-AM') + ' ֏' : 'Գին չկա'}</strong></div>
+        <div class="basket-quantity"><span class="basket-field-label">Քանակ (հատ)</span><div class="basket-quantity-control print-hidden">
+          <button type="button" data-act="mqty" data-delta="-1" data-art="${escapeHtml(articul)}" aria-label="Նվազեցնել քանակը">−</button>
+          <input type="number" data-act="mqty-input" data-art="${escapeHtml(articul)}" value="${item.qty}" min="1" max="9999" aria-label="Ապրանքի քանակ">
+          <button type="button" data-act="mqty" data-delta="1" data-art="${escapeHtml(articul)}" aria-label="Ավելացնել քանակը">+</button>
+        </div><span class="print-only">${item.qty}</span></div>
+        <div class="basket-line-total"><span class="basket-field-label">Ընդհանուր գումար</span><strong>${sum.toLocaleString('hy-AM')} ֏</strong></div>
       </div>`;
     listContainer.appendChild(div);
   });
 
   if (bodyEl) bodyEl.scrollTop = prevScroll;
-  document.getElementById('modalTotalSum').innerText = totalSum.toLocaleString('ru-RU') + ' ֏';
+  document.getElementById('modalTotalSum').innerText = totalSum.toLocaleString('hy-AM') + ' ֏';
 }
 
 function openOrderModal() {
+  ZZWS_MEMORY.savedList();
   document.querySelectorAll('[data-admin-price-mode-select]').forEach(select => { select.value = adminOrderPriceMode; });
   renderModalItems();
   if (!modalFieldsInitialized) {
@@ -343,12 +317,7 @@ function openOrderModal() {
   document.getElementById('orderModal').classList.remove('hidden');
 }
 
-function updateItemPayment(articul, method) {
-  if (cart[articul]) {
-    cart[articul].paymentMethod = method;
-    saveCartToStorage();
-  }
-}
+
 
 function changeQty(articul, delta) {
   if (!cart[articul]) return;
@@ -397,13 +366,14 @@ function closeOrderModal() { document.getElementById('orderModal').classList.add
 
 function getSelectedOrganizationName() {
   const sel = document.getElementById('organizationSelect');
-  return (sel && sel.options.length > 0 && sel.selectedIndex >= 0) ? sel.options[sel.selectedIndex].text : authorizedClient;
+  if(!sel||sel.selectedIndex<0)return authorizedClient;
+  return clientRowsData[Number(sel.value)]?.organization||authorizedClient;
 }
 
 function buildHistorySnapshot(cartItems) {
   const snap = {};
   Object.entries(cartItems).forEach(([k, it]) => {
-    snap[k] = { articul: it.articul, qty: it.qty, paymentMethod: it.paymentMethod, name: getItemName(it), price: getItemWholesalePrice(it) };
+    snap[k] = { articul: it.articul, qty: it.qty, name: getItemName(it), price: getItemWholesalePrice(it) };
   });
   return snap;
 }
@@ -411,12 +381,12 @@ function buildHistorySnapshot(cartItems) {
 function saveOrderToHistory(cartItems, orgName, totalSum, actionType = 'Excel') {
   if (!authorizedClient) return;
   try {
-    const historyKey = 'zigzag_history_' + authorizedClient;
+    const historyKey = 'zigzag_history_' + userStorageId();
     let history = JSON.parse(localStorage.getItem(historyKey) || '[]');
 
     const newOrder = {
       id: 'ORD-' + Date.now(),
-      date: new Date().toLocaleString('ru-RU'),
+      date: new Date().toLocaleString('hy-AM'),
       organization: orgName || authorizedClient,
       totalSum: totalSum,
       itemsCount: Object.keys(cartItems).length,
@@ -438,6 +408,7 @@ function openPersonalCabinet() {
   }
   document.getElementById('cabinetUserSubtitle').innerText = `Օգտատեր: ${authorizedClient} (${userSheetType})`;
   renderOrderHistoryList();
+  ZZWS_ORDERS.load();
   document.getElementById('cabinetModal').classList.remove('hidden');
 }
 
@@ -449,7 +420,7 @@ function renderOrderHistoryList() {
   const container = document.getElementById('cabinetHistoryList');
   if (!authorizedClient) return;
 
-  const historyKey = 'zigzag_history_' + authorizedClient;
+  const historyKey = 'zigzag_history_' + userStorageId();
   let history = [];
   try {
     history = JSON.parse(localStorage.getItem(historyKey) || '[]');
@@ -458,7 +429,7 @@ function renderOrderHistoryList() {
   if (history.length === 0) {
     container.innerHTML = `
       <div class="p-8 text-center text-gray-400 dark:text-gray-500 text-xs sm:text-sm">
-        Դուք դեռևս չունեք պահպանված պատվերների պատմություն:
+        <div class="history-empty-icon">📋</div><strong>Ուղարկված պատվերներ դեռ չկան</strong><p>Պատվերը Excel արտահանելուց կամ ուղարկման պատրաստելուց հետո այն այստեղ կերևա ամսաթվով, գումարով և կազմով։</p>
       </div>`;
     return;
   }
@@ -476,7 +447,7 @@ function renderOrderHistoryList() {
         const price = item.price || (prod ? prod.wholesale : (item.addedPrice || 0));
         return `<div class="text-[11px] text-gray-600 dark:text-gray-300 flex justify-between gap-2 border-b border-gray-100 dark:border-gray-700/50 py-0.5">
           <span class="truncate">🔹 <strong class="font-mono">${escapeHtml(item.articul)}</strong> - ${escapeHtml(name)}</span>
-          <span class="whitespace-nowrap font-medium">${item.qty} հատ × ${price.toLocaleString('ru-RU')} ֏</span>
+          <span class="whitespace-nowrap font-medium">${item.qty} հատ × ${price.toLocaleString('hy-AM')} ֏</span>
         </div>`;
       }).join('');
     }
@@ -496,13 +467,11 @@ function renderOrderHistoryList() {
           </div>
           <div class="text-right">
             <div class="text-xs text-gray-500 dark:text-gray-400">Ընդհանուր՝</div>
-            <div class="text-sm font-black text-green-600 dark:text-green-400">${Number(ord.totalSum).toLocaleString('ru-RU')} ֏</div>
+            <div class="text-sm font-black text-green-600 dark:text-green-400">${Number(ord.totalSum).toLocaleString('hy-AM')} ֏</div>
           </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 p-2 rounded-lg border border-gray-100 dark:border-gray-700 max-h-32 overflow-y-auto space-y-1">
-          ${itemsHtml}
-        </div>
+        <details class="history-order-items"><summary>Պատվերի կազմ · ${Number(ord.itemsCount) || 0} դիրք</summary><div class="history-items-scroll">${itemsHtml}</div></details>
 
         <div class="flex justify-end pt-1">
           <button data-act="restore-history" data-id="${escapeHtml(ord.id)}" aria-label="Կրկնել պատվերը" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition whitespace-nowrap">
@@ -515,7 +484,7 @@ function renderOrderHistoryList() {
 }
 
 function restoreOrderFromHistory(orderId) {
-  const historyKey = 'zigzag_history_' + authorizedClient;
+  const historyKey = 'zigzag_history_' + userStorageId();
   try {
     const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
     const order = history.find(o => o.id === orderId);
@@ -534,7 +503,6 @@ function restoreOrderFromHistory(orderId) {
           qty: item.qty || 1,
           addedPrice: getItemWholesalePrice({ articul: art }),
           addedPriceMode: isAdminUser() ? adminOrderPriceMode : 'WS',
-          paymentMethod: item.paymentMethod || 'Բանկային փոխանցումով'
         };
         count++;
       }
@@ -556,118 +524,7 @@ function restoreOrderFromHistory(orderId) {
 function clearOrderHistory() {
   if (!confirm('Հաստատու՞մ եք, որ ցանկանում եք մաքրել պատվերների ամբողջ պատմությունը։')) return;
   try {
-    localStorage.removeItem('zigzag_history_' + authorizedClient);
+    localStorage.removeItem('zigzag_history_' + userStorageId());
     renderOrderHistoryList();
   } catch (e) {}
 }
-
-function exportFullUserSession() {
-  if (!authorizedClient) {
-    alert('Մուտք գործեք համակարգ։');
-    return;
-  }
-
-  try {
-    const historyKey = 'zigzag_history_' + authorizedClient;
-    const historyData = JSON.parse(localStorage.getItem(historyKey) || '[]');
-    const filtersData = JSON.parse(localStorage.getItem('zigzag_filters_' + authorizedClient) || '{}');
-    const favsData = JSON.parse(localStorage.getItem('zigzag_favs_' + authorizedClient) || '[]');
-
-    const fullSession = {
-      client: authorizedClient,
-      sheet: userSheetType,
-      adminPriceMode: adminOrderPriceMode,
-      clientRows: clientRowsData,
-      cart: cart,
-      favorites: favsData,
-      history: historyData,
-      filters: filtersData,
-      exportDate: new Date().toISOString()
-    };
-
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullSession, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    
-    const safeName = authorizedClient.replace(/[\s"']/g, '_');
-    downloadAnchor.setAttribute("download", `ZIGZAG_Backup_${safeName}_${Date.now()}.json`);
-    
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-  } catch (err) {}
-}
-
-function importFullUserSession(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const data = JSON.parse(e.target.result);
-
-      if (!data.client || !data.cart) {
-        throw new Error('Ֆայլի սխալ ձևաչափ։');
-      }
-
-      if (authorizedClient && data.client.toLowerCase() !== authorizedClient.toLowerCase()) {
-        alert(`❌ Սխալ: Այս ֆայլը պատկանում է "${data.client}" օգտատիրոջը, իսկ դուք մուտք եք գործել որպես "${authorizedClient}":\nՏվյալների ներմուծումն արգելված է.`);
-        event.target.value = '';
-        return;
-      }
-
-      let foundUserRecord = null;
-      Object.values(passMap).forEach(record => {
-        if (record.client.toLowerCase() === data.client.toLowerCase()) {
-          foundUserRecord = record;
-        }
-      });
-
-      authorizedClient = data.client;
-      userSheetType = foundUserRecord ? foundUserRecord.sheet : (data.sheet || 'Dealers');
-      adminOrderPriceMode = isAdminUser() && data.adminPriceMode === 'KP' ? 'KP' : 'WS';
-      if (isAdminUser()) {
-        try { localStorage.setItem('zigzag_admin_price_mode_' + authorizedClient, adminOrderPriceMode); } catch (e) {}
-      }
-      
-      if (foundUserRecord && foundUserRecord.rowsList && foundUserRecord.rowsList.length > 0) {
-        clientRowsData = foundUserRecord.rowsList;
-      } else {
-        clientRowsData = data.clientRows || [{ organization: authorizedClient, address: '', contact: '' }];
-      }
-
-      cart = normalizeCart(data.cart);
-
-      localStorage.setItem('zigzag_client', authorizedClient);
-      localStorage.setItem('zigzag_sheet', userSheetType);
-      localStorage.setItem('zigzag_client_rows', JSON.stringify(clientRowsData));
-      saveCartToStorage();
-
-      if (Array.isArray(data.favorites)) {
-        localStorage.setItem('zigzag_favs_' + authorizedClient, JSON.stringify(data.favorites));
-        favoritesSet = new Set(data.favorites);
-      }
-
-      if (Array.isArray(data.history)) {
-        localStorage.setItem('zigzag_history_' + authorizedClient, JSON.stringify(data.history));
-      }
-
-      if (data.filters) {
-        localStorage.setItem('zigzag_filters_' + authorizedClient, JSON.stringify(data.filters));
-      }
-
-      closePersonalCabinet();
-      document.getElementById('authScreen').classList.add('hidden');
-      
-      Promise.resolve().then(() => {
-        initAppAfterAuth();
-        alert(`Տվյալները հաջողությամբ ներմուծվեցին!\nԲարև ձեզ, ${authorizedClient}։`);
-      });
-
-    } catch (err) {}
-    event.target.value = '';
-  };
-  reader.readAsText(file);
-}
-
