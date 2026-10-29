@@ -1,0 +1,9 @@
+(() => {
+ const editor=document.getElementById('adminOrderEditor'),node=(tag,text)=>{const n=document.createElement(tag);if(text)n.textContent=text;return n;};
+ const nav=document.querySelector('#workspace>nav');if(nav)new ResizeObserver(()=>{if(nav.offsetHeight)document.documentElement.style.setProperty('--admin-nav-height',nav.offsetHeight+'px');}).observe(nav);
+ const help=node('p','1. Ստուգեք պատվիրատուին և առաքումը։ 2. «Ուղարկել հաշվետվություն» կոճակով կցեք ֆայլերը, համեմատեք կազմը և ընտրեք հասցեների տողերը։ 3. Հաջող ուղարկումից հետո կազմը կպահպանվի, կարգավիճակը կդառնա «Ընթացքում», և պատուհանը կփակվի։');help.className='order-workflow-help';editor.querySelector('.admin-order-editor-heading').after(help);
+ const original=editor.querySelector('.original-order-panel'),details=node('details');details.className='order-secondary-block';details.append(node('summary','Սկզբնական պատվեր և փոփոխությունների պատմություն'));original.before(details);details.append(original);
+ for(const fieldset of [...editor.children].filter(n=>n.tagName==='FIELDSET')){const extra=node('details');extra.className='order-secondary-block';extra.append(node('summary',fieldset.querySelector('legend')?.textContent||'Լրացուցիչ գործողություններ'));fieldset.before(extra);extra.append(fieldset);}
+ // Existing controls remain the same elements; their event handlers and rights stay intact.
+ window.ZZWS_ORDER_LAYOUT={delivery(root,delivery){root.replaceChildren();const grid=node('dl');grid.className='order-delivery-grid';for(const [key,label] of [['organization','Կազմակերպություն'],['method','Առաքման եղանակ'],['date','Առաքման ամսաթիվ'],['address','Հասցե'],['contact','Կոնտակտային անձ'],['paymentDeadline','Վճարման վերջնաժամկետ'],['comment','Մեկնաբանություն']]){const pair=node('div');pair.append(node('dt',label),node('dd',delivery[key]||'—'));grid.append(pair);}root.append(grid);}};
+})();

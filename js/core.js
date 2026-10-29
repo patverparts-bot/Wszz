@@ -1,4 +1,5 @@
-console.log("ZIGZAG Catalog v2.55 loaded successfully");
+function userStorageId(){return serverIdentity?.id||authorizedClient;}
+console.log("ZZWS Web 6.12 loaded successfully");
 
 let allProducts = [];
 let filteredProducts = [];
@@ -80,37 +81,12 @@ async function copyArticul(articul) {
 let cart = {};
 let authorizedClient = '';
 let userSheetType = '';
-let passMap = {};
 let adminOrderPriceMode = 'WS';
 
-function normalizeAccessBrand(value) {
-  return String(value === null || value === undefined ? '' : value)
-    .toLowerCase()
-    .replace(/[^a-z0-9\u0531-\u058F]/g, '');
-}
-
-function parseAllowedBrands(value) {
-  const raw = String(value === null || value === undefined ? '' : value).trim();
-  const normalized = raw.toLowerCase().replace(/\s+/g, ' ').trim();
-  const allLabels = ['all', 'all brands', 'все', 'все бренды', 'բոլորը', 'բոլոր ապրանքանիշերը', 'բոլոր բրենդները'];
-  if (allLabels.includes(normalized)) return { all: true, brands: [] };
-  return {
-    all: false,
-    brands: raw.split(/[;,|\n\r]+/).map(normalizeAccessBrand).filter(Boolean)
-  };
-}
-
-function getAuthorizedPartnerRecord() {
-  const clientKey = String(authorizedClient || '').trim().toLowerCase();
-  return Object.values(passMap).find(record =>
-    record && record.sheet === 'KP' &&
-    String(record.client || '').trim().toLowerCase() === clientKey
-  ) || null;
-}
-
-const ADDITIONAL_ADMIN_NAME = "Աշոտ Մանուկյան";
+function catalogIdentity(){return window.ZZWS_CATALOG_VIEW?.identity()||serverIdentity;}
+function catalogIsAdmin(){return catalogIdentity()?.role==='admin';}
 function isAdminUser() {
-  return authorizedClient === "Администратор" || authorizedClient === ADDITIONAL_ADMIN_NAME;
+  return !!serverIdentity && serverIdentity.role === 'admin';
 }
 let clientRowsData = [];
 
@@ -119,7 +95,6 @@ let availableCategories = [];
 let selectedBrands = [];
 let selectedCategories = [];
 
-const TARGET_EMAILS = "Levon.Grigoryan@zigzag.am,Ashot.Manukyan@zigzag.am";
 
 const brandDomains = {
 'wanbo': 'wanbo.cn', 'epson': 'epson.com', 'blaupunkt': 'blaupunkt.com', 'apple': 'apple.com',
@@ -142,17 +117,12 @@ function hideVersionBadge() {
   }, 3000);
 }
 
-async function sha256(message) {
-  const msgBuffer = new TextEncoder().encode(message);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
+
 
 function loadFavorites() {
   if (!authorizedClient) return;
   try {
-    const saved = localStorage.getItem('zigzag_favs_' + authorizedClient);
+    const saved = localStorage.getItem('zigzag_favs_' + userStorageId());
     favoritesSet = saved ? new Set(JSON.parse(saved)) : new Set();
   } catch(e) {
     favoritesSet = new Set();
@@ -162,7 +132,7 @@ function loadFavorites() {
 function saveFavorites() {
   if (!authorizedClient) return;
   try {
-    localStorage.setItem('zigzag_favs_' + authorizedClient, JSON.stringify([...favoritesSet]));
+    localStorage.setItem('zigzag_favs_' + userStorageId(), JSON.stringify([...favoritesSet]));
   } catch(e) {}
 }
 
@@ -203,6 +173,7 @@ function updateMobileFilterBadge() {
   if (btnText) {
     btnText.innerText = count > 0 ? `⚙️ Ֆիլտրեր · ${count}` : '⚙️ Ֆիլտրեր';
   }
+  window.ZZWS_STICKY?.refreshSummary();
 }
 
 function toggleMobileFilters(forcedState) {
@@ -221,8 +192,9 @@ function toggleMobileFilters(forcedState) {
   }
 
   if (authorizedClient) {
-    try { localStorage.setItem('zigzag_filters_open_' + authorizedClient, shouldHide ? '0' : '1'); } catch(e) {}
+    try { localStorage.setItem('zigzag_filters_open_' + userStorageId(), shouldHide ? '0' : '1'); } catch(e) {}
   }
+  window.ZZWS_STICKY?.filtersToggled(!shouldHide);
 }
 
 function toggleDeliveryDetails() {
@@ -274,20 +246,23 @@ function saveFiltersToStorage() {
       category: selectedCategories[0] || '', 
       search: document.getElementById('searchInput').value || '',
       sortBy: document.getElementById('sortBy').value || 'default',
+      sortPrice: document.getElementById('sortPrice').value || 'wholesale',
+      sortColumn: document.getElementById('sortColumn').value || 'wholesale',
       favOnly: document.getElementById('favOnlyFilter').checked || false,
       promoOnly: document.getElementById('promoOnlyFilter').checked || false,
       stockOnly: document.getElementById('stockOnlyFilter').checked || false,
       wholesaleOnly: document.getElementById('wholesaleOnlyFilter')?.checked || false
     };
-    localStorage.setItem('zigzag_filters_' + authorizedClient, JSON.stringify(filtersState));
+    if(window.ZZWS_CATALOG_VIEW?.active())ZZWS_CATALOG_VIEW.rememberFilters(filtersState);else localStorage.setItem('zigzag_filters_' + userStorageId(), JSON.stringify(filtersState));
   } catch(e) {}
   updateMobileFilterBadge();
 }
 
 function loadSavedFilters() {
+  if(window.ZZWS_CATALOG_VIEW?.active())return ZZWS_CATALOG_VIEW.restoreFilters();
   if (!authorizedClient) return;
   try {
-    const saved = localStorage.getItem('zigzag_filters_' + authorizedClient);
+    const saved = localStorage.getItem('zigzag_filters_' + userStorageId());
     if (saved) {
       const f = JSON.parse(saved);
       selectedBrands = Array.isArray(f.brands) ? f.brands : (f.brand ? [f.brand] : []);
@@ -302,6 +277,9 @@ function loadSavedFilters() {
         document.getElementById('searchInput').value = f.search;
         document.getElementById('clearSearchBtn').classList.remove('hidden');
       }
+      document.getElementById('sortColumn').value=allowedSortColumns().includes(f.sortColumn)?f.sortColumn:'wholesale';
+      const priceSelect=document.getElementById('sortPrice');
+      priceSelect.value=[...priceSelect.options].some(o=>o.value===f.sortPrice)?f.sortPrice:'wholesale';
       if (f.sortBy) {
         document.getElementById('sortBy').value = f.sortBy;
       }
@@ -319,9 +297,11 @@ function loadSavedFilters() {
       }
     }
 
-    const openState = localStorage.getItem('zigzag_filters_open_' + authorizedClient);
+    const openState = localStorage.getItem('zigzag_filters_open_' + userStorageId());
     if (openState === '1') {
       toggleMobileFilters(true);
+    } else if (openState === '0') {
+      toggleMobileFilters(false);
     }
   } catch(e) {}
   updateMobileFilterBadge();
@@ -339,7 +319,7 @@ function clearAllFilters() {
   document.getElementById('clearSearchBtn').classList.add('hidden');
   
   if (authorizedClient) {
-    try { localStorage.removeItem('zigzag_filters_' + authorizedClient); } catch(e) {}
+    try { localStorage.removeItem('zigzag_filters_' + userStorageId()); } catch(e) {}
   }
   resetAndRender();
 }
@@ -351,14 +331,14 @@ function getBrandLogoHtml(brandName) {
 
   const cleanBrand = brandName.trim().toLowerCase();
   const domain = brandDomains[cleanBrand] || `${cleanBrand.replace(/\s+/g, '')}.com`;
-  const logoUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
+  const logoUrl = window.ZZWS_CONFIG?.offline ? '/logo.svg' : `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
   const safeBrand = escapeHtml(brandName);
 
   return `
-<div class="flex items-center gap-1">
-<img src="${escapeHtml(logoUrl)}" alt="${safeBrand}" class="h-4 w-4 object-contain rounded flex-shrink-0" loading="lazy" 
+<div class="flex items-center gap-1 catalog-brand-cell">
+<img src="${escapeHtml(logoUrl)}" alt="${safeBrand}" class="h-4 w-4 object-contain rounded flex-shrink-0 catalog-brand-mark" loading="lazy" 
 onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
-<span class="font-semibold text-gray-800 dark:text-gray-200 text-xs whitespace-normal">${safeBrand}</span>
+<span class="font-semibold text-gray-800 dark:text-gray-200 text-xs whitespace-normal catalog-brand-name">${safeBrand}</span>
 </div>
 `;
 }
@@ -375,6 +355,7 @@ function markProductImageLoaded(imgElement) {
 
 function handleImageError(imgElement) {
   imgElement.classList.remove("image-loaded");
+  if(window.ZZWS_CONFIG?.offline){imgElement.onerror=null;imgElement.src='/logo.svg';return;}
   const container = imgElement.parentElement;
   if (!container) return;
   
@@ -394,11 +375,12 @@ function handleImageError(imgElement) {
     container.innerHTML = `
       <div class="w-full h-full bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg flex flex-col items-center justify-center text-center p-0.5" title="Նկարը բացակայում է">
         <span class="text-[10px]">📦</span>
-        <span class="text-[8px] font-bold text-gray-500 dark:text-gray-400">No photo</span>
+        <span class="text-[8px] font-bold text-gray-500 dark:text-gray-400">Նկար չկա</span>
       </div>`;
   }
 }
 function getProductImageHtml(articul, productName) {
+  if(window.ZZWS_CONFIG?.offline)return `<div class="product-img-container"><img src="/offline/assets/product.svg" alt="${escapeHtml(productName)}" class="product-img" onload="markProductImageLoaded(this)"></div>`;
   const cleanArt = String(articul).trim();
   const a1 = cleanArt.charAt(0) || '0';
   const a2 = cleanArt.charAt(1) || '0';
@@ -420,3 +402,4 @@ function getProductImageHtml(articul, productName) {
     </div>
   `;
 }
+

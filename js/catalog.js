@@ -1,3 +1,4 @@
+function renderFilterChips(root,values,remove){root.replaceChildren();for(const value of values){const button=document.createElement('button');button.type='button';button.className='filter-chip';button.textContent=value+' ×';button.setAttribute('aria-label','Հեռացնել '+value);button.onclick=e=>{e.stopPropagation();remove(value);};root.append(button);}}
 function initFilters() {
 availableBrands = [...new Set(allProducts.map(p => p.brand).filter(b => b))].sort();
 availableCategories = [...new Set(allProducts.map(p => p.category).filter(c => c))].sort();
@@ -44,7 +45,7 @@ function renderBrandDropdown(brands) {
   }
   dropdown.innerHTML = brands.map(b => {
     const checked = selectedBrands.includes(b) ? 'checked' : '';
-    return `<label data-act="pick-brand" data-value="${escapeHtml(b)}" class="flex items-center gap-2 px-3 py-2 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer font-medium text-gray-800 dark:text-gray-200 transition border-b border-gray-50 dark:border-gray-700 last:border-none"><input type="checkbox" ${checked} tabindex="-1" class="w-4 h-4 rounded text-blue-600"><span>${escapeHtml(b)}</span></label>`;
+    return `<label data-act="pick-brand" data-value="${escapeHtml(b)}" class="${checked?'filter-option-selected ':''}flex items-center gap-2 px-3 py-2 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer font-medium text-gray-800 dark:text-gray-200 transition border-b border-gray-50 dark:border-gray-700 last:border-none"><input type="checkbox" ${checked} tabindex="-1" class="w-4 h-4 rounded text-blue-600"><span>${escapeHtml(b)}</span></label>`;
   }).join('');
 }
 
@@ -72,7 +73,7 @@ function updateBrandSelectionSummary() {
   const summary = document.getElementById('brandSelectionSummary');
   const clearBtn = document.getElementById('clearBrandBtn');
   if (!summary) return;
-  summary.textContent = selectedBrands.length ? `Ընտրված է ${selectedBrands.length}: ${selectedBrands.join(', ')}` : '';
+  renderFilterChips(summary,selectedBrands,brand=>{selectedBrands=selectedBrands.filter(v=>v!==brand);reconcileFilterSelections();updateBrandSelectionSummary();updateCategorySelectionSummary();renderDependentFilterOptions();resetAndRender();});
   summary.classList.toggle('hidden', selectedBrands.length === 0);
   clearBtn.classList.toggle('hidden', selectedBrands.length === 0 && !document.getElementById('brandInput').value);
 }
@@ -96,7 +97,7 @@ function renderCategoryDropdown(categories) {
   }
   dropdown.innerHTML = categories.map(c => {
     const checked = selectedCategories.includes(c) ? 'checked' : '';
-    return `<label data-act="pick-category" data-value="${escapeHtml(c)}" class="flex items-center gap-2 px-3 py-2 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer font-medium text-gray-800 dark:text-gray-200 transition border-b border-gray-50 dark:border-gray-700 last:border-none"><input type="checkbox" ${checked} tabindex="-1" class="w-4 h-4 rounded text-blue-600"><span>${escapeHtml(c)}</span></label>`;
+    return `<label data-act="pick-category" data-value="${escapeHtml(c)}" class="${checked?'filter-option-selected ':''}flex items-center gap-2 px-3 py-2 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer font-medium text-gray-800 dark:text-gray-200 transition border-b border-gray-50 dark:border-gray-700 last:border-none"><input type="checkbox" ${checked} tabindex="-1" class="w-4 h-4 rounded text-blue-600"><span>${escapeHtml(c)}</span></label>`;
   }).join('');
 }
 
@@ -124,7 +125,7 @@ function updateCategorySelectionSummary() {
   const summary = document.getElementById('categorySelectionSummary');
   const clearBtn = document.getElementById('clearCategoryBtn');
   if (!summary) return;
-  summary.textContent = selectedCategories.length ? `Ընտրված է ${selectedCategories.length}: ${selectedCategories.join(', ')}` : '';
+  renderFilterChips(summary,selectedCategories,category=>{selectedCategories=selectedCategories.filter(v=>v!==category);reconcileFilterSelections();updateCategorySelectionSummary();updateBrandSelectionSummary();renderDependentFilterOptions();resetAndRender();});
   summary.classList.toggle('hidden', selectedCategories.length === 0);
   clearBtn.classList.toggle('hidden', selectedCategories.length === 0 && !document.getElementById('categoryInput').value);
 }
@@ -148,31 +149,33 @@ function clearSearch() {
 
 function filterProducts() {
 const searchQuery = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+const multiSearch=ZZWS_MULTI_SEARCH.compile(document.getElementById('searchInput').value,allProducts);ZZWS_MULTI_SEARCH.highlight(multiSearch);
 const sortBy = document.getElementById('sortBy').value;
 const favOnly = document.getElementById('favOnlyFilter').checked;
 const promoOnly = document.getElementById('promoOnlyFilter').checked;
 const stockOnly = document.getElementById('stockOnlyFilter').checked;
 const wholesaleOnlyEl = document.getElementById('wholesaleOnlyFilter');
-const wholesaleOnly = isAdminUser() && wholesaleOnlyEl && wholesaleOnlyEl.checked;
+const wholesaleOnly = catalogIsAdmin() && wholesaleOnlyEl && wholesaleOnlyEl.checked;
 
 document.getElementById('clearSearchBtn').classList.toggle('hidden', searchQuery.length === 0);
 
 filteredProducts = allProducts.filter(p => {
   const matchBrand = !selectedBrands.length || selectedBrands.some(b => p.brand.toLowerCase() === b.toLowerCase());
   const matchCategory = !selectedCategories.length || selectedCategories.some(c => p.category.toLowerCase() === c.toLowerCase());
-  const matchSearch = !searchQuery || (p.name || '').toLowerCase().includes(searchQuery) || (p.articul || '').toLowerCase().includes(searchQuery);
+  const matchSearch = !searchQuery || multiSearch.matches.has(p.articul);
   const matchFav = !favOnly || favoritesSet.has(p.articul);
   const matchPromo = !promoOnly || (p.isPromo || p.isWholesalePromo || p.kpIsPromo);
-  const matchStock = !stockOnly || p.targetWarehousesStock > 0;
+  const matchStock = !stockOnly || p.stockAvailable === true || (p.stockAvailable == null && (String(p.stockStatus||'').trim()==='Առկա է'||catalogIsAdmin()&&p.targetWarehousesStock>=3));
   
-  // Условие для Администратора: проверяет наличие хотя бы одной из оптовых цен (KP price или WS price)
+  // Условие для Ադմինիստրատորа: проверяет наличие хотя бы одной из оптовых цен (KP price или WS price)
   const matchWholesale = !wholesaleOnly || p.hasWholesale;
 
   return matchBrand && matchCategory && matchSearch && matchFav && matchPromo && matchStock && matchWholesale;
 });
 
-if (sortBy === 'priceAsc') filteredProducts.sort((a, b) => a.wholesale - b.wholesale);
-else if (sortBy === 'priceDesc') filteredProducts.sort((a, b) => b.wholesale - a.wholesale);
+const priceField=document.getElementById('sortPrice').value||'wholesale';
+if (sortBy === 'columnAsc' || sortBy === 'columnDesc'){const selection=activeColumnSort();if(allowedSortColumns().includes(selection.key))filteredProducts.sort((a,b)=>compareByColumn(a,b,selection.key,selection.direction));}
+else if (sortBy === 'priceAsc' || sortBy === 'priceDesc') filteredProducts.sort((a,b)=>compareProductPrices(a,b,priceField,sortBy==='priceAsc'?1:-1));
 else if (sortBy === 'marginDesc') filteredProducts.sort((a, b) => b.marginVal - a.marginVal);
 else {
   const order = new Map();
@@ -183,6 +186,7 @@ groupByCategory = sortBy === 'default';
 categoryCounts = new Map();
 filteredProducts.forEach(p => categoryCounts.set(p.category, (categoryCounts.get(p.category) || 0) + 1));
 
+updateColumnSortIndicators();
 saveFiltersToStorage();
 document.getElementById('productCountInfo').innerText = `Գտնվել է ${filteredProducts.length} ապրանք`;
 }
@@ -291,7 +295,7 @@ tr.dataset.art = p.articul;
 tr.className = 'hover:bg-blue-50/40 dark:hover:bg-gray-700/50 transition-colors border-b border-gray-100 dark:border-gray-700';
 
 const isUtochnit = p.stockStatus.includes('Ճշտել');
-const stockBadgeClass = isAdminUser() ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600 font-mono text-xs' : (isUtochnit ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800');
+const stockBadgeClass = catalogIsAdmin() ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600 font-mono text-xs' : (isUtochnit ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800');
 
 const isDomusUser = authorizedClient.toUpperCase().includes('ԴՈՄՈՒՍ') || authorizedClient.toUpperCase().includes('ДОМУՍ') || authorizedClient.toUpperCase().includes('DOMUS');
 
@@ -306,9 +310,9 @@ if (p.retail > 0 && p.wholesale > 0) {
   }
 }
 
-// Отдельная генерация маржинальности для KP и WS у Администратора
+// Отдельная генерация маржинальности для KP и WS у Ադմինիստրատորа
 let kpMarginBadge = '—';
-if (isAdminUser() && p.retail > 0 && p.kpPrice > 0) {
+if (catalogIsAdmin() && p.retail > 0 && p.kpPrice > 0) {
   if (isDomusUser) {
     kpMarginBadge = `<span class="px-2 py-1 rounded-lg text-xs font-bold border bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600 whitespace-nowrap">${p.kpMarginVal.toFixed(2)}</span>`;
   } else {
@@ -318,7 +322,7 @@ if (isAdminUser() && p.retail > 0 && p.kpPrice > 0) {
 }
 
 let wsMarginBadge = '—';
-if (isAdminUser() && p.retail > 0 && p.wholesale > 0) {
+if (catalogIsAdmin() && p.retail > 0 && p.wholesale > 0) {
   if (isDomusUser) {
     wsMarginBadge = `<span class="px-2 py-1 rounded-lg text-xs font-bold border bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600 whitespace-nowrap">${p.marginVal.toFixed(2)}</span>`;
   } else {
@@ -327,14 +331,14 @@ if (isAdminUser() && p.retail > 0 && p.wholesale > 0) {
   }
 }
 
-let retailCellHtml = p.retail > 0 ? (p.isPromo ? `<div class="flex flex-col items-end"><span class="text-gray-900 dark:text-white font-medium whitespace-nowrap">${p.retail.toLocaleString('ru-RU')} ֏</span><span class="px-1.5 py-0.5 bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 rounded text-[10px] font-bold mt-0.5 border border-red-200 dark:border-red-800 whitespace-nowrap">ԱԿՑԻԱ</span></div>` : `<span class="text-gray-600 dark:text-gray-400 whitespace-nowrap">${p.retail.toLocaleString('ru-RU')} ֏</span>`) : '—';
-let wholesaleCellHtml = p.wholesale > 0 ? (p.isWholesalePromo ? `<div class="flex flex-col items-end"><span class="text-gray-900 dark:text-white font-semibold whitespace-nowrap">${p.wholesale.toLocaleString('ru-RU')} ֏</span><span class="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded text-[10px] font-bold mt-0.5 border border-emerald-200 dark:border-emerald-800 whitespace-nowrap">PROMO</span></div>` : `<span class="text-gray-900 dark:text-white font-semibold whitespace-nowrap">${p.wholesale.toLocaleString('ru-RU')} ֏</span>`) : '—';
+let retailCellHtml = p.retail > 0 ? (p.isPromo ? `<div class="flex flex-col items-end"><span class="text-gray-900 dark:text-white font-medium whitespace-nowrap">${p.retail.toLocaleString('hy-AM')} ֏</span><span class="px-1.5 py-0.5 bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 rounded text-[10px] font-bold mt-0.5 border border-red-200 dark:border-red-800 whitespace-nowrap">ԱԿՑԻԱ</span></div>` : `<span class="text-gray-600 dark:text-gray-400 whitespace-nowrap">${p.retail.toLocaleString('hy-AM')} ֏</span>`) : '—';
+let wholesaleCellHtml = p.wholesale > 0 ? (p.isWholesalePromo ? `<div class="flex flex-col items-end"><span class="text-gray-900 dark:text-white font-semibold whitespace-nowrap">${p.wholesale.toLocaleString('hy-AM')} ֏</span><span class="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded text-[10px] font-bold mt-0.5 border border-emerald-200 dark:border-emerald-800 whitespace-nowrap">Ակցիա</span></div>` : `<span class="text-gray-900 dark:text-white font-semibold whitespace-nowrap">${p.wholesale.toLocaleString('hy-AM')} ֏</span>`) : '—';
 
 let priceTdsHtml = `<td class="text-center">${marginBadge}</td><td class="text-right">${wholesaleCellHtml}</td>`;
-if (isAdminUser()) {
-  const kpFmt = p.kpPrice > 0 ? p.kpPrice.toLocaleString('ru-RU') + ' ֏' : '';
+if (catalogIsAdmin()) {
+  const kpFmt = p.kpPrice > 0 ? p.kpPrice.toLocaleString('hy-AM') + ' ֏' : '';
   const kpHtml = !kpFmt ? '' : (p.kpIsPromo
-    ? `<div class="flex flex-col items-end"><span class="text-gray-900 dark:text-white font-semibold whitespace-nowrap">${kpFmt}</span><span class="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded text-[10px] font-bold mt-0.5 border border-emerald-200 dark:border-emerald-800 whitespace-nowrap">PROMO</span></div>`
+    ? `<div class="flex flex-col items-end"><span class="text-gray-900 dark:text-white font-semibold whitespace-nowrap">${kpFmt}</span><span class="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded text-[10px] font-bold mt-0.5 border border-emerald-200 dark:border-emerald-800 whitespace-nowrap">Ակցիա</span></div>`
     : `<span class="text-gray-900 dark:text-white font-semibold whitespace-nowrap">${kpFmt}</span>`);
   priceTdsHtml = `<td class="text-right">${kpHtml}</td><td class="text-center">${kpMarginBadge}</td><td class="text-right">${wholesaleCellHtml}</td><td class="text-center">${wsMarginBadge}</td>`;
 }
@@ -342,7 +346,7 @@ if (isAdminUser()) {
 const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
 const cartItem = cart[p.articul];
 const actionCellHtml = getActionControlHtml(p.articul, cartItem);
-const resaleColHtml = authorizedClient === "ՓՐԻԹԻ ՈՒԵՅ ՍՊԸ" ? `<td class="text-right text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap">${p.resaleWholesale ? p.resaleWholesale.toLocaleString('ru-RU') + ' ֏' : '—'}</td>` : '';
+const resaleColHtml = catalogIdentity()?.allowResale ? `<td class="text-right text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap">${p.resaleWholesale ? p.resaleWholesale.toLocaleString('hy-AM') + ' ֏' : '—'}</td>` : '';
 
 const isFav = favoritesSet.has(p.articul);
 const starIcon = isFav ? '⭐' : '☆';
@@ -381,7 +385,7 @@ const div = document.createElement('div');
 div.className = 'bg-white dark:bg-gray-800 rounded-xl p-3.5 border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-between gap-3 relative transition-colors duration-200';
 
 const isUtochnit = p.stockStatus.includes('Ճշտել');
-const stockBadgeClass = isAdminUser() ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600 font-mono text-[11px]' : (isUtochnit ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800');
+const stockBadgeClass = catalogIsAdmin() ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600 font-mono text-[11px]' : (isUtochnit ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800');
 const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
 const cartItem = cart[p.articul];
 
@@ -398,7 +402,7 @@ if (p.retail > 0 && p.wholesale > 0) {
 }
 
 let kpMarginBadge = '';
-if (isAdminUser() && p.retail > 0 && p.kpPrice > 0) {
+if (catalogIsAdmin() && p.retail > 0 && p.kpPrice > 0) {
   if (isDomusUser) {
     kpMarginBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold border bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600">${p.kpMarginVal.toFixed(2)}</span>`;
   } else {
@@ -430,15 +434,15 @@ div.innerHTML = `
 
   <div class="flex items-center justify-between pt-2.5 mt-2.5 border-t border-gray-100 dark:border-gray-700 text-xs">
     <span class="px-2 py-0.5 rounded-md font-semibold ${stockBadgeClass}">${escapeHtml(p.stockStatus)}</span>
-    <div class="flex items-center gap-1.5"><span class="text-gray-400 dark:text-gray-500">Եկամտաբերություն:</span>${isAdminUser() ? marginBadge : marginBadge}</div>
+    <div class="flex items-center gap-1.5"><span class="text-gray-400 dark:text-gray-500">Եկամտաբերություն:</span>${catalogIsAdmin() ? marginBadge : marginBadge}</div>
   </div>
 </div>
 
 <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-700/40 p-2.5 rounded-xl border border-gray-100 dark:border-gray-700 mt-auto">
   <div>
-    <div class="text-[11px] text-gray-500 dark:text-gray-400">Մանրածախ: <span class="font-medium text-gray-700 dark:text-gray-300">${p.retail ? p.retail.toLocaleString('ru-RU') + ' ֏' : '—'}</span></div>
-    ${isAdminUser() ? `<div class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">KP: <span class="font-bold text-gray-800 dark:text-gray-200">${p.kpPrice > 0 ? p.kpPrice.toLocaleString('ru-RU') + ' ֏' : ''}</span> (${kpMarginBadge})${p.kpIsPromo ? ' <span class="px-1 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[9px] font-bold">PROMO</span>' : ''}</div>` : ''}
-    <div class="text-sm font-black text-emerald-600 dark:text-emerald-400 mt-0.5">${isAdminUser() ? 'WS: ' : ''}${p.wholesale ? p.wholesale.toLocaleString('ru-RU') + ' ֏' : '—'} ${isAdminUser() ? '(' + marginBadge + ')' : ''}</div>
+    <div class="text-[11px] text-gray-500 dark:text-gray-400">Մանրածախ: <span class="font-medium text-gray-700 dark:text-gray-300">${p.retail ? p.retail.toLocaleString('hy-AM') + ' ֏' : '—'}</span></div>
+    ${catalogIsAdmin() ? `<div class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">Խոշոր գործընկերոջ գին՝ <span class="font-bold text-gray-800 dark:text-gray-200">${p.kpPrice > 0 ? p.kpPrice.toLocaleString('hy-AM') + ' ֏' : ''}</span> (${kpMarginBadge})${p.kpIsPromo ? ' <span class="px-1 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[9px] font-bold">Ակցիա</span>' : ''}</div>` : ''}
+    <div class="text-sm font-black text-emerald-600 dark:text-emerald-400 mt-0.5">${catalogIsAdmin() ? 'WS: ' : ''}${p.wholesale ? p.wholesale.toLocaleString('hy-AM') + ' ֏' : '—'} ${catalogIsAdmin() ? '(' + marginBadge + ')' : ''}</div>
   </div>
   <div class="js-action" data-art="${escapeHtml(p.articul)}">${getActionControlHtml(p.articul, cartItem, true)}</div>
 </div>
