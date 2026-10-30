@@ -9,7 +9,10 @@
   Object.assign(copy.hy,{addToCart:'Ավելացնել զամբյուղ',quantity:'Քանակ',inCart:'Զամբյուղում՝ ',pieces:' հատ',noPhoto:'Նկարը հասանելի չէ',notOrderable:'Այս ապրանքը հիմա հասանելի չէ զամբյուղում ավելացնելու համար։',invalidQuantity:'Նշեք թույլատրելի ամբողջ քանակը։',cartFull:'Հասել եք այս ապրանքի առավելագույն քանակին։'});
   Object.assign(copy.hy,{detailsTitle:'Ապրանքի մանրամասները',details:'Բոլոր բնութագրերը',requirements:'Ընտրված պայմանները',exactMatch:'Ճշգրիտ համապատասխանություն',nearMatch:'Մոտ չափերով տարբերակ',nearGroup:'Մոտ չափերով այլընտրանքներ',nearNote:'Այս տարբերակների չափերը տարբերվում են ձեր նշածից։ Համեմատեք չափերը նախքան ընտրելը։',width:'Լայնություն',depth:'Խորություն',height:'Բարձրություն',requested:'Ձեր նշածը',cm:'սմ'});
   Object.assign(copy.hy,{orderableGroup:'Կարելի է ավելացնել զամբյուղ',managerGroup:'Ճշտել մենեջերի հետ',managerNote:'Այս ապրանքները հիմա հնարավոր չէ ավելացնել զամբյուղ։ Գինը և պատվիրելու հնարավորությունը ճշտեք մենեջերի հետ։',notOrderable:'Այս ապրանքի գինը և պատվիրելու հնարավորությունը ճշտեք մենեջերի հետ։',retailReference:'Մանրածախ գինը՝ որպես տեղեկություն։ Պատվերի գինը ճշտեք մենեջերի հետ։'});
+  Object.assign(copy.hy,{contactManager:'Կապվել մենեջերի հետ',copyInquiry:'Պատճենել հարցումը',inquiryCopied:'Հարցումը պատճենված է։',copyFailed:'Չհաջողվեց պատճենել։ Կարող եք բացել նամակը։',sku:'Արտիկուլ',publicGroup:'Ձեր կատալոգից դուրս մոդելներ',publicNote:'Այս մոդելները կան zigzag.am-ի ստուգված տվյալներում, բայց ձեր ընթացիկ կատալոգում չկան։ Գինը, հասանելիությունը և պատվիրելու հնարավորությունը ճշտեք մենեջերի հետ։',outsideCatalog:'Այս ապրանքը ձեր կատալոգում չկա։ Գինը, հասանելիությունը և պատվիրելու հնարավորությունը ճշտեք մենեջերի հետ։',budgetUnconfirmed:'Ձեր բյուջեին համապատասխանությունը դեռ հաստատված չէ։',pricePending:'Գինը՝ ճշտել մենեջերի հետ'});
   const locale = 'hy';
+  // Existing administrator reply-to address, checked in the current settings.
+  const managerEmail = 'levon.grigoryan@zigzag.am';
   let context = [], selected = [], advisor = null, requirements = '', currentMode = 'specifications', controller, revision = 0, busy = false, owner = null;
   const t = key => copy[locale][key];
   const cartWidgets = new WeakMap();
@@ -65,9 +68,23 @@
   function scroll() { messages.scrollTop = messages.scrollHeight; }
   function revealReply(reply){messages.scrollTo({top:reply.getBoundingClientRect().top-messages.getBoundingClientRect().top+messages.scrollTop-8,behavior:'instant'});}
   function syncCartControls(){for(const root of [messages,detailsBody])for(const widget of root.querySelectorAll('.zigzag-cart-controls'))cartWidgets.get(widget)?.();}
-  const canOrderProduct=product=>serverIdentity?.id===owner&&!!getProduct(product.articul)&&getItemWholesalePrice({articul:product.articul})>0;
+  const canOrderProduct=product=>product.catalogScope!=='public'&&serverIdentity?.id===owner&&!!getProduct(product.articul)&&getItemWholesalePrice({articul:product.articul})>0;
+  function managerContact(product){
+    const links=create('div','zigzag-manager-actions'),status=create('small','zigzag-inquiry-status');status.setAttribute('role','status');
+    let source='';try{const u=new URL(product.sourceUrl);if(u.protocol==='https:'&&u.hostname==='www.zigzag.am'&&!u.username&&!u.password&&!u.port)source='\nԱպրանքի էջ՝ '+u.href;}catch{}
+    const message='Բարև ձեզ,\n\nԽնդրում եմ ճշտել այս ապրանքի գինը, հասանելիությունը և պատվիրելու հնարավորությունը։\n\nՄոդել՝ '+product.name+'\nԱրտիկուլ՝ '+product.articul+source;
+    const email=create('a','zigzag-contact-manager',t('contactManager'));
+    email.href='mailto:'+managerEmail+'?subject='+encodeURIComponent('Հարցում ապրանքի մասին՝ '+product.name)+'&body='+encodeURIComponent(message);
+    email.setAttribute('aria-label',t('contactManager')+'՝ '+product.name);
+    const copy=button(t('copyInquiry'),async()=>{
+      if(serverIdentity?.id!==owner)return;
+      try{await navigator.clipboard.writeText(message);status.textContent=t('inquiryCopied');}catch{status.textContent=t('copyFailed');}
+    },'zigzag-copy-inquiry');
+    links.append(email,copy,status);return links;
+  }
   function productCartControls(product){
     const controls=create('div','zigzag-cart-controls'), actions=create('div','zigzag-cart-actions'), field=create('label','zigzag-cart-quantity'), qty=create('input'), status=create('p','zigzag-cart-status');
+    const contact=managerContact(product);
     qty.type='number';qty.min='1';qty.step='1';qty.value='1';qty.inputMode='numeric';qty.setAttribute('aria-label',t('quantity')+'՝ '+product.name);
     field.append(create('span','',t('quantity')),qty);status.setAttribute('role','status');
     const allowed=()=>canOrderProduct(product);
@@ -85,9 +102,10 @@
       const available=allowed(),count=Number(cart[product.articul]?.qty||0),full=count>=MAX_QTY;
       qty.max=String(Math.max(1,MAX_QTY-count));qty.disabled=!available||full;add.disabled=!available||full;
       actions.hidden=!available;controls.classList.toggle('zigzag-manager-controls',!available);
-      status.textContent=!available?t('notOrderable'):full?t('cartFull'):count?t('inCart')+count+t('pieces'):'';
+      contact.hidden=available;
+      status.textContent=!available?t(product.catalogScope==='public'?'outsideCatalog':'notOrderable'):full?t('cartFull'):count?t('inCart')+count+t('pieces'):'';
     };
-    actions.append(field,add);controls.append(actions,status);cartWidgets.set(controls,refresh);refresh();return controls;
+    actions.append(field,add);controls.append(actions,status,contact);cartWidgets.set(controls,refresh);refresh();return controls;
   }
   function openProductDetails(product){
     if(serverIdentity?.id!==owner)return;
@@ -97,8 +115,12 @@
     const box = create('section', 'zigzag-product'+(expanded?' zigzag-product-expanded':'')),summary=create('div','zigzag-product-summary'),photo=create('div','zigzag-product-photo'),info=create('div','zigzag-product-info');
     box.dataset.articul=product.articul;
     // Use the catalogue's verified SKU photo map and existing safe image fallbacks.
-    if(visibleProduct(product.articul)&&typeof getProductImageHtml==='function')photo.innerHTML=getProductImageHtml(product.articul,product.name);else photo.append(create('span','',t('noPhoto')));
-    info.append(create('h4','',product.name));summary.append(photo,info);box.append(summary,productCartControls(product));
+    if((visibleProduct(product.articul)||product.catalogScope==='public'&&product.status==='verified')&&typeof getProductImageHtml==='function')photo.innerHTML=getProductImageHtml(product.articul,product.name);else photo.append(create('span','',t('noPhoto')));
+    info.append(create('h4','',product.name),create('small','zigzag-product-sku',t('sku')+': '+product.articul));summary.append(photo,info);box.append(summary,productCartControls(product));
+    if(product.catalogScope==='public'){
+      info.append(create('p','zigzag-price-pending',t('pricePending')));
+      if(product.budgetStatus==='unconfirmed')box.append(create('p','zigzag-budget-unconfirmed',t('budgetUnconfirmed')));
+    }
     if(product.price&&typeof product.price.amount==='number'&&product.price.amount>0){
       const orderPrice=canOrderProduct(product)?getItemWholesalePrice({articul:product.articul}):0;
       const price=create('div','zigzag-offer-price');price.append(create('strong','',t(orderPrice||product.price.kind==='customer'?'price':'retailPrice')+': '+(orderPrice||product.price.amount).toLocaleString(locale==='ru'?'ru-RU':locale==='hy'?'hy-AM':'en-GB')+' ֏'),create('small','',t(!orderPrice&&product.price.kind==='retail'?'retailReference':'catalogPrice')));info.append(price);
@@ -157,6 +179,17 @@
           }
           reply.append(section);
         }
+      }
+      if(data.publicRecommendations?.length){
+        const section=create('section','zigzag-availability-group zigzag-group-public');
+        section.append(create('h3','zigzag-availability-title',t('publicGroup')),create('p','zigzag-manager-note',t('publicNote')));
+        for(const kind of ['exact','near']){
+          const products=data.publicRecommendations.filter(p=>p.catalogScope==='public'&&(p.match?.kind||'exact')===kind);if(!products.length)continue;
+          const group=create('section','zigzag-recommendation-group zigzag-group-'+kind);group.append(create('h4','zigzag-group-title',t(kind==='near'?'nearGroup':'exactMatch')));
+          if(kind==='near')group.append(create('p','zigzag-near-note',t('nearNote')));
+          const offers=create('div','zigzag-products zigzag-public-recommendations');for(const product of products)offers.append(showProduct(product));group.append(offers);section.append(group);
+        }
+        reply.append(section);
       }
       if (data.products?.length) {
         const cards = create('div', 'zigzag-products'); for (const product of data.products) cards.append(showProduct(product)); reply.append(cards);
