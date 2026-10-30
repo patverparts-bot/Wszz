@@ -7,6 +7,7 @@
   };
   for(const lang of Object.keys(shoppingCopy))Object.assign(copy[lang],shoppingCopy[lang]);
   Object.assign(copy.hy,{addToCart:'Ավելացնել զամբյուղ',quantity:'Քանակ',inCart:'Զամբյուղում՝ ',pieces:' հատ',noPhoto:'Նկարը հասանելի չէ',notOrderable:'Այս ապրանքը հիմա հասանելի չէ զամբյուղում ավելացնելու համար։',invalidQuantity:'Նշեք թույլատրելի ամբողջ քանակը։',cartFull:'Հասել եք այս ապրանքի առավելագույն քանակին։'});
+  Object.assign(copy.hy,{detailsTitle:'Ապրանքի մանրամասները',details:'Բոլոր բնութագրերը',requirements:'Ընտրված պայմանները',exactMatch:'Ճշգրիտ համապատասխանություն',nearMatch:'Մոտ չափերով տարբերակ',nearGroup:'Մոտ չափերով այլընտրանքներ',nearNote:'Այս տարբերակների չափերը տարբերվում են ձեր նշածից։ Համեմատեք չափերը նախքան ընտրելը։',width:'Լայնություն',depth:'Խորություն',height:'Բարձրություն',requested:'Ձեր նշածը',cm:'սմ'});
   const locale = 'hy';
   let context = [], selected = [], advisor = null, requirements = '', currentMode = 'specifications', controller, revision = 0, busy = false, owner = null;
   const t = key => copy[locale][key];
@@ -27,11 +28,15 @@
   const form = create('form', 'zigzag-composer'), row = create('div', 'zigzag-input-row'), input = create('input'), send = create('button', 'zigzag-send', '↑'), note = create('p');
   input.id = 'zigzagInput'; input.maxLength = 1200; input.autocomplete = 'off'; input.required = true; send.type = 'submit'; row.append(input, send); form.append(row, note);
   dialog.append(header, toolbar, messages, contextBar, form); document.body.append(dialog);
+  const detailsDialog=create('dialog','zigzag-details-dialog');detailsDialog.id='zigzagProductDetails';detailsDialog.lang='hy';detailsDialog.setAttribute('aria-labelledby','zigzagDetailsTitle');
+  const detailsHeader=create('header','zigzag-details-header'),detailsTitle=create('h2','',t('detailsTitle')),detailsBody=create('div','zigzag-details-body');detailsTitle.id='zigzagDetailsTitle';
+  const detailsClose=button('×',()=>detailsDialog.close(),'zigzag-details-close');detailsClose.setAttribute('aria-label',t('close'));detailsHeader.append(detailsTitle,detailsClose);detailsDialog.append(detailsHeader,detailsBody);document.body.append(detailsDialog);
+  detailsDialog.addEventListener('close',syncCartControls);
   function labels() { dialog.lang = locale; subtitle.textContent = t('subtitle'); close.setAttribute('aria-label', t('close')); clear.textContent = t('clear'); input.placeholder = t('placeholder'); input.setAttribute('aria-label', t('placeholder')); send.setAttribute('aria-label', t('send')); note.textContent = t('note'); mode.textContent = t(currentMode==='selection'?'selection':currentMode==='ai'?'ai':'mode'); launcher.setAttribute('aria-label', t('ask')); }
   function visibleProduct(id) { return allProducts.find(p => p.articul === id); }
   function updateContext() {
     contextBar.replaceChildren();
-    if(advisor){if(requirements)contextBar.append(create('span','zigzag-requirements',requirements));contextBar.append(button(t('newSelection'),()=>reset(false)));return;}
+    if(advisor){if(requirements){const selectedDetails=create('details','zigzag-selected-requirements');selectedDetails.append(create('summary','',t('requirements')),create('p','zigzag-requirements',requirements));contextBar.append(selectedDetails);}contextBar.append(button(t('newSelection'),()=>reset(false)));return;}
     if (!context.length && !selected.length) return;
     for (const id of [...new Set([...context, ...selected])]) { const p = visibleProduct(id); if (p) contextBar.append(create('span', '', p.name)); }
     contextBar.append(button(t('resetContext'), () => { context = []; selected = []; updateContext(); }));
@@ -51,13 +56,14 @@
     if (!messages.children.length) welcome(); syncCartControls(); input.focus();
   }
   function reset(closeDialog = true) {
+    if(detailsDialog.open)detailsDialog.close();detailsBody.replaceChildren();
     revision++; controller?.abort(); busy = false; controller = null; send.disabled = false; input.value = ''; context = []; selected = []; advisor = null; requirements = ''; currentMode = 'specifications'; messages.replaceChildren(); messages.removeAttribute('aria-busy'); updateContext(); mode.textContent = t('mode');
     if (closeDialog) { if (dialog.open) dialog.close(); owner = null; } else { welcome(); input.focus(); }
   }
   function bubble(text, user = false) { const el = create('div', 'zigzag-message' + (user ? ' zigzag-message-user' : '')); el.append(create('span', 'zigzag-message-label', user ? t('you') : 'ԶիգԶագ'), document.createTextNode(text)); messages.append(el); return el; }
   function scroll() { messages.scrollTop = messages.scrollHeight; }
   function revealReply(reply){messages.scrollTo({top:reply.getBoundingClientRect().top-messages.getBoundingClientRect().top+messages.scrollTop-8,behavior:'instant'});}
-  function syncCartControls(){for(const widget of messages.querySelectorAll('.zigzag-cart-controls'))cartWidgets.get(widget)?.();}
+  function syncCartControls(){for(const root of [messages,detailsBody])for(const widget of root.querySelectorAll('.zigzag-cart-controls'))cartWidgets.get(widget)?.();}
   function productCartControls(product){
     const controls=create('div','zigzag-cart-controls'), actions=create('div','zigzag-cart-actions'), field=create('label','zigzag-cart-quantity'), qty=create('input'), status=create('p','zigzag-cart-status');
     qty.type='number';qty.min='1';qty.step='1';qty.value='1';qty.inputMode='numeric';qty.setAttribute('aria-label',t('quantity')+'՝ '+product.name);
@@ -80,8 +86,12 @@
     };
     actions.append(field,add);controls.append(actions,status);cartWidgets.set(controls,refresh);refresh();return controls;
   }
-  function showProduct(product) {
-    const box = create('section', 'zigzag-product'),summary=create('div','zigzag-product-summary'),photo=create('div','zigzag-product-photo'),info=create('div','zigzag-product-info');
+  function openProductDetails(product){
+    if(serverIdentity?.id!==owner)return;
+    detailsBody.replaceChildren(showProduct(product,true));if(!detailsDialog.open)detailsDialog.showModal();detailsBody.scrollTop=0;detailsClose.focus();
+  }
+  function showProduct(product,expanded=false) {
+    const box = create('section', 'zigzag-product'+(expanded?' zigzag-product-expanded':'')),summary=create('div','zigzag-product-summary'),photo=create('div','zigzag-product-photo'),info=create('div','zigzag-product-info');
     box.dataset.articul=product.articul;
     // Use the catalogue's verified SKU photo map and existing safe image fallbacks.
     if(visibleProduct(product.articul)&&typeof getProductImageHtml==='function')photo.innerHTML=getProductImageHtml(product.articul,product.name);else photo.append(create('span','',t('noPhoto')));
@@ -89,10 +99,25 @@
     if(product.price&&typeof product.price.amount==='number'&&product.price.amount>0){
       const price=create('div','zigzag-offer-price');price.append(create('strong','',t(product.price.kind==='customer'?'price':'retailPrice')+': '+product.price.amount.toLocaleString(locale==='ru'?'ru-RU':locale==='hy'?'hy-AM':'en-GB')+' ֏'),create('small','',t('catalogPrice')));info.append(price);
     }
+    if(product.match){
+      const match=create('div','zigzag-match zigzag-match-'+product.match.kind);match.append(create('strong','',t(product.match.kind==='near'?'nearMatch':'exactMatch')));
+      for(const difference of product.match.deviations||[])match.append(create('span','',t(difference.field)+': '+difference.actual+' '+t('cm')+' ('+(difference.difference>0?'+':'')+difference.difference+' '+t('cm')+' · '+t('requested')+': '+difference.requested+')'));
+      box.insertBefore(match,summary);
+    }
     if (product.status !== 'verified') { box.append(create('p', 'zigzag-source', t('missing'))); return box; }
-    const dl = create('dl', 'zigzag-specs');
-    for (const spec of product.specifications || []) { const pair = create('div', 'zigzag-spec-row'), name=create('dt','',ZZWS_ARMENIAN_SPECS.label(spec.name)), value=create('dd','',ZZWS_ARMENIAN_SPECS.value(spec.value)); name.title=spec.name;value.title=String(spec.value);pair.append(name,value);dl.append(pair); }
-    box.append(dl); const source = create('div', 'zigzag-source');
+    if(expanded){
+      const dl = create('dl', 'zigzag-specs');
+      for (const spec of product.specifications || []) { const pair = create('div', 'zigzag-spec-row'), name=create('dt','',ZZWS_ARMENIAN_SPECS.label(spec.name)), value=create('dd','',ZZWS_ARMENIAN_SPECS.value(spec.value)); name.title=spec.name;value.title=String(spec.value);pair.append(name,value);dl.append(pair); }
+      box.append(dl);
+    }else{
+      const highlights=create('div','zigzag-highlights');let count=0;
+      for(const axis of ['width','depth','height'])if(product.matchedDimensions?.[axis]!=null){highlights.append(create('span','',t(axis)+': '+product.matchedDimensions[axis]+' '+t('cm')));count++;}
+      const important=(product.specifications||[]).filter(s=>/load capacity|spin speed|screen size|resolution|capacity.*l\b|memory|processor/i.test(s.name));
+      for(const spec of important.slice(0,Math.max(0,4-count)))highlights.append(create('span','',ZZWS_ARMENIAN_SPECS.label(spec.name)+': '+ZZWS_ARMENIAN_SPECS.value(spec.value)));
+      if(highlights.children.length)box.append(highlights);
+      box.append(button(t('details'),()=>openProductDetails(product),'zigzag-offer-details'));
+    }
+    const source = create('div', 'zigzag-source');
     try { const url = new URL(product.sourceUrl); if (url.protocol === 'https:' && url.hostname === 'www.zigzag.am' && !url.username && !url.password) { const a = create('a', '', 'zigzag.am ↗'); a.href = url.href; a.target = '_blank'; a.rel = 'noopener noreferrer'; source.append(a); } } catch {}
     const date = new Date(product.checkedAt); source.append(create('small', '', t('checked') + (Number.isNaN(date.getTime()) ? '—' : date.toLocaleString(locale === 'hy' ? 'hy-AM' : locale === 'ru' ? 'ru-RU' : 'en-GB')) + ' · ' + t(product.sourceMode === 'live' ? 'live' : 'saved')));
     if (product.refreshUnavailable) source.append(create('small', '', t('unavailable'))); box.append(source); return box;
@@ -114,8 +139,12 @@
       if (data.modelUnavailable) reply.append(create('p', 'zigzag-note', t('modelUnavailable')));
       if(data.quickReplies?.length){const quick=create('div','zigzag-quick-replies');for(const text of data.quickReplies)quick.append(button(text,()=>submit(text),'zigzag-choice'));reply.append(quick);}
       if(data.recommendations?.length){
-        const offers=create('div','zigzag-products zigzag-recommendations');
-        for(const product of data.recommendations){const card=showProduct(product);card.append(button(t('offerDetails'),()=>askProduct(product.articul),'zigzag-offer-details'));offers.append(card);}reply.append(offers);
+        for(const kind of ['exact','near']){
+          const products=data.recommendations.filter(p=>(p.match?.kind||'exact')===kind);if(!products.length)continue;
+          const group=create('section','zigzag-recommendation-group zigzag-group-'+kind);group.append(create('h3','zigzag-group-title',t(kind==='near'?'nearGroup':'exactMatch')));
+          if(kind==='near')group.append(create('p','zigzag-near-note',t('nearNote')));
+          const offers=create('div','zigzag-products zigzag-recommendations');for(const product of products)offers.append(showProduct(product));group.append(offers);reply.append(group);
+        }
       }
       if (data.products?.length) {
         const cards = create('div', 'zigzag-products'); for (const product of data.products) cards.append(showProduct(product)); reply.append(cards);
@@ -146,3 +175,4 @@
   labels();
   window.ZZWS_ASSISTANT = Object.freeze({open, reset, ask: askProduct});
 })();
+
