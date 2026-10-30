@@ -1,24 +1,27 @@
 (() => {
  const labels={new:'Նոր',confirmed:'Հաստատված',in_progress:'Ընթացքում',completed:'Առաքված է',rejected:'Մերժված',received:'Ստացված է'};
- let owner=null,timer=null,events=[],orders=[],busy=false,loadTicket=0,noticeSeen=new Set();
+ let owner=null,timer=null,events=[],orders=[],busy=false,loadTicket=0,noticeSeen=new Set(),readRevisions=new Map();
  const el=id=>document.getElementById(id),money=v=>Number(v||0).toLocaleString('hy-AM')+' ֏';
  const date=v=>new Date(v).toLocaleString('hy-AM',{timeZone:'Asia/Yerevan'});
  const node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
+ function unreadBadge(id){const unread=events.filter(e=>e.order_id===id);if(!unread.length)return null;const event=unread.find(e=>ZZWS_ORDER_COMPARE.eventNotice(e).changed)||unread[0],notice=ZZWS_ORDER_COMPARE.eventNotice(event);const badge=node('span',notice.text,'order-unread'+(notice.changed?'':' order-unread-info'));badge.dataset.orderUpdate='';return badge;}
+ function refreshUnreadBadges(){for(const card of el('serverOrdersList').querySelectorAll('[data-order-id]')){const identity=card.querySelector('summary > div');identity?.querySelector('[data-order-update]')?.remove();const badge=unreadBadge(card.dataset.orderId);if(identity&&badge)identity.append(badge);}}
+ function rememberRead(id,revision){readRevisions.set(id,Math.max(readRevisions.get(id)||0,revision));events=events.filter(e=>e.order_id!==id||e.revision>revision);refreshUnreadBadges();}
  function setNotice(text){const box=el('orderNotificationNotice');box.textContent=text;box.hidden=!text;}
  async function poll(force=false,refreshList=true){
   window.ZZWS_RECEIPTS?.refresh().catch(()=>{});
   if(!owner||(!force&&document.hidden))return;
   const activeOwner=owner;
-  try{const result=await ZZWS.json('orders/notifications');if(owner!==activeOwner)return;events=result.events;
+  try{const result=await ZZWS.json('orders/notifications');if(owner!==activeOwner)return;events=result.events.filter(e=>!readRevisions.has(e.order_id)||e.revision>readRevisions.get(e.order_id));refreshUnreadBadges();
    const badge=el('orderNotificationsCount');badge.textContent=events.length>=50?'50+':String(events.length);badge.hidden=!events.length;
    const fresh=events.filter(e=>!noticeSeen.has(e.id));for(const event of events)noticeSeen.add(event.id);
-   if(fresh.length){const assisted=fresh.find(e=>e.detail.kind==='created_by_admin');setNotice(assisted&&fresh.length===1?'Ձեր անունից պատվեր №'+assisted.detail.number+' լրացրել է ադմինիստրատոր՝ '+assisted.detail.createdBy.name+' ('+assisted.detail.createdBy.login+')։ Բացեք ծանուցումները կամ անձնական հաշիվը։':'Ձեր պատվերներում կան փոփոխություններ՝ '+fresh.length+'։ Բացեք ծանուցումները կամ անձնական հաշիվը։');}
+   if(fresh.length){const assisted=fresh.find(e=>e.detail.kind==='created_by_admin');setNotice(assisted&&fresh.length===1?'Ձեր անունից պատվեր №'+assisted.detail.number+' լրացրել է ադմինիստրատոր՝ '+assisted.detail.createdBy.name+' ('+assisted.detail.createdBy.login+')։ Բացեք ծանուցումները կամ անձնական հաշիվը։':'Ձեր պատվերների վերաբերյալ նոր ծանուցումներ՝ '+fresh.length+'։ Բացեք ծանուցումները կամ անձնական հաշիվը։');}
    if(!events.length)setNotice('');
    if(refreshList&&fresh.length&&!el('cabinetModal').classList.contains('hidden'))await load();
   }catch(e){if(e.status===401)lockCatalog();}
  }
  function start(user){stop();owner=user.id;window.ZZWS_RECEIPTS?.start(user);poll();timer=setInterval(poll,15000);}
- function stop(){++loadTicket;window.ZZWS_RECEIPTS?.stop();if(timer)clearInterval(timer);timer=null;owner=null;events=[];orders=[];noticeSeen=new Set();el('orderNotificationsCount')?.setAttribute('hidden','');if(el('serverOrdersList'))el('serverOrdersList').replaceChildren();if(el('orderNotificationNotice'))setNotice('');}
+ function stop(){++loadTicket;window.ZZWS_RECEIPTS?.stop();if(timer)clearInterval(timer);timer=null;owner=null;events=[];orders=[];noticeSeen=new Set();readRevisions=new Map();el('orderNotificationsCount')?.setAttribute('hidden','');if(el('serverOrdersList'))el('serverOrdersList').replaceChildren();if(el('orderNotificationNotice'))setNotice('');}
  async function load(more=false){
   if(!owner)return;const root=el('serverOrdersList');
   const activeOwner=owner;
@@ -32,9 +35,9 @@
   for(const order of orders){const card=node('details',null,'server-order-card'),summary=node('summary'),identity=node('div'),total=node('div');
    identity.append(node('strong','Պատվեր №'+order.number),node('span',date(order.created),'server-order-date'));if(order.created_by)identity.append(node('span','Լրացրել է ադմինիստրատոր՝ '+order.created_by.name+' ('+order.created_by.login+')','order-info'));
    total.append(node('span',labels[order.status]||order.status,'order-status status-'+order.status),ZZWS_ORDER_COMPARE.renderTotal(order));
-   if(events.some(e=>e.order_id===order.id))identity.append(node('span','Կան փոփոխություններ','order-unread'));
+   const unread=unreadBadge(order.id);if(unread)identity.append(unread);
    summary.append(identity,total);card.append(summary);const content=node('div',null,'server-order-content');card.append(content);card.dataset.orderId=order.id;
-   card.ontoggle=async()=>{if(card.open&&!content.dataset.loaded){content.textContent='Պատվերը բեռնվում է…';const activeOwner=owner;try{const revision=await details(order.id,content);if(owner!==activeOwner||!card.open||!card.isConnected||el('cabinetModal').classList.contains('hidden'))return;content.dataset.loaded='true';await ZZWS.json('orders/read',{method:'POST',body:JSON.stringify({orderId:order.id,revision})});events=events.filter(e=>e.order_id!==order.id||e.revision>revision);poll();}catch(e){content.textContent=e.message;}}};root.append(card);if(opened.has(order.id))card.open=true;
+   card.ontoggle=async()=>{if(card.open&&!content.dataset.loaded){content.textContent='Պատվերը բեռնվում է…';const activeOwner=owner;try{const revision=await details(order.id,content);if(owner!==activeOwner||!card.open||!card.isConnected||el('cabinetModal').classList.contains('hidden'))return;content.dataset.loaded='true';await ZZWS.json('orders/read',{method:'POST',body:JSON.stringify({orderId:order.id,revision})});rememberRead(order.id,revision);poll();}catch(e){content.textContent=e.message;}}};root.append(card);if(opened.has(order.id))card.open=true;
   }
  }
  function linesTable(lines){const wrap=node('div',null,'order-lines-scroll'),table=node('table');const head=table.createTHead().insertRow();for(const h of ['Ապրանք','Քանակ','Գին','Գումար'])head.append(node('th',h));
@@ -44,7 +47,7 @@
   if(order.created_by)root.append(node('p','Պատվերը ձեր անունից լրացրել է ադմինիստրատոր՝ '+order.created_by.name+' ('+order.created_by.login+')','order-admin-comment'));
   const delivery=order.delivery||{};root.append(node('p',[delivery.organization,delivery.contact,delivery.address,delivery.method,delivery.date,delivery.paymentDeadline?'Վճարման վերջնաժամկետ՝ '+delivery.paymentDeadline:''].filter(Boolean).join(' · '),'order-info'));
   if(delivery.comment)root.append(node('p','Ձեր մեկնաբանությունը՝ '+delivery.comment));if(order.comment)root.append(node('p','Ադմինիստրատորի մեկնաբանությունը՝ '+order.comment,'order-admin-comment'));
-  root.append(node('p','Սկզբնական պատվերն ու հաստատված կազմը։ Չհաստատված ապրանքներն ու արժեքները ջնջագծված են։','order-info'));
+  root.append(node('p',order.original_lines?.length?(ZZWS_ORDER_COMPARE.hasLineChanges(order.original_lines,order.lines)?'Սկզբնական պատվերն ու հաստատված կազմը։ Չհաստատված ապրանքներն ու արժեքները ջնջագծված են։':'Ապրանքների կազմը, քանակը և գները չեն փոխվել։'):'Պատվերի ընթացիկ կազմը։','order-info'));
   root.append(ZZWS_ORDER_COMPARE.render(order.original_lines?.length?order.original_lines:order.lines,order.lines));
   const repeat=node('button','Կրկնել պատվերը ընթացիկ գներով');repeat.type='button';repeat.onclick=()=>{
    const allowed=order.lines.filter(line=>productIndex.has(line.articul)),missing=order.lines.length-allowed.length;
@@ -58,8 +61,8 @@
   return order.revision;
  }
  async function notifications(){const who=owner;openPersonalCabinet();await poll(true,false);await load();if(!who||owner!==who)return;const root=el('orderNotificationList');root.replaceChildren();root.hidden=false;
-  if(!events.length){root.append(node('p','Չընթերցված փոփոխություններ չկան։'));return;}
-  for(const event of events){const b=node('button','Պատվեր №'+event.detail.number+' · '+(event.detail.kind==='closed_order_reopened'?'Փակված պատվերը վերաբացել է '+event.detail.actorLogin+' · '+event.detail.comment:event.detail.kind==='created_by_admin'?'Ձեր անունից լրացրել է '+event.detail.createdBy.name+' ('+event.detail.createdBy.login+')':labels[event.detail.status])+' · '+date(event.created));b.type='button';b.onclick=async()=>{const box=node('div',null,'server-order-content');root.replaceChildren(box);try{const activeOwner=owner,revision=await details(event.order_id,box);if(owner!==activeOwner||!box.isConnected||el('cabinetModal').classList.contains('hidden'))return;await ZZWS.json('orders/read',{method:'POST',body:JSON.stringify({orderId:event.order_id,revision})});await poll();}catch(e){box.textContent=e.message;}};root.append(b);}
+  if(!events.length){root.append(node('p','Չընթերցված ծանուցումներ չկան։'));return;}
+  for(const event of events){const b=node('button','Պատվեր №'+event.detail.number+' · '+(event.detail.kind==='closed_order_reopened'?'Փակված պատվերը վերաբացել է '+event.detail.actorLogin+' · '+event.detail.comment:event.detail.kind==='created_by_admin'?'Ձեր անունից լրացրել է '+event.detail.createdBy.name+' ('+event.detail.createdBy.login+')':labels[event.detail.status])+' · '+date(event.created));b.type='button';b.onclick=async()=>{const box=node('div',null,'server-order-content');root.replaceChildren(box);try{const activeOwner=owner,revision=await details(event.order_id,box);if(owner!==activeOwner||!box.isConnected||el('cabinetModal').classList.contains('hidden'))return;await ZZWS.json('orders/read',{method:'POST',body:JSON.stringify({orderId:event.order_id,revision})});rememberRead(event.order_id,revision);await poll();}catch(e){box.textContent=e.message;}};root.append(b);}
  }
  async function submit(){
   if(window.ZZWS_ASSISTED?.active())return ZZWS_ASSISTED.submit();

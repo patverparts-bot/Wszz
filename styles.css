@@ -428,3 +428,5 @@ input[type=date]{cursor:pointer;min-height:42px}
  .catalog-bulletins-dialog td:last-child{justify-self:end}
  .catalog-bulletins-dialog button{font-size:14px;padding:8px 10px}
 }
+
+.order-unread.order-unread-info{color:#1d4ed8}.dark .order-unread.order-unread-info{color:#93c5fd}

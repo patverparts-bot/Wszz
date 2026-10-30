@@ -68,3 +68,6 @@ main{max-width:1440px}#workspace>nav{gap:8px;box-shadow:0 3px 12px #0f172a0a}#wo
 #adminOrderEditor .admin-order-editor-heading{position:sticky;top:calc(var(--admin-nav-height,130px) + 6px);z-index:5;padding:18px;background:#f5f8ff;border:1px solid #d6dff0;border-radius:12px;gap:16px}
 #adminOrderEditor .admin-order-editor-heading button{white-space:nowrap}
 @media(max-width:700px){#userForm.organized-user-card{padding:14px}.organized-user-card .user-card-group{grid-template-columns:minmax(0,1fr)}}
+
+.confirmation-match{padding:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;color:#166534;font-size:13px;line-height:1.6}
+.dark .confirmation-match{background:#052e16;border-color:#166534;color:#bbf7d0}

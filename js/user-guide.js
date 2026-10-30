@@ -16,7 +16,7 @@
     content.textContent = 'Ուղեցույցը բեռնվում է…';
     loading = (async () => {
       try {
-        const response = await fetch('help/user-guide.html?v=20261030-catalog-reset');
+        const response = await fetch('help/user-guide.html?v=20261030-order-notices');
         if (!response.ok) throw new Error('Guide unavailable');
         const html = await response.text();
         content.innerHTML = html;

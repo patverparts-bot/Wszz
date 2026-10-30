@@ -15,7 +15,7 @@
 try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.classList.toggle('dark', __t ? __t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches); } catch (e) {}</script>
 <!-- SheetJS (XLSX reader/writer) -->
 <script src="js/vendor/xlsx.full.min.js?v=6.12-web-review" integrity="sha384-KxTQhJ4PSplGXtuombYakDpnHoXsNNh8wnk456xVdrKipiN4QP+x9+YcYuVUswkA" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="styles.css?v=20261030-bulletin-nowrap">
+<link rel="stylesheet" href="styles.css?v=20261030-order-notices">
 <link rel="stylesheet" href="js/zigzag-assistant.css?v=1.5-orderable-first">
 <style>
 .auth-entry-card {
@@ -126,8 +126,8 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
       <h3 id="bulkAddTitle" class="text-base sm:text-lg font-bold text-gray-900 dark:text-white">Ավելացնել ապրանքներ ցանկից</h3>
       <button type="button" onclick="closeBulkAddModal()" aria-label="Փակել" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl font-bold">&times;</button>
     </div>
-    <p class="text-xs text-gray-600 dark:text-gray-300 mb-2">Մուտքագրեք արտիկուլներ կամ մոդելի անվանումներ։ Արտիկուլը համեմատվում է ամբողջությամբ, մոդելը՝ մասնակի։ Մուտքերը բաժանեք ստորակետով կամ բացատով։</p>
-    <textarea id="bulkAddInput" rows="4" oninput="clearBulkAddPreview()" aria-label="Արտիկուլների կամ մոդելների ցանկ" placeholder="Օրինակ՝ 0146590, Samsung UE100M90HUXPY" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+    <p class="text-xs text-gray-600 dark:text-gray-300 mb-2">Մուտքագրեք արտիկուլներ կամ մոդելի անվանումներ։ Արտիկուլը համեմատվում է ամբողջությամբ, մոդելը՝ մասնակի։ Մուտքերը բաժանեք ստորակետով կամ նոր տողերով։ Քանակով գրեք, օրինակ՝ SMV26DX00T - 5hat կամ SMS4IMB62Q - 2։</p>
+    <textarea id="bulkAddInput" rows="4" oninput="clearBulkAddPreview()" aria-label="Արտիկուլների կամ մոդելների ցանկ" placeholder="SMV26DX00T - 5hat&#10;SMS4IMB62Q - 2" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
     <div id="bulkAddPreview" class="hidden mt-3 p-3 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/40 text-xs text-gray-800 dark:text-gray-200">
       <p id="bulkAddPreviewSummary" class="font-semibold mb-2"></p>
       <ul id="bulkAddPreviewList" class="max-h-36 overflow-y-auto space-y-1"></ul>
@@ -496,13 +496,13 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
 <script src="js/multi-search.js?v=6.12-web-review"></script>
 <script src="js/catalog.js?v=20261030-zigzag-assistant"></script>
 <script src="js/order-state.js?v=7.0.8-github-apk"></script><script src="js/admin-assisted-order.js?v=6.12-web-review"></script><script src="js/catalog-customer-view.js?v=6.12-web-review"></script>
-<script src="js/bulk-add.js?v=6.12-web-review"></script>
+<script src="js/bulk-add.js?v=20261030-order-notices"></script>
 <script src="js/order-submit.js?v=6.12-web-review"></script>
 <script src="js/user-memory.js?v=20261030-catalog-reset"></script>
-<script src="js/order-comparison.js?v=6.12-web-review"></script>
-<script src="js/receipts.js?v=6.12-web-review"></script><script src="js/server-orders.js?v=6.12-web-review"></script>
+<script src="js/order-comparison.js?v=20261030-order-notices"></script>
+<script src="js/receipts.js?v=6.12-web-review"></script><script src="js/server-orders.js?v=20261030-order-notices"></script>
 <script src="js/catalog-columns.js?v=6.12-web-review"></script><script src="js/sticky-controls.js?v=6.12-web-review"></script>
-<script src="js/user-guide.js?v=20261030-catalog-reset"></script>
+<script src="js/user-guide.js?v=20261030-order-notices"></script>
 <script src="js/zigzag-armenian.js?v=1.2-hy-blue"></script>
 <script src="js/zigzag-assistant.js?v=1.5-orderable-first"></script>
 <script>
@@ -535,5 +535,5 @@ try { var __t = localStorage.getItem('zigzag_theme'); document.documentElement.c
   showAuthCard();
 })();
 </script>
-<script src="js/ui-language.js?v=6.12-web-review"></script><script src="js/context-help.js?v=20261030-catalog-reset"></script><script src="js/date-picker.js?v=6.12-web-review"></script><script src="js/catalog-bulletins.js?v=6.12-web-review"></script></body>
+<script src="js/ui-language.js?v=6.12-web-review"></script><script src="js/context-help.js?v=20261030-order-notices"></script><script src="js/date-picker.js?v=6.12-web-review"></script><script src="js/catalog-bulletins.js?v=6.12-web-review"></script></body>
 </html>

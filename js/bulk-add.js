@@ -38,46 +38,40 @@ function findBulkAddProduct(query) {
 }
 
 function resolveBulkAddInput(value) {
-  const chunks = String(value || '').split(/[,;\n\r]+/).map(part => part.trim()).filter(Boolean);
-  const matches = new Map();
-  const unmatched = [];
-
-  const addMatchesFor = query => {
-    const found = findBulkAddProduct(query);
-    found.forEach(product => matches.set(product.articul, product));
-    return found.length > 0;
+  const lines=String(value||'').normalize('NFKC').split(/[;\n\r]+/);
+  const chunks=lines.flatMap(line=>/^[^,]*\s[-–—]\s*[+-]?\d+,\d+\s*(?:hat|հատ|шт\.?|pcs?\.?)?\s*$/iu.test(line)?[line]:line.split(',')).map(part=>part.trim()).filter(Boolean);
+  const matches=new Map(),unmatched=[],invalid=[];
+  const addMatchesFor=(query,qty=1,explicit=false)=>{
+    const found=findBulkAddProduct(query);
+    found.forEach(product=>{const previous=matches.get(product.articul);if(!previous)matches.set(product.articul,{product,qty,explicit});else if(explicit){previous.qty=previous.explicit?previous.qty+qty:qty;previous.explicit=true;}});
+    return found.length>0;
   };
-
-  chunks.forEach(chunk => {
-    if (addMatchesFor(chunk)) return;
-    const tokens = chunk.split(/\s+/).filter(Boolean);
-    if (tokens.length > 1) {
-      const tokenMisses = [];
-      tokens.forEach(token => {
-        if (!addMatchesFor(token)) tokenMisses.push(token);
-      });
-      unmatched.push(...tokenMisses);
-    } else {
-      unmatched.push(chunk);
-    }
-  });
-
-  return { products: [...matches.values()], unmatched: [...new Set(unmatched)] };
+  for(const chunk of chunks){
+    const exact=allProducts.some(p=>String(p.articul).trim().toLowerCase()===chunk.toLowerCase()||String(p.name||'').trim().toLowerCase()===chunk.toLowerCase());
+    const quantity=exact?null:(chunk.match(/^(.+?)\s+[-–—]\s*([+-]?\d+(?:[.,]\d+)?)\s*(?:hat|հատ|шт\.?|pcs?\.?)?\s*$/iu)||chunk.match(/^(.+?)[-–—]\s*(\d+)\s*(?:hat|հատ|шт\.?|pcs?\.?)\s*$/iu));
+    if(quantity){const qty=Number(quantity[2].replace(',','.'));if(!Number.isInteger(qty)||qty<1||qty>MAX_QTY){invalid.push({input:chunk,reason:'Քանակը պետք է լինի ամբողջ թիվ՝ 1-ից '+MAX_QTY});continue;}if(!addMatchesFor(quantity[1].trim(),qty,true))unmatched.push(chunk);continue;}
+    if(addMatchesFor(chunk))continue;
+    const tokens=chunk.split(/\s+/).filter(Boolean);for(const token of tokens)if(!addMatchesFor(token))unmatched.push(token);
+  }
+  const items=[...matches.values()].map(({product,qty})=>({product,qty}));
+  return {products:items.map(item=>item.product),items,unmatched:[...new Set(unmatched)],invalid};
 }
 
 function previewBulkAdd() {
   const result = resolveBulkAddInput(document.getElementById('bulkAddInput').value);
-  bulkAddPreviewItems = result.products;
+  bulkAddPreviewItems = result.items;
   const preview = document.getElementById('bulkAddPreview');
   const summary = document.getElementById('bulkAddPreviewSummary');
   const list = document.getElementById('bulkAddPreviewList');
   const confirmButton = document.getElementById('bulkAddConfirmBtn');
 
   summary.textContent = `Գտնվել է ${result.products.length} ապրանք։` +
-    (result.unmatched.length ? ` Չգտնված մուտքեր՝ ${result.unmatched.join(', ')}։` : '');
+    ` Ընդհանուր քանակ՝ ${result.items.reduce((sum,item)=>sum+item.qty,0)} հատ։` +
+    (result.unmatched.length ? ` Չգտնված մուտքեր՝ ${result.unmatched.join(', ')}։` : '') +
+    (result.invalid.length ? ' Սխալ քանակ՝ '+result.invalid.map(row=>row.input+' ('+row.reason+')').join('; ')+'։' : '');
 
-  const visibleProducts = result.products.slice(0, 30).map(product =>
-    `<li><strong>${escapeHtml(product.articul)}</strong> — ${escapeHtml(product.name || '—')}</li>`
+  const visibleProducts = result.items.slice(0, 30).map(({product,qty}) =>
+    `<li><strong>${escapeHtml(product.articul)}</strong> — ${escapeHtml(product.name || '—')} · <strong>${qty} հատ</strong></li>`
   );
   if (result.products.length > 30) visibleProducts.push(`<li>…և ևս ${result.products.length - 30}</li>`);
   list.innerHTML = visibleProducts.join('');
@@ -90,18 +84,20 @@ function confirmBulkAdd() {
   let added = 0;
   let capped = 0;
 
-  bulkAddPreviewItems.forEach(product => {
+  bulkAddPreviewItems.forEach(({product,qty}) => {
     const articul = product.articul;
     if (cart[articul]) {
       if (cart[articul].qty >= MAX_QTY) {
         capped++;
         return;
       }
-      cart[articul].qty++;
+      if(cart[articul].qty+qty>MAX_QTY)capped++;
+      cart[articul].qty=Math.min(MAX_QTY,cart[articul].qty+qty);
     } else {
+      if(qty>MAX_QTY)capped++;
       cart[articul] = {
         articul,
-        qty: 1,
+        qty: Math.min(MAX_QTY,qty),
         addedPrice: getItemWholesalePrice({ articul }),
         addedPriceMode: isAdminUser() ? adminOrderPriceMode : 'WS',
       };
@@ -113,7 +109,7 @@ function confirmBulkAdd() {
   updateOrderPanel();
   refreshAllActions();
   closeBulkAddModal();
-  if (capped) alert(`${added} ապրանք ավելացվել է։ ${capped} ապրանքի քանակը չի փոխվել՝ հասել է առավելագույնին։`);
+  if (capped) alert(`${added} ապրանք ավելացվել է։ ${capped} ապրանքի քանակը սահմանափակվել է առավելագույնով՝ ${MAX_QTY} հատ։`);
 }
 
 window.addEventListener('keydown', event => {

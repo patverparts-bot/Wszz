@@ -81,7 +81,7 @@
  async function makePreview(kind){
   if(!selected||busy||!canEdit())return;
   if(dirty&&!confirm('Նախադիտումը կազմվում է պահպանված պատվերի հիման վրա։ Կիրառելիս այն կփոխարինի չպահպանված ձեռքով փոփոխությունները։ Շարունակե՞լ։'))return;
-  const context={id:selected.id,revision:selected.revision,number:selected.number,customer:{...selected.customer}},ticket=editorEpoch;
+  const context={id:selected.id,revision:selected.revision,number:selected.number,customer:{...selected.customer},delivery:{...selected.delivery}},ticket=editorEpoch;
   let body;if(kind==='file'){const file=el('finalOrderFile').files[0];if(!file)throw new Error('Ընտրեք XLSX');body=new FormData();body.set('file',file);body.set('orderId',context.id);body.set('revision',context.revision);}else body={orderId:context.id,revision:context.revision,text:el('confirmationPaste').value};
   const token=begin();el('adminOrderStatus').textContent='Հաստատումը ստուգվում է…';
   try{const result=await request('admin/orders/preview',body);if(token!==operation||ticket!==editorEpoch||selected?.id!==context.id)return;
@@ -92,7 +92,9 @@
  function renderPreview(){const root=el('confirmationPreviewContent');root.replaceChildren();const meta=preview.metadata||{};
   root.append(node('h3','Վերջնական կազմ · '+preview.lines.length+' դիրք · '+money(preview.total)));
   root.append(node('p','Ընտրված պատվեր՝ №'+preview.context.number+' · '+preview.context.customer.client+' ('+preview.context.customer.login+')','order-info'));
-  root.append(node('p',meta.customer||meta.organization?'Հաստատման հաճախորդը՝ '+[meta.customer,meta.organization].filter(Boolean).join(' · '):'Աղյուսակում հաճախորդն ու պատվերի համարը նշված չեն։ Անպայման ստուգեք համապատասխանությունն ընտրված պատվերին։','confirmation-warning'));
+  const customer=ZZWS_ORDER_COMPARE.confirmationCustomer(meta,preview.context.customer,preview.context.delivery);
+  root.append(node('p',customer.text,customer.status==='match'?'confirmation-match':'confirmation-warning'));
+  if(meta.customer||meta.organization)root.append(node('p',[meta.customer?'Ֆայլի պատվիրատու՝ '+meta.customer:'',meta.organization?'Իրավաբանական անձ՝ '+meta.organization:''].filter(Boolean).join(' · '),'order-info'));
   if(meta.format==='zigzag_sales_report')root.append(node('p',meta.totalProvided?'Փաստաթղթի ընդհանուր գումարը համընկնում է տողերի գումարին։ Գինը հաշվարկված է զեղչված գումարից։':'Ստուգիչ ընդհանուր գումարը նշված չէ։ Գումարը հաշվարկված է զեղչված տողերից։','order-info'));
   if(Object.keys(preview.delivery||{}).length)root.append(node('p','Հաստատման ամսաթվերն ու առաքումը՝ '+Object.entries(preview.delivery).map(([k,v])=>({date:'Առաքման ամսաթիվ',method:'Առաքման եղանակ',paymentDeadline:'Վճարման վերջնաժամկետ'}[k]||'Լրացուցիչ տվյալ')+': '+v).join(' · ')));
   const changes=node('div',null,'confirmation-changes');if(!preview.changes.length)changes.append(node('p','Կազմը, գներն ու քանակը չեն փոխվել։ Պատվերը կհաստատվի։'));

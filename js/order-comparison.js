@@ -33,5 +33,25 @@
   if(values.changed){const old=node('del',money(values.original),'order-total-original');old.title='Սկզբնական ընդհանուր գումար';root.append(old);}
   const final=node('strong',money(values.current),'order-total-current');final.title='Վերջնական ընդհանուր գումար';root.append(final);if(values.changed)root.classList.add('order-total-changed');return root;
  }
- window.ZZWS_ORDER_COMPARE={model,render,totals,renderTotal};
+ function hasLineChanges(before,after){return model(before,after).some(row=>!row.before||!row.after||['qty','unitPrice'].some(key=>Number(row.before[key])!==Number(row.after[key])));}
+ const normalized=value=>String(value??'').normalize('NFKC').toLocaleLowerCase('hy-AM').replace(/\s+/gu,' ').trim();
+ function confirmationCustomer(metadata,customer,delivery={}){
+  const login=normalized(customer?.login),reported=normalized(metadata?.customer),organization=normalized(metadata?.organization);
+  const code=metadata?.format==='zigzag_sales_report'?reported.match(/^(\d+)(?:\s|$)/)?.[1]:null;
+  if(code&&/^\d+$/.test(login))return code===login?{status:'match',text:'Հաճախորդի կոդը համընկնում է ընտրված պատվերին՝ '+customer.login+'։'}:{status:'mismatch',text:'Հաճախորդի կոդը չի համընկնում․ ֆայլում՝ '+code+', պատվերում՝ '+customer.login+'։ Ստուգեք ընտրված պատվերն ու ֆայլը։'};
+  if(reported&&login&&reported===login)return {status:'match',text:'Հաճախորդի մուտքանունը համընկնում է ընտրված պատվերին։'};
+  const names=[customer?.client,delivery?.organization].map(normalized).filter(Boolean);
+  if(organization&&names.includes(organization))return {status:'match',text:'Իրավաբանական անձը համընկնում է ընտրված պատվերին։'};
+  if(reported&&names.includes(reported))return {status:'match',text:'Հաճախորդի անվանումը համընկնում է ընտրված պատվերին։'};
+  return {status:'review',text:reported||organization?'Ստուգեք ֆայլի պատվիրատուին և իրավաբանական անձին՝ համեմատելով ընտրված պատվերի տվյալների հետ։':'Աղյուսակում հաճախորդը նշված չէ։ Ստուգեք համապատասխանությունն ընտրված պատվերին։'};
+ }
+ function eventNotice(event){
+  const d=event?.detail||{};
+  if(d.changes?.length)return {text:'Կան ապրանքների փոփոխություններ',changed:true};
+  if(d.deliveryChanged)return {text:'Առաքման տվյալները փոխվել են',changed:true};
+  if(d.kind==='closed_order_reopened')return {text:'Պատվերը վերաբացվել է',changed:false};
+  if(d.kind==='created_by_admin')return {text:'Նոր պատվեր՝ ադմինիստրատորից',changed:false};
+  return {text:({confirmed:'Պատվերը հաստատված է',in_progress:'Պատվերը մշակվում է',completed:'Պատվերը առաքված է',rejected:'Պատվերը մերժված է',received:'Ստացումը հաստատված է',new:'Պատվերը ստացված է'})[d.status]||'Նոր ծանուցում պատվերի մասին',changed:false};
+ }
+ window.ZZWS_ORDER_COMPARE={model,render,totals,renderTotal,hasLineChanges,confirmationCustomer,eventNotice};
 })();
