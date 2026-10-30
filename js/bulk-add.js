@@ -31,6 +31,8 @@ function clearBulkAddPreview() {
 function findBulkAddProduct(query) {
   const exactArticul = allProducts.find(product => String(product.articul).trim().toLowerCase() === query.toLowerCase());
   if (exactArticul) return [exactArticul];
+  // Numeric entries are article codes, never fragments of model names.
+  if (/^\d+$/.test(query.trim())) return [];
 
   const normalizedQuery = query.toLowerCase().replace(/\s+/g, ' ').trim();
   if (!normalizedQuery) return [];
@@ -39,7 +41,7 @@ function findBulkAddProduct(query) {
 
 function resolveBulkAddInput(value) {
   const lines=String(value||'').normalize('NFKC').split(/[;\n\r]+/);
-  const chunks=lines.flatMap(line=>/^[^,]*\s[-–—]\s*[+-]?\d+,\d+\s*(?:hat|հատ|шт\.?|pcs?\.?)?\s*$/iu.test(line)?[line]:line.split(',')).map(part=>part.trim()).filter(Boolean);
+  const chunks=lines.flatMap(line=>/^\s*\d+\s+[+-]?\d+(?:[.,]\d+)?\s*(?:hat|հատ|шт\.?|pcs?\.?)?\s*$/iu.test(line)||line.includes('\t')||/^[^,]*\s[-–—]\s*[+-]?\d+,\d+\s*(?:hat|հատ|шт\.?|pcs?\.?)?\s*$/iu.test(line)?[line]:line.split(',')).map(part=>part.trim()).filter(Boolean);
   const matches=new Map(),unmatched=[],invalid=[];
   const addMatchesFor=(query,qty=1,explicit=false)=>{
     const found=findBulkAddProduct(query);
@@ -48,14 +50,17 @@ function resolveBulkAddInput(value) {
   };
   for(const chunk of chunks){
     const exact=allProducts.some(p=>String(p.articul).trim().toLowerCase()===chunk.toLowerCase()||String(p.name||'').trim().toLowerCase()===chunk.toLowerCase());
-    const quantity=exact?null:(chunk.match(/^(.+?)\s+[-–—]\s*([+-]?\d+(?:[.,]\d+)?)\s*(?:hat|հատ|шт\.?|pcs?\.?)?\s*$/iu)||chunk.match(/^(.+?)[-–—]\s*(\d+)\s*(?:hat|հատ|шт\.?|pcs?\.?)\s*$/iu));
+    const quantity=exact?null:(chunk.match(/^(\d+)\s+([+-]?\d+(?:[.,]\d+)?)\s*(?:hat|հատ|шт\.?|pcs?\.?)?\s*$/iu)||chunk.match(/^(.+?)\t+\s*([+-]?\d+(?:[.,]\d+)?)\s*(?:hat|հատ|шт\.?|pcs?\.?)?\s*$/iu)||chunk.match(/^(.+?)\s+[-–—]\s*([+-]?\d+(?:[.,]\d+)?)\s*(?:hat|հատ|шт\.?|pcs?\.?)?\s*$/iu)||chunk.match(/^(.+?)[-–—]\s*(\d+)\s*(?:hat|հատ|шт\.?|pcs?\.?)\s*$/iu));
     if(quantity){const qty=Number(quantity[2].replace(',','.'));if(!Number.isInteger(qty)||qty<1||qty>MAX_QTY){invalid.push({input:chunk,reason:'Քանակը պետք է լինի ամբողջ թիվ՝ 1-ից '+MAX_QTY});continue;}if(!addMatchesFor(quantity[1].trim(),qty,true))unmatched.push(chunk);continue;}
+    // A malformed table row must not turn its cells into independent searches.
+    if(chunk.includes('\t')||/^\d+\s+/.test(chunk)){invalid.push({input:chunk,reason:'Նշեք արտիկուլը և ամբողջ քանակը՝ 1-ից '+MAX_QTY});continue;}
     if(addMatchesFor(chunk))continue;
     const tokens=chunk.split(/\s+/).filter(Boolean);for(const token of tokens)if(!addMatchesFor(token))unmatched.push(token);
   }
   const items=[...matches.values()].map(({product,qty})=>({product,qty}));
   return {products:items.map(item=>item.product),items,unmatched:[...new Set(unmatched)],invalid};
 }
+
 
 function previewBulkAdd() {
   const result = resolveBulkAddInput(document.getElementById('bulkAddInput').value);
