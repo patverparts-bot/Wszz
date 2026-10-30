@@ -11,6 +11,7 @@ async function secureApi(path, options = {}) {
   catch(e) { if (e.status === 401) lockCatalog(); throw e; }
 }
 function lockCatalog() {
+  window.ZZWS_ASSISTANT?.reset();
   window.ZZWS_BULLETINS?.reset();
   window.ZZWS_CATALOG_VIEW?.reset();
   window.ZZWS_ASSISTED?.reset();

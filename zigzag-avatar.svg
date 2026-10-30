@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">ԶիգԶագ</title><desc id="desc">Ընկերական կապույտ զիգզագ՝ ժպիտով և վառ աչքերով</desc>
+  <defs><linearGradient id="bg" x1="15" y1="8" x2="145" y2="155" gradientUnits="userSpaceOnUse"><stop stop-color="#eff6ff"/><stop offset="1" stop-color="#cfe2ff"/></linearGradient><linearGradient id="z" x1="60" y1="28" x2="110" y2="130" gradientUnits="userSpaceOnUse"><stop stop-color="#5599ff"/><stop offset="1" stop-color="#2454ca"/></linearGradient></defs>
+  <rect x="4" y="4" width="152" height="152" rx="48" fill="url(#bg)"/>
+  <ellipse cx="81" cy="133" rx="35" ry="7" fill="#244ca8" opacity=".14"/>
+  <path d="M52 32C46 32 43 38 46 43L60 58L34 89C30 95 34 101 41 101H76L64 123C61 130 69 136 75 131L125 84C131 78 127 70 120 70H91L117 43C122 38 119 32 112 32H52Z" fill="url(#z)" stroke="#1d4ed8" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M53 38H101" stroke="#dbeafe" stroke-width="4" stroke-linecap="round" opacity=".65"/>
+  <rect x="59" y="67" width="15" height="21" rx="7.5" fill="#f8fbff"/><rect x="83" y="67" width="15" height="21" rx="7.5" fill="#f8fbff"/>
+  <rect x="65" y="72" width="7" height="11" rx="3.5" fill="#172554"/><rect x="85" y="72" width="7" height="11" rx="3.5" fill="#172554"/>
+  <circle cx="68" cy="74" r="2" fill="white"/><circle cx="88" cy="74" r="2" fill="white"/>
+  <path d="M74 93Q80 99 86 93" stroke="#172554" stroke-width="3" stroke-linecap="round"/>
+  <ellipse cx="54" cy="90" rx="6" ry="3" fill="#76b5ff" opacity=".5"/><ellipse cx="102" cy="90" rx="6" ry="3" fill="#76b5ff" opacity=".5"/>
+  <path d="M128 29V39M123 34H133" stroke="#3b82f6" stroke-width="3" stroke-linecap="round"/><circle cx="32" cy="57" r="3" fill="#60a5fa"/>
+</svg>

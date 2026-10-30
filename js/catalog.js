@@ -368,7 +368,7 @@ tr.innerHTML = `
 <td>
 <div class="flex items-center gap-3">
 ${getProductImageHtml(p.articul, p.name)}
-<div class="min-w-0"><span class="text-gray-900 dark:text-white font-medium whitespace-normal">${escapeHtml(p.name || '—')}</span>${groupByCategory ? '' : `<div class="text-[11px] text-gray-500 dark:text-gray-400">${escapeHtml(p.category)}</div>`}</div>
+<div class="min-w-0"><span class="text-gray-900 dark:text-white font-medium whitespace-normal">${escapeHtml(p.name || '—')}</span>${groupByCategory ? '' : `<div class="text-[11px] text-gray-500 dark:text-gray-400">${escapeHtml(p.category)}</div>`}<button type="button" class="zigzag-product-ask" data-zigzag-art="${escapeHtml(p.articul)}">ԶիգԶագ · Բնութագրեր</button></div>
 </div>
 </td>
 <td><span class="inline-block px-2.5 py-1 rounded-md font-semibold break-words ${stockBadgeClass}">${escapeHtml(p.stockStatus)}</span></td>
@@ -428,6 +428,7 @@ div.innerHTML = `
       </div>
       <button type="button" data-act="copy-articul" data-art="${escapeHtml(p.articul)}" title="Պատճենել արտիկուլը" aria-label="Պատճենել արտիկուլը ${escapeHtml(p.articul)}" class="block font-mono text-xs font-bold text-blue-600 dark:text-blue-400 mb-0.5 hover:underline cursor-copy">${escapeHtml(p.articul)}</button>
       <h4 class="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white leading-snug">${escapeHtml(p.name || '—')}</h4>
+      <button type="button" class="zigzag-product-ask" data-zigzag-art="${escapeHtml(p.articul)}">ԶիգԶագ · Բնութագրեր</button>
     </div>
     <button data-act="toggle-fav" data-art="${escapeHtml(p.articul)}" class="star-btn absolute top-3 right-3 p-1" aria-label="${starTitle}" title="${starTitle}">${starIcon}</button>
   </div>
