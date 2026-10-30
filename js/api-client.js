@@ -1,6 +1,8 @@
 (() => {
   const config=window.ZZWS_CONFIG;
   const key='zzws_session_v3';
+  const responseSessions=new WeakMap();
+  function staleSession(){const error=new Error('Հարցումն ավարտվել է նախկին աշխատաշրջանում։ Կրկին փորձեք։');error.status=409;error.staleSession=true;return error;}
   // A token is kept for this tab only. It contains no role or customer information.
   // The server rechecks status and permissions on every request.
   async function request(path,options={}){
@@ -9,11 +11,14 @@
     const token=sessionStorage.getItem(key);if(token)headers.set('Authorization','Bearer '+token);
     if(options.body&&!(options.body instanceof FormData))headers.set('Content-Type','application/json');
     let response;try{response=await fetch(new URL(path,config.api),{...options,headers,credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer'});}catch{throw new Error('Չհաջողվեց կապվել սերվերի հետ։ Ստուգեք ինտերնետային կապը։');}
+    if(sessionStorage.getItem(key)!==token)throw staleSession();
     if(response.status===401)sessionStorage.removeItem(key);
+    responseSessions.set(response,sessionStorage.getItem(key));
     return response;
   }
   async function json(path,options={},retried=false){
     const response=await request(path,options);let data;try{data=await response.json();}catch{throw new Error('Սերվերը վերադարձրել է սխալ պատասխան։');}
+    if(sessionStorage.getItem(key)!==responseSessions.get(response))throw staleSession();
     if(response.status===428&&data.reauthRequired&&!retried&&window.requireReauthentication){await window.requireReauthentication();return json(path,options,true);}
     if(!response.ok){const missing=response.status===404&&data.error==='Չի գտնվել'&&/^(admin\/orders\/(customers|customer-|create|report-)|admin\/users\/channels|admin\/email-settings|admin\/offers|orders\/quote|catalog\/contract)/.test(path);const error=new Error(missing?'Այս հնարավորությունը դեռ հասանելի չէ գործող սերվերում։ Անհրաժեշտ է ZZWS սերվերի համաձայնեցված թարմացում։':data.error||'Հարցման սխալ');error.status=response.status;error.data=data;throw error;}
     if(['login','login/mfa','account/password'].includes(path)&&data.sessionToken){sessionStorage.setItem(key,data.sessionToken);delete data.sessionToken;}

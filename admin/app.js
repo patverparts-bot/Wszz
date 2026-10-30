@@ -36,7 +36,7 @@ function table(headers, rows) {
   return table;
 }
 function button(label, callback) { const b = document.createElement('button'); b.type='button'; b.textContent = label; b.onclick = () => run(callback); return b; }
-async function run(fn) { try { await fn(); } catch(e) { status(ZZWS.message(e), true); } }
+async function run(fn) { try { await fn(); } catch(e) { if(!e.staleSession)status(ZZWS.message(e), true); } }
 const adminTabs=['dashboard','orders','price','users','rules','audit','storage','email','offers'];
 function rememberedAdminTab(){
   const linked=new URLSearchParams(location.hash.slice(1)).get('tab');if(adminTabs.includes(linked))return linked;
@@ -182,7 +182,8 @@ el('previewUserAccess').onclick=()=>run(async()=>{
 el('userForm').onsubmit = e => { e.preventDefault(); run(async () => {
   const p=userPayload();
   const saved=await api('admin/users',{method:'POST',body:JSON.stringify(p)});if(saved.invitation)showInvitation(p.login,saved.invitation,saved.id); e.target.reset(); e.target.hidden = true;
-  await loadUsers(); status('Օգտատերը պահպանված է։ Նախկին աշխատաշրջանները դադարեցված են։');
+  if(saved.sessionRevoked){ZZWS.clearSession();showLogin();status('Մուտքի տվյալները փոխված են։ Կրկին մուտք գործեք նոր տվյալներով։');return;}
+  await loadUsers(); status(saved.sessionRetained?'Օգտատերը պահպանված է։ Ձեր ընթացիկ աշխատաշրջանը շարունակվում է։':'Օգտատերը պահպանված է։ Նախկին աշխատաշրջանները դադարեցված են։');
 }); };
 async function loadAudit(){
   await loadUsers();
@@ -244,7 +245,7 @@ if (setupToken) {
   history.replaceState(null, '', location.pathname);
   finishSessionLoading();el('login').hidden = true; el('setup').hidden = false;
 } else {
-  run(async () => { try { await enter(); } catch(e) { if(sessionStorage.getItem('zzws_session_v3')&&e.status!==403)sessionLoadFailed(e.message);else{showLogin();if (!e.message.includes('Մուտք գործեք'))status(e.message,true);} } });
+  run(async () => { try { await enter(); } catch(e) { if(e.staleSession)return;if(sessionStorage.getItem('zzws_session_v3')&&e.status!==403)sessionLoadFailed(e.message);else{showLogin();if (!e.message.includes('Մուտք գործեք'))status(e.message,true);} } });
 }
 el('setupForm').onsubmit = e => { e.preventDefault(); run(async () => {
   const p = Object.fromEntries(new FormData(e.target));
