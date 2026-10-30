@@ -8,6 +8,7 @@
   for(const lang of Object.keys(shoppingCopy))Object.assign(copy[lang],shoppingCopy[lang]);
   Object.assign(copy.hy,{addToCart:'Ավելացնել զամբյուղ',quantity:'Քանակ',inCart:'Զամբյուղում՝ ',pieces:' հատ',noPhoto:'Նկարը հասանելի չէ',notOrderable:'Այս ապրանքը հիմա հասանելի չէ զամբյուղում ավելացնելու համար։',invalidQuantity:'Նշեք թույլատրելի ամբողջ քանակը։',cartFull:'Հասել եք այս ապրանքի առավելագույն քանակին։'});
   Object.assign(copy.hy,{detailsTitle:'Ապրանքի մանրամասները',details:'Բոլոր բնութագրերը',requirements:'Ընտրված պայմանները',exactMatch:'Ճշգրիտ համապատասխանություն',nearMatch:'Մոտ չափերով տարբերակ',nearGroup:'Մոտ չափերով այլընտրանքներ',nearNote:'Այս տարբերակների չափերը տարբերվում են ձեր նշածից։ Համեմատեք չափերը նախքան ընտրելը։',width:'Լայնություն',depth:'Խորություն',height:'Բարձրություն',requested:'Ձեր նշածը',cm:'սմ'});
+  Object.assign(copy.hy,{orderableGroup:'Կարելի է ավելացնել զամբյուղ',managerGroup:'Ճշտել մենեջերի հետ',managerNote:'Այս ապրանքները հիմա հնարավոր չէ ավելացնել զամբյուղ։ Գինը և պատվիրելու հնարավորությունը ճշտեք մենեջերի հետ։',notOrderable:'Այս ապրանքի գինը և պատվիրելու հնարավորությունը ճշտեք մենեջերի հետ։',retailReference:'Մանրածախ գինը՝ որպես տեղեկություն։ Պատվերի գինը ճշտեք մենեջերի հետ։'});
   const locale = 'hy';
   let context = [], selected = [], advisor = null, requirements = '', currentMode = 'specifications', controller, revision = 0, busy = false, owner = null;
   const t = key => copy[locale][key];
@@ -64,11 +65,12 @@
   function scroll() { messages.scrollTop = messages.scrollHeight; }
   function revealReply(reply){messages.scrollTo({top:reply.getBoundingClientRect().top-messages.getBoundingClientRect().top+messages.scrollTop-8,behavior:'instant'});}
   function syncCartControls(){for(const root of [messages,detailsBody])for(const widget of root.querySelectorAll('.zigzag-cart-controls'))cartWidgets.get(widget)?.();}
+  const canOrderProduct=product=>serverIdentity?.id===owner&&!!getProduct(product.articul)&&getItemWholesalePrice({articul:product.articul})>0;
   function productCartControls(product){
     const controls=create('div','zigzag-cart-controls'), actions=create('div','zigzag-cart-actions'), field=create('label','zigzag-cart-quantity'), qty=create('input'), status=create('p','zigzag-cart-status');
     qty.type='number';qty.min='1';qty.step='1';qty.value='1';qty.inputMode='numeric';qty.setAttribute('aria-label',t('quantity')+'՝ '+product.name);
     field.append(create('span','',t('quantity')),qty);status.setAttribute('role','status');
-    const allowed=()=>serverIdentity?.id===owner&&!!getProduct(product.articul)&&getItemWholesalePrice({articul:product.articul})>0;
+    const allowed=()=>canOrderProduct(product);
     const add=button(t('addToCart'),()=>{
       if(!allowed()){refresh();return;}
       const amount=Number(qty.value),existing=Number(cart[product.articul]?.qty||0);
@@ -82,6 +84,7 @@
     const refresh=()=>{
       const available=allowed(),count=Number(cart[product.articul]?.qty||0),full=count>=MAX_QTY;
       qty.max=String(Math.max(1,MAX_QTY-count));qty.disabled=!available||full;add.disabled=!available||full;
+      actions.hidden=!available;controls.classList.toggle('zigzag-manager-controls',!available);
       status.textContent=!available?t('notOrderable'):full?t('cartFull'):count?t('inCart')+count+t('pieces'):'';
     };
     actions.append(field,add);controls.append(actions,status);cartWidgets.set(controls,refresh);refresh();return controls;
@@ -97,7 +100,8 @@
     if(visibleProduct(product.articul)&&typeof getProductImageHtml==='function')photo.innerHTML=getProductImageHtml(product.articul,product.name);else photo.append(create('span','',t('noPhoto')));
     info.append(create('h4','',product.name));summary.append(photo,info);box.append(summary,productCartControls(product));
     if(product.price&&typeof product.price.amount==='number'&&product.price.amount>0){
-      const price=create('div','zigzag-offer-price');price.append(create('strong','',t(product.price.kind==='customer'?'price':'retailPrice')+': '+product.price.amount.toLocaleString(locale==='ru'?'ru-RU':locale==='hy'?'hy-AM':'en-GB')+' ֏'),create('small','',t('catalogPrice')));info.append(price);
+      const orderPrice=canOrderProduct(product)?getItemWholesalePrice({articul:product.articul}):0;
+      const price=create('div','zigzag-offer-price');price.append(create('strong','',t(orderPrice||product.price.kind==='customer'?'price':'retailPrice')+': '+(orderPrice||product.price.amount).toLocaleString(locale==='ru'?'ru-RU':locale==='hy'?'hy-AM':'en-GB')+' ֏'),create('small','',t(!orderPrice&&product.price.kind==='retail'?'retailReference':'catalogPrice')));info.append(price);
     }
     if(product.match){
       const match=create('div','zigzag-match zigzag-match-'+product.match.kind);match.append(create('strong','',t(product.match.kind==='near'?'nearMatch':'exactMatch')));
@@ -132,18 +136,26 @@
     const pending = create('div', 'zigzag-pending', t('pending')); messages.append(pending); scroll(); controller = new AbortController();
     const requestController = controller, timeout = setTimeout(() => requestController.abort(), 45000);
     try {
-      const data = await secureApi('assistant/chat', {method: 'POST', body: JSON.stringify({message, context, refresh, advisor, locale}), signal: requestController.signal});
+      const orderPriceMode=isAdminUser()&&adminOrderPriceMode==='KP'?'KP':'WS';
+      const data = await secureApi('assistant/chat', {method: 'POST', body: JSON.stringify({message, context, refresh, advisor, locale,orderPriceMode}), signal: requestController.signal});
       if (currentRevision !== revision || serverIdentity?.id !== userId) return;
       pending.remove(); currentMode=data.mode;mode.textContent = t(data.mode==='selection'?'selection':data.mode === 'ai' ? 'ai' : 'mode'); const reply = bubble(data.answer);
       context = (data.context || []).filter(id => visibleProduct(id)).slice(0, 2); advisor=data.advisor||null;requirements=data.requirementSummary||'';updateContext();
       if (data.modelUnavailable) reply.append(create('p', 'zigzag-note', t('modelUnavailable')));
       if(data.quickReplies?.length){const quick=create('div','zigzag-quick-replies');for(const text of data.quickReplies)quick.append(button(text,()=>submit(text),'zigzag-choice'));reply.append(quick);}
       if(data.recommendations?.length){
-        for(const kind of ['exact','near']){
-          const products=data.recommendations.filter(p=>(p.match?.kind||'exact')===kind);if(!products.length)continue;
-          const group=create('section','zigzag-recommendation-group zigzag-group-'+kind);group.append(create('h3','zigzag-group-title',t(kind==='near'?'nearGroup':'exactMatch')));
-          if(kind==='near')group.append(create('p','zigzag-near-note',t('nearNote')));
-          const offers=create('div','zigzag-products zigzag-recommendations');for(const product of products)offers.append(showProduct(product));group.append(offers);reply.append(group);
+        for(const available of [true,false]){
+          const candidates=data.recommendations.filter(p=>canOrderProduct(p)===available);if(!candidates.length)continue;
+          const section=create('section','zigzag-availability-group zigzag-group-'+(available?'orderable':'manager'));
+          section.append(create('h3','zigzag-availability-title',t(available?'orderableGroup':'managerGroup')));
+          if(!available)section.append(create('p','zigzag-manager-note',t('managerNote')));
+          for(const kind of ['exact','near']){
+            const products=candidates.filter(p=>(p.match?.kind||'exact')===kind);if(!products.length)continue;
+            const group=create('section','zigzag-recommendation-group zigzag-group-'+kind);group.append(create('h4','zigzag-group-title',t(kind==='near'?'nearGroup':'exactMatch')));
+            if(kind==='near')group.append(create('p','zigzag-near-note',t('nearNote')));
+            const offers=create('div','zigzag-products zigzag-recommendations');for(const product of products)offers.append(showProduct(product));group.append(offers);section.append(group);
+          }
+          reply.append(section);
         }
       }
       if (data.products?.length) {
@@ -175,4 +187,3 @@
   labels();
   window.ZZWS_ASSISTANT = Object.freeze({open, reset, ask: askProduct});
 })();
-
