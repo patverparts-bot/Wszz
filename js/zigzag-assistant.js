@@ -6,9 +6,11 @@
     hy:{intro:'Նկարագրեք՝ ինչ տեխնիկա է պետք։ Կօգնեմ ընտրել ըստ բյուջեի, չափի և ցանկությունների, իսկ անհրաժեշտության դեպքում կհարցնեմ մանրամասները։',placeholder:'Օրինակ՝ մատչելի լվացքի մեքենա, 60 սմ…',selection:'Տեխնիկայի ընտրություն',shoppingExample:'Պետք է մատչելի լվացքի մեքենա, 60 սմ',price:'Ձեր գինը',retailPrice:'Մանրածախ գին',catalogPrice:'Գինը՝ ձեր ընթացիկ կատալոգից',offerDetails:'Բնութագրերը',newSelection:'Նոր ընտրություն'},
   };
   for(const lang of Object.keys(shoppingCopy))Object.assign(copy[lang],shoppingCopy[lang]);
+  Object.assign(copy.hy,{addToCart:'Ավելացնել զամբյուղ',quantity:'Քանակ',inCart:'Զամբյուղում՝ ',pieces:' հատ',noPhoto:'Նկարը հասանելի չէ',notOrderable:'Այս ապրանքը հիմա հասանելի չէ զամբյուղում ավելացնելու համար։',invalidQuantity:'Նշեք թույլատրելի ամբողջ քանակը։',cartFull:'Հասել եք այս ապրանքի առավելագույն քանակին։'});
   const locale = 'hy';
   let context = [], selected = [], advisor = null, requirements = '', currentMode = 'specifications', controller, revision = 0, busy = false, owner = null;
   const t = key => copy[locale][key];
+  const cartWidgets = new WeakMap();
   const create = (tag, className, text) => { const el = document.createElement(tag); if (className) el.className = className; if (text !== undefined) el.textContent = text; return el; };
   const button = (text, onClick, className) => { const b = create('button', className, text); b.type = 'button'; b.addEventListener('click', onClick); return b; };
   const avatar = size => { const img = create('img'); img.src = 'zigzag-avatar.svg?v=1.2-hy-blue'; img.alt = ''; img.width = img.height = size; return img; };
@@ -46,7 +48,7 @@
     if (!serverIdentity || document.getElementById('mainApp').classList.contains('hidden')) return;
     if (owner !== serverIdentity.id) { reset(true); owner = serverIdentity.id; }
     if (!dialog.open) dialog.showModal();
-    if (!messages.children.length) welcome(); input.focus();
+    if (!messages.children.length) welcome(); syncCartControls(); input.focus();
   }
   function reset(closeDialog = true) {
     revision++; controller?.abort(); busy = false; controller = null; send.disabled = false; input.value = ''; context = []; selected = []; advisor = null; requirements = ''; currentMode = 'specifications'; messages.replaceChildren(); messages.removeAttribute('aria-busy'); updateContext(); mode.textContent = t('mode');
@@ -55,10 +57,37 @@
   function bubble(text, user = false) { const el = create('div', 'zigzag-message' + (user ? ' zigzag-message-user' : '')); el.append(create('span', 'zigzag-message-label', user ? t('you') : 'ԶիգԶագ'), document.createTextNode(text)); messages.append(el); return el; }
   function scroll() { messages.scrollTop = messages.scrollHeight; }
   function revealReply(reply){messages.scrollTo({top:reply.getBoundingClientRect().top-messages.getBoundingClientRect().top+messages.scrollTop-8,behavior:'instant'});}
+  function syncCartControls(){for(const widget of messages.querySelectorAll('.zigzag-cart-controls'))cartWidgets.get(widget)?.();}
+  function productCartControls(product){
+    const controls=create('div','zigzag-cart-controls'), actions=create('div','zigzag-cart-actions'), field=create('label','zigzag-cart-quantity'), qty=create('input'), status=create('p','zigzag-cart-status');
+    qty.type='number';qty.min='1';qty.step='1';qty.value='1';qty.inputMode='numeric';qty.setAttribute('aria-label',t('quantity')+'՝ '+product.name);
+    field.append(create('span','',t('quantity')),qty);status.setAttribute('role','status');
+    const allowed=()=>serverIdentity?.id===owner&&!!getProduct(product.articul)&&getItemWholesalePrice({articul:product.articul})>0;
+    const add=button(t('addToCart'),()=>{
+      if(!allowed()){refresh();return;}
+      const amount=Number(qty.value),existing=Number(cart[product.articul]?.qty||0);
+      if(!Number.isSafeInteger(amount)||amount<1||amount>MAX_QTY-existing){qty.setCustomValidity(t('invalidQuantity'));status.textContent=existing>=MAX_QTY?t('cartFull'):t('invalidQuantity');qty.reportValidity();return;}
+      qty.setCustomValidity('');
+      if(amount===1)addToCart(product.articul);else setDirectQty(product.articul,existing+amount);
+      window.ZZWS_MEMORY?.capture();syncCartControls();
+    },'zigzag-add-to-cart');
+    add.setAttribute('aria-label',t('addToCart')+'՝ '+product.name);
+    qty.addEventListener('input',()=>qty.setCustomValidity(''));
+    const refresh=()=>{
+      const available=allowed(),count=Number(cart[product.articul]?.qty||0),full=count>=MAX_QTY;
+      qty.max=String(Math.max(1,MAX_QTY-count));qty.disabled=!available||full;add.disabled=!available||full;
+      status.textContent=!available?t('notOrderable'):full?t('cartFull'):count?t('inCart')+count+t('pieces'):'';
+    };
+    actions.append(field,add);controls.append(actions,status);cartWidgets.set(controls,refresh);refresh();return controls;
+  }
   function showProduct(product) {
-    const box = create('section', 'zigzag-product'); box.append(create('h4', '', product.name));
+    const box = create('section', 'zigzag-product'),summary=create('div','zigzag-product-summary'),photo=create('div','zigzag-product-photo'),info=create('div','zigzag-product-info');
+    box.dataset.articul=product.articul;
+    // Use the catalogue's verified SKU photo map and existing safe image fallbacks.
+    if(visibleProduct(product.articul)&&typeof getProductImageHtml==='function')photo.innerHTML=getProductImageHtml(product.articul,product.name);else photo.append(create('span','',t('noPhoto')));
+    info.append(create('h4','',product.name));summary.append(photo,info);box.append(summary,productCartControls(product));
     if(product.price&&typeof product.price.amount==='number'&&product.price.amount>0){
-      const price=create('div','zigzag-offer-price');price.append(create('strong','',t(product.price.kind==='customer'?'price':'retailPrice')+': '+product.price.amount.toLocaleString(locale==='ru'?'ru-RU':locale==='hy'?'hy-AM':'en-GB')+' ֏'),create('small','',t('catalogPrice')));box.append(price);
+      const price=create('div','zigzag-offer-price');price.append(create('strong','',t(product.price.kind==='customer'?'price':'retailPrice')+': '+product.price.amount.toLocaleString(locale==='ru'?'ru-RU':locale==='hy'?'hy-AM':'en-GB')+' ֏'),create('small','',t('catalogPrice')));info.append(price);
     }
     if (product.status !== 'verified') { box.append(create('p', 'zigzag-source', t('missing'))); return box; }
     const dl = create('dl', 'zigzag-specs');
