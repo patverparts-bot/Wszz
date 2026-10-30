@@ -410,3 +410,21 @@ input[type=date]{cursor:pointer;min-height:42px}
 .order-step-title{font-size:16px;font-weight:700;margin:8px 0 14px;color:inherit}
 @media(min-width:1024px){#filtersContainer .relative:has(> #brandInput),#filtersContainer .relative:has(> #categoryInput){max-width:400px}}
 @media(min-width:1024px){#filtersContainer input#brandInput,#filtersContainer input#categoryInput{max-width:400px}#modalBody .order-modal-body-grid{grid-template-columns:minmax(0,1.35fr) minmax(360px,.85fr);gap:24px}#savedCartsPanel{margin-bottom:16px}#deliveryDetailsContent{padding:18px}}
+
+/* Keep bulletin prices and cart actions readable without splitting their labels. */
+.catalog-bulletins-dialog th:nth-child(2),.catalog-bulletins-dialog td:nth-child(2),.catalog-bulletins-dialog th:last-child,.catalog-bulletins-dialog td:last-child{width:1%;white-space:nowrap}
+.catalog-bulletins-dialog button{white-space:nowrap}
+.catalog-bulletins-dialog td:last-child button{font-size:14px;padding:8px 10px}
+.catalog-bulletins-dialog td:first-child{overflow-wrap:anywhere}
+@media(max-width:480px){
+ .catalog-bulletins-dialog{padding:16px}
+ .catalog-bulletins-dialog .bulletin-dialog-heading{gap:12px;align-items:flex-start}
+ .catalog-bulletins-dialog h2{font-size:18px;min-width:0;overflow-wrap:anywhere}
+ .catalog-bulletins-dialog .bulletin-dialog-heading button{flex-shrink:0}
+ .catalog-bulletins-dialog thead{display:none}
+ .catalog-bulletins-dialog tbody tr{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;border-bottom:1px solid #e2e8f0}
+ .catalog-bulletins-dialog td{width:auto!important;border:0;padding:10px 6px;font-size:14px}
+ .catalog-bulletins-dialog td:first-child{grid-column:1/-1;padding-bottom:0}
+ .catalog-bulletins-dialog td:last-child{justify-self:end}
+ .catalog-bulletins-dialog button{font-size:14px;padding:8px 10px}
+}
