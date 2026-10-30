@@ -1,8 +1,8 @@
 (() => {
  'use strict';
- const apkFile='ZZWS-7.0.8-production.apk',apkVersion='7.0.8';
- const apkHash='d211e577d921f218bc80f02b49532ebb1f776327b46417c7797523443ef18b51';
- const apkUrl=new URL('../'+apkFile,document.currentScript.src).href;
+ const releaseUrl=new URL('../apk-release.json',document.currentScript.src);
+ const assetOptions={credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',redirect:'error'};
+ const maxApkBytes=150*1024*1024;
  let owner=null,ticket=0,mount=null,loading=false;
  const node=(tag,text)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;return n;};
  function root(){
@@ -13,34 +13,55 @@
  }
  function reset(){owner=null;++ticket;loading=false;const box=root();if(box){box.replaceChildren();box.hidden=true;}}
  function textError(error){return window.ZZWS?.message(error)||'Չհաջողվեց կատարել գործողությունը։';}
- async function availability(button,notice,who,requestTicket){
+ async function readRelease(){
+  // Only a filename beside the manifest is accepted; account credentials never leave the API.
+  const response=await fetch(releaseUrl,assetOptions);
+  if(!response.ok)throw Error('APK-ի թողարկման տվյալները դեռ հասանելի չեն։ Փորձեք ավելի ուշ։');
+  const text=await response.text();if(text.length>16384)throw Error('APK-ի թողարկման տվյալները սխալ են։');
+  let data;try{data=JSON.parse(text);}catch{throw Error('APK-ի թողարկման տվյալները սխալ են։');}
+  if(data?.schemaVersion!==1||typeof data.version!=='string'||!/^[0-9][A-Za-z0-9.+_-]{0,79}$/.test(data.version)||
+   typeof data.filename!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._-]{0,159}\.apk$/.test(data.filename)||
+   typeof data.sha256!=='string'||!/^[a-f0-9]{64}$/.test(data.sha256)||!Number.isSafeInteger(data.bytes)||data.bytes<4||data.bytes>maxApkBytes||
+   typeof data.description!=='string'||data.description.length>4000)throw Error('APK-ի թողարկման տվյալները սխալ են։');
+  return {...data,url:new URL(data.filename,releaseUrl).href};
+ }
+ function showRelease(card,release){
+  card.querySelector('[data-apk-version]').textContent='Տարբերակ՝ '+release.version;
+  card.querySelector('[data-apk-description]').textContent=release.description;
+ }
+ async function availability(button,notice,card,who,requestTicket){
   button.disabled=true;button.textContent='Ստուգվում է APK-ի հասանելիությունը…';
   try{
-   const response=await fetch(apkUrl,{method:'HEAD',credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',redirect:'error'});
-   if(!response.ok||!/^(application\/vnd\.android\.package-archive|application\/octet-stream)(;|$)/i.test(response.headers.get('content-type')||''))throw Error('APK-ը դեռ հասանելի չէ։ Փորձեք ավելի ուշ։');
+   const release=await readRelease();
+   const response=await fetch(release.url,{...assetOptions,method:'HEAD'});
+   const length=response.headers.get('content-length');
+   if(!response.ok||!/^(application\/vnd\.android\.package-archive|application\/octet-stream)(;|$)/i.test(response.headers.get('content-type')||'')||length!==null&&Number(length)!==release.bytes)throw Error('APK-ը դեռ հասանելի չէ։ Փորձեք ավելի ուշ։');
    if(owner!==who||requestTicket!==ticket)return;
-   button.textContent='Ներբեռնել ZZWS Android հավելվածը';button.onclick=()=>download(button,notice,who,requestTicket);button.disabled=false;notice.textContent='';
-  }catch(error){if(owner===who&&requestTicket===ticket){notice.textContent=textError(error);button.textContent='Կրկին ստուգել APK-ը';button.onclick=()=>availability(button,notice,who,requestTicket);button.disabled=false;}}
+   showRelease(card,release);button.textContent='Ներբեռնել ZZWS Android հավելվածը';button.onclick=()=>download(button,notice,card,who,requestTicket);button.disabled=false;notice.textContent='';
+  }catch(error){if(owner===who&&requestTicket===ticket){notice.textContent=textError(error);button.textContent='Կրկին ստուգել APK-ը';button.onclick=()=>availability(button,notice,card,who,requestTicket);button.disabled=false;}}
  }
- async function download(button,notice,who,requestTicket){
+ async function download(button,notice,card,who,requestTicket){
   if(loading||owner!==who||requestTicket!==ticket)return;loading=true;button.disabled=true;notice.textContent='Ֆայլը բեռնվում է…';
   try{
    const permission=await ZZWS.json('me/resources');
    if(owner!==who||requestTicket!==ticket)return;
    if(permission.mobileAdminEnabled!==true)throw Error('Ներբեռնման թույլտվությունը փոխվել է։');
+   const release=await readRelease();
+   if(owner!==who||requestTicket!==ticket)return;
+   showRelease(card,release);
    // Public GitHub asset: never send the ZZWS session or API key to this URL.
-   const response=await fetch(apkUrl,{credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',redirect:'error'});
+   const response=await fetch(release.url,assetOptions);
    if(!response.ok){const e=new Error('APK-ի ներբեռնումը հասանելի չէ։ Թարմացրեք մուտքը կամ դիմեք սեփականատիրոջը։');e.status=response.status;throw e;}
    if(!/^(application\/vnd\.android\.package-archive|application\/octet-stream)(;|$)/i.test(response.headers.get('content-type')||''))throw Error('Սերվերը վերադարձրել է ոչ ճիշտ APK ֆայլ։');
-   const blob=await response.blob();if(blob.size<4||blob.size>150*1024*1024)throw Error('APK ֆայլի չափը սխալ է։');
+   const blob=await response.blob();if(blob.size!==release.bytes)throw Error('APK ֆայլի ստուգումը ձախողվել է։ Թարմացրեք էջը կամ դիմեք սեփականատիրոջը։');
    const signature=new Uint8Array(await blob.slice(0,4).arrayBuffer());if(signature[0]!==80||signature[1]!==75||signature[2]!==3||signature[3]!==4)throw Error('APK ֆայլը չի ստուգվել։');
    const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',await blob.arrayBuffer())),v=>v.toString(16).padStart(2,'0')).join('');
-   if(digest!==apkHash)throw Error('APK ֆայլի ստուգումը ձախողվել է։ Թարմացրեք էջը կամ դիմեք սեփականատիրոջը։');
+   if(digest!==release.sha256)throw Error('APK ֆայլի ստուգումը ձախողվել է։ Թարմացրեք էջը կամ դիմեք սեփականատիրոջը։');
    if(owner!==who||requestTicket!==ticket)return;
    const current=await ZZWS.json('me/resources');
    if(owner!==who||requestTicket!==ticket)return;
    if(current.mobileAdminEnabled!==true)throw Error('Ներբեռնման թույլտվությունը փոխվել է։');
-   const link=node('a'),url=URL.createObjectURL(blob);link.href=url;link.download=apkFile;link.hidden=true;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+   const link=node('a'),url=URL.createObjectURL(blob);link.href=url;link.download=release.filename;link.hidden=true;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
    notice.textContent='APK ֆայլը ներբեռնված է։ Տեղադրեք այն ձեր Android սարքում։';
   }catch(error){if(owner===who&&requestTicket===ticket)notice.textContent=textError(error);}
   finally{if(owner===who&&requestTicket===ticket){loading=false;if(button.isConnected)button.disabled=false;}}
@@ -54,7 +75,8 @@
   box.append(node('h3','ZZWS Admin և Telegram'));const notice=node('p');notice.setAttribute('role','status');notice.style.fontSize='13px';
   if(mobile){
    const card=node('div');card.append(node('h4','ZZWS Admin՝ Android հավելված'));
-   const button=node('button');button.type='button';button.dataset.resource='apk';button.style.cssText='padding:10px 14px;border:1px solid #2563eb;border-radius:8px;background:#1d4ed8;color:white;cursor:pointer';card.append(button);card.append(node('p','Տարբերակ՝ '+apkVersion));availability(button,notice,who,requestTicket);
+   const button=node('button');button.type='button';button.dataset.resource='apk';button.style.cssText='padding:10px 14px;border:1px solid #2563eb;border-radius:8px;background:#1d4ed8;color:white;cursor:pointer';card.append(button);
+   const version=node('p');version.dataset.apkVersion='';card.append(version);const description=node('p');description.dataset.apkDescription='';description.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere';card.append(description);availability(button,notice,card,who,requestTicket);
    card.append(node('p','Մուտք գործեք ձեր ZZWS ադմինիստրատորի հաշվով։ Հավելվածը չի ընդլայնում հաշվի իրավունքները։'));box.append(card);
   }
   if(telegram){
@@ -89,4 +111,3 @@
  window.ZZWS_ADMIN_RESOURCES=Object.freeze({start,reset,refresh});
  window.addEventListener('zzws:session-changed',event=>event.detail?.user?start(event.detail.user):reset());
 })();
-
