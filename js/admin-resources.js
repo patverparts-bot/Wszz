@@ -78,17 +78,19 @@
   const box=root();if(!box)return;box.replaceChildren();box.hidden=true;
   const mobile=data.mobileAdminEnabled===true,telegram=data.telegramEnabled===true;
   if(!mobile&&!telegram)return;
-  box.style.cssText='padding:16px;margin:16px 0;border:1px solid #94a3b8;border-radius:12px;line-height:1.6';
-  if(box.id==='catalogAdminResources')box.style.cssText+='max-height:34vh;overflow:auto;flex-shrink:0;';
-  box.append(node('h3','ZZWS Admin և Telegram'));const notice=node('p');notice.setAttribute('role','status');notice.style.fontSize='13px';
+  box.style.cssText='margin:10px 0;min-width:0;max-width:100%;line-height:1.5;flex-shrink:0';
+  const details=node('details');details.dataset.resourceInstructions='';details.style.cssText='box-sizing:border-box;width:fit-content;max-width:min(100%,32rem);padding:10px 12px;border:1px solid #94a3b8;border-radius:10px';
+  const summary=node('summary',(mobile&&telegram?'APK և Telegram':mobile?'APK':'Telegram')+' · հրահանգներ');summary.style.cssText='cursor:pointer;font-weight:600;font-size:13px;list-style-position:inside;overflow-wrap:anywhere';
+  const content=node('div');content.style.cssText='display:grid;gap:12px;padding-top:12px;max-height:34vh;overflow:auto;font-size:13px;min-width:0;overflow-wrap:anywhere';details.append(summary,content);box.append(details);
+  const notice=node('p');notice.setAttribute('role','status');notice.style.fontSize='13px';
   if(mobile){
-   const card=node('div');card.append(node('h4','ZZWS Admin՝ Android հավելված'));
-   const button=node('button');button.type='button';button.dataset.resource='apk';button.style.cssText='padding:10px 14px;border:1px solid #2563eb;border-radius:8px;background:#1d4ed8;color:white;cursor:pointer';card.append(button);
+   const card=node('div');card.style.cssText='display:grid;gap:6px;min-width:0';card.append(node('h4','ZZWS Admin՝ Android հավելված'));
+   const button=node('button');button.type='button';button.dataset.resource='apk';button.style.cssText='padding:10px 14px;border:1px solid #2563eb;border-radius:8px;background:#1d4ed8;color:white;cursor:pointer;justify-self:start;max-width:100%;white-space:normal';card.append(button);
    const version=node('p');version.dataset.apkVersion='';card.append(version);const description=node('p');description.dataset.apkDescription='';description.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere';card.append(description);availability(button,notice,card,who,requestTicket);
-   card.append(node('p','Մուտք գործեք ձեր ZZWS ադմինիստրատորի հաշվով։ Հավելվածը չի ընդլայնում հաշվի իրավունքները։'));box.append(card);
+   card.append(node('p','Մուտք գործեք ձեր ZZWS ադմինիստրատորի հաշվով։ Հավելվածը չի ընդլայնում հաշվի իրավունքները։'));content.append(card);
   }
   if(telegram){
-   const card=node('div');card.dataset.resource='telegram';card.append(node('h4','Telegram ծանուցումների միացում'));
+   const card=node('div');card.dataset.resource='telegram';card.style.cssText='display:grid;gap:6px;min-width:0';card.append(node('h4','Telegram ծանուցումների միացում'));
    card.append(node('p',data.telegram?.mode==='offline'?'Անցանց փորձարկման ռեժիմ․ իրական Telegram հաղորդագրություններ չեն ուղարկվում։':'Ծանուցումները նախատեսված են միայն սեփականատիրոջ կողմից հաստատված ստացողի համար։'));
    const username=data.telegram?.botUsername,validBot=typeof username==='string'&&/^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(username)&&!['botfather','userinfobot'].includes(username.toLowerCase());
    card.append(node('p',validBot?'ZZWS ծանուցումների բոտ՝ @'+username:'ZZWS ծանուցումների բոտը դեռ նշված չէ։ Սեփականատերը պետք է այն լրացնի ադմինիստրատորի քարտում։'));
@@ -104,9 +106,9 @@
    const idHelp=node('a','Իմանալ իմ անձնական ID-ն՝ @userinfobot');idHelp.href='https://t.me/userinfobot';idHelp.target='_blank';idHelp.rel='noopener noreferrer';idHelp.style.display='block';card.append(idHelp);
    if(data.telegram?.canSimulateStart===true){const simulator=node('a','Փորձարկել /start-ը անցանց՝ առանց Telegram ուղարկելու');simulator.href='/offline-console';simulator.style.display='block';card.append(simulator);}
    card.append(node('p',data.telegram?.recipientConfigured?'Ձեր անձնական ID-ն պահպանված է սերվերում։ Իրական ուղարկումը կախված է սերվերի միացված ծառայությունից։':'Ձեր ստացողի ID-ն դեռ հաստատված չէ այս հաշվի համար։ Դիմեք սեփականատիրոջը։'));
-   if(typeof data.telegram?.instructions==='string'&&data.telegram.instructions.length<=2000)card.append(node('p',data.telegram.instructions));box.append(card);
+   if(typeof data.telegram?.instructions==='string'&&data.telegram.instructions.length<=2000)card.append(node('p',data.telegram.instructions));content.append(card);
   }
-  box.append(notice);box.hidden=false;
+  content.append(notice);box.hidden=false;
  }
  async function start(user,options={}){
   reset();if(options.root)mount=options.root;
@@ -119,3 +121,4 @@
  window.ZZWS_ADMIN_RESOURCES=Object.freeze({start,reset,refresh});
  window.addEventListener('zzws:session-changed',event=>event.detail?.user?start(event.detail.user):reset());
 })();
+
