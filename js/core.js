@@ -94,6 +94,7 @@ let availableBrands = [];
 let availableCategories = [];
 let selectedBrands = [];
 let selectedCategories = [];
+let catalogFiltersForOpening = null;
 
 
 const brandDomains = {
@@ -253,8 +254,21 @@ function saveFiltersToStorage() {
       stockOnly: document.getElementById('stockOnlyFilter').checked || false,
       wholesaleOnly: document.getElementById('wholesaleOnlyFilter')?.checked || false
     };
-    if(window.ZZWS_CATALOG_VIEW?.active())ZZWS_CATALOG_VIEW.rememberFilters(filtersState);else localStorage.setItem('zigzag_filters_' + userStorageId(), JSON.stringify(filtersState));
+    if(window.ZZWS_CATALOG_VIEW?.active())ZZWS_CATALOG_VIEW.rememberFilters(filtersState);else catalogFiltersForOpening=structuredClone(filtersState);
   } catch(e) {}
+  updateMobileFilterBadge();
+}
+
+function resetCatalogFiltersOnOpen() {
+  catalogFiltersForOpening=null;
+  selectedBrands=[];selectedCategories=[];
+  for(const id of ['searchInput','brandInput','categoryInput'])document.getElementById(id).value='';
+  for(const [id,value]of [['sortBy','default'],['sortPrice','wholesale'],['sortColumn','wholesale']])document.getElementById(id).value=value;
+  for(const id of ['favOnlyFilter','promoOnlyFilter','stockOnlyFilter','wholesaleOnlyFilter'])document.getElementById(id).checked=false;
+  document.getElementById('clearSearchBtn').classList.add('hidden');
+  try{localStorage.removeItem('zigzag_filters_'+userStorageId());}catch{}
+  if(window.ZZWS_CATALOG_VIEW?.active())ZZWS_CATALOG_VIEW.rememberFilters({});
+  if(catalogLoaded){updateBrandSelectionSummary();updateCategorySelectionSummary();renderDependentFilterOptions();resetAndRender();}
   updateMobileFilterBadge();
 }
 
@@ -262,9 +276,9 @@ function loadSavedFilters() {
   if(window.ZZWS_CATALOG_VIEW?.active())return ZZWS_CATALOG_VIEW.restoreFilters();
   if (!authorizedClient) return;
   try {
-    const saved = localStorage.getItem('zigzag_filters_' + userStorageId());
+    const saved = catalogFiltersForOpening;
     if (saved) {
-      const f = JSON.parse(saved);
+      const f = saved;
       selectedBrands = Array.isArray(f.brands) ? f.brands : (f.brand ? [f.brand] : []);
       selectedCategories = Array.isArray(f.categories) ? f.categories : (f.category ? [f.category] : []);
       updateBrandSelectionSummary();

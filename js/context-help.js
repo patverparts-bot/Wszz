@@ -26,7 +26,7 @@
   const who=window.ZZWS_HELP_USER,dialog=document.createElement('dialog');document.getElementById('contextGuideDialog')?.remove();dialog.id='contextGuideDialog';dialog.className='zzws-context-guide';dialog.setAttribute('aria-label',labels[topic]);
   const close=document.createElement('button');close.type='button';close.textContent='Փակել';close.onclick=()=>{dialog.close();dialog.remove();};const root=document.createElement('div');root.className='context-guide-body';root.textContent='Բեռնվում է…';const header=document.createElement('div');header.className='context-guide-header';const title=document.createElement('h2');title.textContent='Օգնություն';header.append(title,close);dialog.append(header,root);document.body.append(dialog);dialog.showModal();
   try{
-   const response=await fetch(guideFor(topic)+'?v=20261030-instructions');if(!response.ok)throw Error();
+   const response=await fetch(guideFor(topic)+'?v=20261030-catalog-reset');if(!response.ok)throw Error();
    const source=new DOMParser().parseFromString(await response.text(),'text/html');
    if(window.ZZWS_HELP_USER!==who||!allowed(topic)||!dialog.isConnected){dialog.close();dialog.remove();return false;}
    const section=source.getElementById('guide-'+topic)?.closest('section');if(!section)throw Error();root.replaceChildren(document.importNode(section,true));

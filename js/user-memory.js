@@ -1,6 +1,7 @@
 (() => {
-  const sections=['cart','favorites','history','filters','preferences','draft'];
-  const suffix={cart:'cart',favorites:'favs',history:'history',filters:'filters'};
+  // Search and filters belong to this catalogue opening, not synchronized account state.
+  const sections=['cart','favorites','history','preferences','draft'];
+  const suffix={cart:'cart',favorites:'favs',history:'history'};
   const fields=['organizationSelect','deliveryMethodInput','deliveryDateInput','deliveryAddressInput','contactPersonInput','orderCommentInput'];
   let owner=null,versions={},baseline={},pending={},timer=null,busy=false,ready=false,pollAt=0,suspended=false,clearedUntil=0;
   const copy=v=>JSON.parse(JSON.stringify(v));
@@ -10,20 +11,13 @@
   const persist=()=>{if(!owner)return;try{localStorage.setItem(key(),JSON.stringify(pending));}catch{banner('Չհաջողվեց պահպանել տեղային պատճենը։ Մի փակեք էջը մինչև համաժամացումը։',true);}};
   function read(){
     const draft={};for(const id of fields)draft[id]=document.getElementById(id)?.value||'';
-    return {cart:copy(cart),favorites:[...favoritesSet],history:cache('history',[]),filters:cache('filters',{}),preferences:{theme:localStorage.getItem('zigzag_theme')||'light',filtersOpen:localStorage.getItem('zigzag_filters_open_'+userStorageId())||'false',priceMode:adminOrderPriceMode,hiddenColumns:JSON.parse(localStorage.getItem('zigzag_columns_'+userStorageId())||'[]')},draft};
+    return {cart:copy(cart),favorites:[...favoritesSet],history:cache('history',[]),preferences:{theme:localStorage.getItem('zigzag_theme')||'light',filtersOpen:localStorage.getItem('zigzag_filters_open_'+userStorageId())||'false',priceMode:adminOrderPriceMode,hiddenColumns:JSON.parse(localStorage.getItem('zigzag_columns_'+userStorageId())||'[]')},draft};
   }
   function apply(section,value,render=true){
     value=value??(['favorites','history'].includes(section)?[]:{});
     if(suffix[section])localStorage.setItem('zigzag_'+suffix[section]+'_'+userStorageId(),JSON.stringify(value));
     if(section==='cart'){cart=normalizeCart(value);if(render&&catalogLoaded){reconcileCart();updateOrderPanel();refreshAllActions();if(!document.getElementById('orderModal').classList.contains('hidden')){renderModalItems();savedList();}}}
     if(section==='favorites'){favoritesSet=new Set(value);if(render&&catalogLoaded)resetAndRender();}
-    if(section==='filters'&&render&&catalogLoaded){
-      for(const id of ['searchInput','brandInput','categoryInput'])document.getElementById(id).value='';
-      selectedBrands=[];selectedCategories=[];
-      document.getElementById('sortBy').value='default';document.getElementById('sortPrice').value='wholesale';
-      for(const id of ['favOnlyFilter','promoOnlyFilter','stockOnlyFilter','wholesaleOnlyFilter'])document.getElementById(id).checked=false;
-      loadSavedFilters();resetAndRender();
-    }
     if(section==='history'&&render)renderOrderHistoryList();
     if(section==='preferences'){
       localStorage.setItem('zigzag_columns_'+userStorageId(),JSON.stringify(value.hiddenColumns||[]));window.ZZWS_COLUMNS?.render();
@@ -86,6 +80,7 @@
     stop();owner=user.id;
     const state=await ZZWS.json('me/state');versions=state.versions||{};
     try{pending=JSON.parse(localStorage.getItem(key())||'{}');}catch{pending={};}
+    delete pending.filters;resetCatalogFiltersOnOpen();
     for(const id of fields){const el=document.getElementById(id);if(el)el.value='';}
     populateOrderModalFields();modalFieldsInitialized=true;
     for(const section of sections){
@@ -123,6 +118,7 @@
   }
   window.ZZWS_MEMORY={start,stop,capture,flush,savedList,saveNamed,restoreDraft:()=>{if(ready)apply('draft',baseline.draft,false);}};
   document.addEventListener('visibilitychange',()=>{if(document.hidden){capture();flush();}});
+  window.addEventListener('pageshow',event=>{if(event.persisted&&ready&&owner===serverIdentity?.id)resetCatalogFiltersOnOpen();});
   window.addEventListener('focus',()=>{pollAt=0;flush();});
   window.addEventListener('beforeunload',e=>{capture();if(Object.keys(pending).length){e.preventDefault();e.returnValue='';}});
 })();
