@@ -100,7 +100,7 @@
         const box=document.createElement('article'),info=document.createElement('div'),title=document.createElement('h5'),meta=document.createElement('p'),actions=document.createElement('div');
         box.className='saved-cart-card';info.className='saved-cart-info';actions.className='saved-cart-actions';title.textContent=row.title;
         const count=Object.values(row.cart).reduce((n,item)=>n+(Number(item.qty)||0),0);
-        meta.textContent=new Intl.DateTimeFormat('hy-AM',{timeZone:'Asia/Yerevan',dateStyle:'medium',timeStyle:'short'}).format(new Date(row.saved_at))+' · '+Object.keys(row.cart).length+' դիրք · '+count+' հատ';
+        meta.textContent=new Intl.DateTimeFormat((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'),{timeZone:'Asia/Yerevan',dateStyle:'medium',timeStyle:'short'}).format(new Date(row.saved_at))+' · '+Object.keys(row.cart).length+' դիրք · '+count+' հատ';
         info.append(title,meta);box.append(info,actions);
         for(const [text,action] of [['Բեռնել',async()=>{if(Object.keys(cart).length&&!confirm('Ընթացիկ զամբյուղը փոխարինե՞լ պահպանվածով։'))return;apply('cart',row.cart);apply('draft',row.draft);capture();await flush();renderModalItems();document.getElementById('savedCartsPanel').open=false;}],['Ջնջել',async()=>{if(!confirm('Ջնջե՞լ «'+row.title+'»?'))return;await ZZWS.json('me/carts/delete',{method:'POST',body:JSON.stringify({id:row.id})});await savedList();}]]){const b=document.createElement('button');b.type='button';b.textContent=text;b.className=text==='Ջնջել'?'saved-delete':'saved-secondary';b.setAttribute('aria-label',text+' « զամբյուղը՝'+row.title+'»');b.onclick=()=>action().catch(e=>alert(e.message));actions.append(b);}root.append(box);}
     }catch(e){root.textContent=e.message;}
@@ -110,7 +110,7 @@
     try{let result;
       try{result=await ZZWS.json('me/carts',{method:'POST',body:JSON.stringify(payload)});}
       catch(e){if(e.status!==409||!e.data.limit)throw e;const oldest=e.data.oldest;
-        if(!confirm('Արդեն պահպանված է 10 զամբյուղ։ Փոխարինե՞լ ամենահինը՝ «'+oldest.title+'», ամսաթիվ՝ '+new Date(oldest.saved_at).toLocaleString('hy-AM')+'?'))return;
+        if(!confirm('Արդեն պահպանված է 10 զամբյուղ։ Փոխարինե՞լ ամենահինը՝ «'+oldest.title+'», ամսաթիվ՝ '+new Date(oldest.saved_at).toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'))+'?'))return;
         result=await ZZWS.json('me/carts',{method:'POST',body:JSON.stringify({...payload,replace:oldest.id})});
       }
       input.value='';await savedList();alert(result.replaced?'Զամբյուղը պահպանվել է։ Ամենահին զամբյուղը փոխարինվել է։':'Զամբյուղը պահպանվել է սերվերում։');

@@ -1,6 +1,6 @@
 (() => {
  const statuses={new:'Նոր',confirmed:'Հաստատված',in_progress:'Ընթացքում',completed:'Առաքված է',rejected:'Մերժված',received:'Ստացված է'};
- const el=id=>document.getElementById(id),money=v=>Number(v||0).toLocaleString('hy-AM')+' ֏',date=v=>new Date(v).toLocaleString('hy-AM',{timeZone:'Asia/Yerevan'});
+ const el=id=>document.getElementById(id),money=v=>Number(v||0).toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'))+' ֏',date=v=>new Date(v).toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'),{timeZone:'Asia/Yerevan'});
  let list=[],selected=null,manualRows=[],preview=null,dirty=false,busy=false,timer=null,listEpoch=0,listKey=null,editorEpoch=0,operation=0,searchTimer,running=false,pollBusy=false,pollSession=0,summaryEpoch=0,summaryVersion=null,refreshSeconds=5,viewEpoch=0;
  const node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
  const btn=(text,fn,cls)=>{const b=node('button',text,cls);b.type='button';b.onclick=()=>run(fn);return b;};
@@ -125,7 +125,7 @@
   const table=node('table'),head=table.createTHead().insertRow();for(const value of data.rows[1])head.append(node('th',value));const tbody=table.createTBody();
   data.rows.slice(2).forEach(values=>{const row=tbody.insertRow();values.forEach((value,index)=>{row.insertCell().textContent=typeof value==='number'&&(index===4||index===5)?money(value):value;});});body.append(table);dialog.append(heading,body);document.body.append(dialog);dialog.showModal();
  }
- async function download(path,filename,body){const r=await ZZWS.request(path,body?{method:'POST',body:JSON.stringify(body)}:{});if(!r.ok)throw new Error('Չհաջողվեց ներբեռնել ֆայլը');const url=URL.createObjectURL(await r.blob()),a=node('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+ async function download(path,filename,body){const r=await ZZWS.request(path,body?{method:'POST',body:JSON.stringify(body)}:{});if(!r.ok)throw new Error('Չհաջողվեց ներբեռնել ֆայլը');const url=URL.createObjectURL(await ZZWS_I18N_WORKBOOKS.localizeBlob(await r.blob())),a=node('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
  function reset(){++viewEpoch;document.getElementById('orderViewDialog')?.remove();window.ZZWS_REPORT_EMAIL?.reset();document.getElementById('orderExportPreviewDialog')?.remove();running=false;++pollSession;++summaryEpoch;pollBusy=false;summaryVersion=null;const badge=el('adminUnreadOrderBadge');if(badge){badge.hidden=true;badge.textContent='';}window.ZZWS_ADMIN_RECEIPTS?.reset();++listEpoch;++editorEpoch;++operation;clearTimeout(searchTimer);if(timer)clearInterval(timer);timer=null;list=[];listKey=null;selected=null;manualRows=[];preview=null;dirty=false;busy=false;el('adminOrderList').replaceChildren();el('adminOrderEditor').hidden=true;}
  async function refreshUnread(){
   if(!running||document.documentElement.dataset.orderRead!=='true')return null;const session=pollSession,ticket=++summaryEpoch;

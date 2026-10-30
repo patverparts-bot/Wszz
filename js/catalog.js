@@ -33,8 +33,8 @@ function reconcileFilterSelections() {
 function renderDependentFilterOptions() {
   const brandQuery = document.getElementById('brandInput').value.trim().toLowerCase();
   const categoryQuery = document.getElementById('categoryInput').value.trim().toLowerCase();
-  renderBrandDropdown(getBrandOptionsForSelectedCategories().filter(b => b.toLowerCase().includes(brandQuery)));
-  renderCategoryDropdown(getCategoryOptionsForSelectedBrands().filter(c => c.toLowerCase().includes(categoryQuery)));
+  renderBrandDropdown(getBrandOptionsForSelectedCategories().filter(b => ZZWS_I18N.search(b,brandQuery)));
+  renderCategoryDropdown(getCategoryOptionsForSelectedBrands().filter(c => ZZWS_I18N.search(c,categoryQuery)));
 }
 
 function renderBrandDropdown(brands) {
@@ -54,7 +54,7 @@ function showBrandDropdown() { document.getElementById('brandDropdown').classLis
 function filterBrandOptions() {
   const query = document.getElementById('brandInput').value.trim().toLowerCase();
   document.getElementById('clearBrandBtn').classList.toggle('hidden', !query && !selectedBrands.length);
-  renderBrandDropdown(getBrandOptionsForSelectedCategories().filter(b => b.toLowerCase().includes(query)));
+  renderBrandDropdown(getBrandOptionsForSelectedCategories().filter(b => ZZWS_I18N.search(b,query)));
   showBrandDropdown();
 }
 
@@ -106,7 +106,7 @@ function showCategoryDropdown() { document.getElementById('categoryDropdown').cl
 function filterCategoryOptions() {
   const query = document.getElementById('categoryInput').value.trim().toLowerCase();
   document.getElementById('clearCategoryBtn').classList.toggle('hidden', !query && !selectedCategories.length);
-  renderCategoryDropdown(getCategoryOptionsForSelectedBrands().filter(c => c.toLowerCase().includes(query)));
+  renderCategoryDropdown(getCategoryOptionsForSelectedBrands().filter(c => ZZWS_I18N.search(c,query)));
   showCategoryDropdown();
 }
 
@@ -331,12 +331,12 @@ if (catalogIsAdmin() && p.retail > 0 && p.wholesale > 0) {
   }
 }
 
-let retailCellHtml = p.retail > 0 ? (p.isPromo ? `<div class="flex flex-col items-end"><span class="text-gray-900 dark:text-white font-medium whitespace-nowrap">${p.retail.toLocaleString('hy-AM')} ֏</span><span class="px-1.5 py-0.5 bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 rounded text-[10px] font-bold mt-0.5 border border-red-200 dark:border-red-800 whitespace-nowrap">ԱԿՑԻԱ</span></div>` : `<span class="text-gray-600 dark:text-gray-400 whitespace-nowrap">${p.retail.toLocaleString('hy-AM')} ֏</span>`) : '—';
-let wholesaleCellHtml = p.wholesale > 0 ? (p.isWholesalePromo ? `<div class="flex flex-col items-end"><span class="text-gray-900 dark:text-white font-semibold whitespace-nowrap">${p.wholesale.toLocaleString('hy-AM')} ֏</span><span class="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded text-[10px] font-bold mt-0.5 border border-emerald-200 dark:border-emerald-800 whitespace-nowrap">Ակցիա</span></div>` : `<span class="text-gray-900 dark:text-white font-semibold whitespace-nowrap">${p.wholesale.toLocaleString('hy-AM')} ֏</span>`) : '—';
+let retailCellHtml = p.retail > 0 ? (p.isPromo ? `<div class="flex flex-col items-end"><span class="text-gray-900 dark:text-white font-medium whitespace-nowrap">${p.retail.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'))} ֏</span><span class="px-1.5 py-0.5 bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 rounded text-[10px] font-bold mt-0.5 border border-red-200 dark:border-red-800 whitespace-nowrap">ԱԿՑԻԱ</span></div>` : `<span class="text-gray-600 dark:text-gray-400 whitespace-nowrap">${p.retail.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'))} ֏</span>`) : '—';
+let wholesaleCellHtml = p.wholesale > 0 ? (p.isWholesalePromo ? `<div class="flex flex-col items-end"><span class="text-gray-900 dark:text-white font-semibold whitespace-nowrap">${p.wholesale.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'))} ֏</span><span class="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded text-[10px] font-bold mt-0.5 border border-emerald-200 dark:border-emerald-800 whitespace-nowrap">Ակցիա</span></div>` : `<span class="text-gray-900 dark:text-white font-semibold whitespace-nowrap">${p.wholesale.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'))} ֏</span>`) : '—';
 
 let priceTdsHtml = `<td class="text-center">${marginBadge}</td><td class="text-right">${wholesaleCellHtml}</td>`;
 if (catalogIsAdmin()) {
-  const kpFmt = p.kpPrice > 0 ? p.kpPrice.toLocaleString('hy-AM') + ' ֏' : '';
+  const kpFmt = p.kpPrice > 0 ? p.kpPrice.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM')) + ' ֏' : '';
   const kpHtml = !kpFmt ? '' : (p.kpIsPromo
     ? `<div class="flex flex-col items-end"><span class="text-gray-900 dark:text-white font-semibold whitespace-nowrap">${kpFmt}</span><span class="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded text-[10px] font-bold mt-0.5 border border-emerald-200 dark:border-emerald-800 whitespace-nowrap">Ակցիա</span></div>`
     : `<span class="text-gray-900 dark:text-white font-semibold whitespace-nowrap">${kpFmt}</span>`);
@@ -346,7 +346,7 @@ if (catalogIsAdmin()) {
 const searchUrl = `https://www.zigzag.am/am/catalogsearch/result/?q=${encodeURIComponent(p.articul)}`;
 const cartItem = cart[p.articul];
 const actionCellHtml = getActionControlHtml(p.articul, cartItem);
-const resaleColHtml = catalogIdentity()?.allowResale ? `<td class="text-right text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap">${p.resaleWholesale ? p.resaleWholesale.toLocaleString('hy-AM') + ' ֏' : '—'}</td>` : '';
+const resaleColHtml = catalogIdentity()?.allowResale ? `<td class="text-right text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap">${p.resaleWholesale ? p.resaleWholesale.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM')) + ' ֏' : '—'}</td>` : '';
 
 const isFav = favoritesSet.has(p.articul);
 const starIcon = isFav ? '⭐' : '☆';
@@ -441,9 +441,9 @@ div.innerHTML = `
 
 <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-700/40 p-2.5 rounded-xl border border-gray-100 dark:border-gray-700 mt-auto">
   <div>
-    <div class="text-[11px] text-gray-500 dark:text-gray-400">Մանրածախ: <span class="font-medium text-gray-700 dark:text-gray-300">${p.retail ? p.retail.toLocaleString('hy-AM') + ' ֏' : '—'}</span></div>
-    ${catalogIsAdmin() ? `<div class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">Խոշոր գործընկերոջ գին՝ <span class="font-bold text-gray-800 dark:text-gray-200">${p.kpPrice > 0 ? p.kpPrice.toLocaleString('hy-AM') + ' ֏' : ''}</span> (${kpMarginBadge})${p.kpIsPromo ? ' <span class="px-1 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[9px] font-bold">Ակցիա</span>' : ''}</div>` : ''}
-    <div class="text-sm font-black text-emerald-600 dark:text-emerald-400 mt-0.5">${catalogIsAdmin() ? 'WS: ' : ''}${p.wholesale ? p.wholesale.toLocaleString('hy-AM') + ' ֏' : '—'} ${catalogIsAdmin() ? '(' + marginBadge + ')' : ''}</div>
+    <div class="text-[11px] text-gray-500 dark:text-gray-400">Մանրածախ: <span class="font-medium text-gray-700 dark:text-gray-300">${p.retail ? p.retail.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM')) + ' ֏' : '—'}</span></div>
+    ${catalogIsAdmin() ? `<div class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">Խոշոր գործընկերոջ գին՝ <span class="font-bold text-gray-800 dark:text-gray-200">${p.kpPrice > 0 ? p.kpPrice.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM')) + ' ֏' : ''}</span> (${kpMarginBadge})${p.kpIsPromo ? ' <span class="px-1 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[9px] font-bold">Ակցիա</span>' : ''}</div>` : ''}
+    <div class="text-sm font-black text-emerald-600 dark:text-emerald-400 mt-0.5">${catalogIsAdmin() ? 'WS: ' : ''}${p.wholesale ? p.wholesale.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM')) + ' ֏' : '—'} ${catalogIsAdmin() ? '(' + marginBadge + ')' : ''}</div>
   </div>
   <div class="js-action" data-art="${escapeHtml(p.articul)}">${getActionControlHtml(p.articul, cartItem, true)}</div>
 </div>

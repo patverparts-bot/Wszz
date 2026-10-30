@@ -1,8 +1,8 @@
 (() => {
  const labels={new:'Նոր',confirmed:'Հաստատված',in_progress:'Ընթացքում',completed:'Առաքված է',rejected:'Մերժված',received:'Ստացված է'};
  let owner=null,timer=null,events=[],orders=[],busy=false,loadTicket=0,noticeSeen=new Set(),readRevisions=new Map();
- const el=id=>document.getElementById(id),money=v=>Number(v||0).toLocaleString('hy-AM')+' ֏';
- const date=v=>new Date(v).toLocaleString('hy-AM',{timeZone:'Asia/Yerevan'});
+ const el=id=>document.getElementById(id),money=v=>Number(v||0).toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'))+' ֏';
+ const date=v=>new Date(v).toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'),{timeZone:'Asia/Yerevan'});
  const node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
  function unreadBadge(id){const unread=events.filter(e=>e.order_id===id);if(!unread.length)return null;const event=unread.find(e=>ZZWS_ORDER_COMPARE.eventNotice(e).changed)||unread[0],notice=ZZWS_ORDER_COMPARE.eventNotice(event);const badge=node('span',notice.text,'order-unread'+(notice.changed?'':' order-unread-info'));badge.dataset.orderUpdate='';return badge;}
  function refreshUnreadBadges(){for(const card of el('serverOrdersList').querySelectorAll('[data-order-id]')){const identity=card.querySelector('summary > div');identity?.querySelector('[data-order-update]')?.remove();const badge=unreadBadge(card.dataset.orderId);if(identity&&badge)identity.append(badge);}}

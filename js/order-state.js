@@ -192,7 +192,7 @@ function updateOrderPanel() {
   if (totalCount > 0) {
     orderPanel.classList.remove('hidden');
     document.getElementById('orderCount').innerText = `${totalCount} ապրանք`;
-    document.getElementById('orderSum').innerText = totalSum.toLocaleString('hy-AM') + ' ֏';
+    document.getElementById('orderSum').innerText = totalSum.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM')) + ' ֏';
     if (badgeDesk) { badgeDesk.innerText = totalCount; badgeDesk.classList.remove('hidden'); }
   } else {
     orderPanel.classList.add('hidden');
@@ -273,8 +273,8 @@ function renderModalItems() {
 
     let priceDiffNotice = '';
     if (item.addedPrice && item.addedPrice !== currentPrice && currentPrice > 0) {
-      const wasPriceStr = item.addedPrice.toLocaleString('hy-AM');
-      const isPriceStr = currentPrice.toLocaleString('hy-AM');
+      const wasPriceStr = item.addedPrice.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'));
+      const isPriceStr = currentPrice.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'));
       const diffColor = currentPrice > item.addedPrice ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900' : 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-900';
       priceDiffNotice = `<button type="button" data-act="ack-price" data-art="${escapeHtml(articul)}" class="px-2 py-0.5 text-[10px] font-bold rounded border ${diffColor} whitespace-nowrap">Գինը փոխվել է: ${wasPriceStr} ֏ → ${isPriceStr} ֏ ✕</button>`;
     }
@@ -287,19 +287,19 @@ function renderModalItems() {
         ${priceDiffNotice ? `<div class="basket-price-notice">${priceDiffNotice}</div>` : ''}
       </div>
       <div class="basket-item-details">
-        <div class="basket-unit-price"><span class="basket-field-label">Միավորի գին${isAdminUser() ? ` (${escapeHtml(getOrderPriceLabel())})` : ''}</span><strong>${currentPrice > 0 ? currentPrice.toLocaleString('hy-AM') + ' ֏' : 'Գին չկա'}</strong></div>
+        <div class="basket-unit-price"><span class="basket-field-label">Միավորի գին${isAdminUser() ? ` (${escapeHtml(getOrderPriceLabel())})` : ''}</span><strong>${currentPrice > 0 ? currentPrice.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM')) + ' ֏' : 'Գին չկա'}</strong></div>
         <div class="basket-quantity"><span class="basket-field-label">Քանակ (հատ)</span><div class="basket-quantity-control print-hidden">
           <button type="button" data-act="mqty" data-delta="-1" data-art="${escapeHtml(articul)}" aria-label="Նվազեցնել քանակը">−</button>
           <input type="number" data-act="mqty-input" data-art="${escapeHtml(articul)}" value="${item.qty}" min="1" max="9999" aria-label="Ապրանքի քանակ">
           <button type="button" data-act="mqty" data-delta="1" data-art="${escapeHtml(articul)}" aria-label="Ավելացնել քանակը">+</button>
         </div><span class="print-only">${item.qty}</span></div>
-        <div class="basket-line-total"><span class="basket-field-label">Ընդհանուր գումար</span><strong>${sum.toLocaleString('hy-AM')} ֏</strong></div>
+        <div class="basket-line-total"><span class="basket-field-label">Ընդհանուր գումար</span><strong>${sum.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'))} ֏</strong></div>
       </div>`;
     listContainer.appendChild(div);
   });
 
   if (bodyEl) bodyEl.scrollTop = prevScroll;
-  document.getElementById('modalTotalSum').innerText = totalSum.toLocaleString('hy-AM') + ' ֏';
+  document.getElementById('modalTotalSum').innerText = totalSum.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM')) + ' ֏';
 }
 
 function openOrderModal() {
@@ -389,7 +389,7 @@ function saveOrderToHistory(cartItems, orgName, totalSum, actionType = 'Excel') 
 
     const newOrder = {
       id: 'ORD-' + Date.now(),
-      date: new Date().toLocaleString('hy-AM'),
+      date: new Date().toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM')),
       organization: orgName || authorizedClient,
       totalSum: totalSum,
       itemsCount: Object.keys(cartItems).length,
@@ -451,7 +451,7 @@ function renderOrderHistoryList() {
         const price = item.price || (prod ? prod.wholesale : (item.addedPrice || 0));
         return `<div class="text-[11px] text-gray-600 dark:text-gray-300 flex justify-between gap-2 border-b border-gray-100 dark:border-gray-700/50 py-0.5">
           <span class="truncate">🔹 <strong class="font-mono">${escapeHtml(item.articul)}</strong> - ${escapeHtml(name)}</span>
-          <span class="whitespace-nowrap font-medium">${item.qty} հատ × ${price.toLocaleString('hy-AM')} ֏</span>
+          <span class="whitespace-nowrap font-medium">${item.qty} հատ × ${price.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'))} ֏</span>
         </div>`;
       }).join('');
     }
@@ -471,7 +471,7 @@ function renderOrderHistoryList() {
           </div>
           <div class="text-right">
             <div class="text-xs text-gray-500 dark:text-gray-400">Ընդհանուր՝</div>
-            <div class="text-sm font-black text-green-600 dark:text-green-400">${Number(ord.totalSum).toLocaleString('hy-AM')} ֏</div>
+            <div class="text-sm font-black text-green-600 dark:text-green-400">${Number(ord.totalSum).toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'))} ֏</div>
           </div>
         </div>
 

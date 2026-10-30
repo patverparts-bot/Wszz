@@ -1,6 +1,6 @@
 /* DOM-based editors: customer-controlled names are never interpolated into HTML. */
 (() => {
-  let nextId=0;
+  let nextId=0;const localizedCategories=new WeakMap();window.addEventListener('zzws:languagechange',()=>{for(const input of document.querySelectorAll('[data-rule-field=category]'))localizedCategories.get(input)?.();});
   const normalized=v=>String(v||'').normalize('NFKC').toLowerCase().trim();
   const node=(tag,text,className)=>{const n=document.createElement(tag);if(text)n.textContent=text;if(className)n.className=className;return n;};
   const option=(value,text)=>{const n=node('option',text);n.value=value;return n;};
@@ -14,7 +14,7 @@
     function row(value,kind){
       const wrap=node('div',null,'pair-row');wrap.dataset.pairKind=kind;
       const brand=node('input'),category=node('input'),match=node('select');
-      brand.value=value.brand||'';category.value=value.category||'';
+      brand.value=value.brand||'';category.value=ZZWS_I18N.t(value.category||'');const canonicalCategories=[...new Set(pairs.map(p=>p.category))];let canonicalCategory=value.category||'',lastDisplay=category.value;const readCategory=()=>category.value===lastDisplay?canonicalCategory:ZZWS_I18N.canonical(category.value,canonicalCategories);localizedCategories.set(category,()=>{canonicalCategory=readCategory();category.value=ZZWS_I18N.t(canonicalCategory);lastDisplay=category.value;refresh();});
       brand.placeholder='Ցանկացած բրենդ';category.placeholder='Ցանկացած կատեգորիա';
       brand.dataset.ruleField='brand';category.dataset.ruleField='category';match.dataset.ruleField='match';
       match.append(option('exact','Ճշգրիտ կատեգորիա'),option('contains','Անվանումը պարունակում է'));
@@ -23,16 +23,16 @@
       brand.setAttribute('list',brands.id);category.setAttribute('list',categories.id);
       const hint=node('small',null,'pair-hint');
       function refresh(){
-        const b=normalized(brand.value),c=normalized(category.value);
+        const b=normalized(brand.value),c=normalized(readCategory());
         const hasCategory=p=>!c||(match.value==='contains'?normalized(p.category).includes(c):normalized(p.category)===c);
         brands.replaceChildren(...unique(pairs.filter(hasCategory).map(p=>p.brand)).map(b=>option(b,b)));
-        categories.replaceChildren(...unique(pairs.filter(p=>!b||normalized(p.brand)===b).map(p=>p.category)).map(c=>option(c,c)));
+        categories.replaceChildren(...unique(pairs.filter(p=>!b||normalized(p.brand)===b).map(p=>p.category)).map(c=>option(ZZWS_I18N.t(c),ZZWS_I18N.t(c))));
         const exists=pairs.some(p=>(!b||normalized(p.brand)===b)&&hasCategory(p));
         hint.textContent=(!b&&!c)?'Ընտրեք բրենդը կամ կատեգորիան։':exists?'':'Գործող գնացուցակում նման կապ չկա։ Կանոնը կպահպանվի ապագա ապրանքների համար։';
       }
       brand.oninput=category.oninput=match.onchange=refresh;
       const item={element:wrap,read:()=>{
-        const b=brand.value.trim(),c=category.value.trim();
+        const b=brand.value.trim(),c=readCategory().trim();
         if(!b&&!c)throw new Error('Յուրաքանչյուր ավելացված կապում լրացրեք բրենդը կամ կատեգորիան կամ ջնջեք դատարկ տողը։');
         return {brand:b,category:c,categoryMatch:match.value};
       }};

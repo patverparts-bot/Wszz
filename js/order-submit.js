@@ -18,12 +18,12 @@ function buildEmailFormattedText() {
     const price = getItemWholesalePrice(item);
     const sum = price * item.qty;
     total += sum;
-    text += `${i}. Արտիկուլ: ${getItemArticul(artKey, item)}\n   Անվանում: ${getItemName(item)}\n   Միավորի գին: ${price.toLocaleString('hy-AM')} ֏ | Քանակ: ${item.qty} հատ\n   Գումար: ${sum.toLocaleString('hy-AM')} ֏\n\n`;
+    text += `${i}. Արտիկուլ: ${getItemArticul(artKey, item)}\n   Անվանում: ${getItemName(item)}\n   Միավորի գին: ${price.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'))} ֏ | Քանակ: ${item.qty} հատ\n   Գումար: ${sum.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'))} ֏\n\n`;
     i++;
   });
-  text += `ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('hy-AM')} ֏\n`;
+  text += `ԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'))} ֏\n`;
   text += `Գնացուցակի թարմացում՝ ${cachedPriceDateText || '—'}`;
-  return text;
+  return ZZWS_I18N.t(text);
 }
 
 function buildViberFormattedText() {
@@ -43,9 +43,9 @@ function buildViberFormattedText() {
   if (delivDate) text += `Ցանկալի առաքման ամսաթիվ: ${delivDate}\n`;
   if (delivAddr) text += `Առաքման հասցե: ${delivAddr}\n`;
   if (comment) text += `Մեկնաբանություն: ${comment}\n`;
-  text += `\nԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString('hy-AM')} ֏\n`;
+  text += `\nԸՆԴՀԱՆՈՒՐ ԳՈՒՄԱՐ՝ ${total.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'))} ֏\n`;
   text += `Գնացուցակի թարմացում՝ ${cachedPriceDateText || '—'}`;
-  return text;
+  return ZZWS_I18N.t(text);
 }
 
 function sendViaViber() {
@@ -123,7 +123,7 @@ function generateAndDownloadExcel(isFromExternal = false) {
   const pad = n => String(n).padStart(2, '0');
   const uniqueFileName = `Zakaz_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}.xlsx`;
 
-  try{XLSX.writeFile(workbook, uniqueFileName);}catch(error){console.error('Excel export failed');alert('Չհաջողվեց ստեղծել Excel ֆայլը։ Զամբյուղը պահպանված է։');return false;}
+  try{XLSX.writeFile(ZZWS_I18N_WORKBOOKS.localizeWorkbook(workbook), uniqueFileName);}catch(error){console.error('Excel export failed');alert('Չհաջողվեց ստեղծել Excel ֆայլը։ Զամբյուղը պահպանված է։');return false;}
   if(!isFromExternal)saveOrderToHistory(cart, orgName, currentTotalSum, 'Excel');
   closeOrderModal();
   document.getElementById('successOverlay').classList.remove('hidden');

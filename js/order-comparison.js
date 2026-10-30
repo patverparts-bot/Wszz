@@ -1,5 +1,5 @@
 (() => {
- const money=value=>Number(value||0).toLocaleString('hy-AM')+' ֏';
+ const money=value=>Number(value||0).toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'))+' ֏';
  const node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
  function model(original,current){
   const now=new Map(current.map(row=>[row.articul,row])),old=new Set(original.map(row=>row.articul));
@@ -34,7 +34,7 @@
   const final=node('strong',money(values.current),'order-total-current');final.title='Վերջնական ընդհանուր գումար';root.append(final);if(values.changed)root.classList.add('order-total-changed');return root;
  }
  function hasLineChanges(before,after){return model(before,after).some(row=>!row.before||!row.after||['qty','unitPrice'].some(key=>Number(row.before[key])!==Number(row.after[key])));}
- const normalized=value=>String(value??'').normalize('NFKC').toLocaleLowerCase('hy-AM').replace(/\s+/gu,' ').trim();
+ const normalized=value=>String(value??'').normalize('NFKC').toLocaleLowerCase((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM')).replace(/\s+/gu,' ').trim();
  function confirmationCustomer(metadata,customer,delivery={}){
   const login=normalized(customer?.login),reported=normalized(metadata?.customer),organization=normalized(metadata?.organization);
   const code=metadata?.format==='zigzag_sales_report'?reported.match(/^(\d+)(?:\s|$)/)?.[1]:null;

@@ -76,10 +76,10 @@ el('logout').onclick = () => run(async () => { await api('logout',{method:'POST'
 document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => run(()=>selectAdminTab(b.dataset.tab)));
 el('priceForm').onsubmit = e => { e.preventDefault(); run(async () => {
   draft = null; el('preview').hidden = true; status('Ֆայլը ստուգվում է…');
-  const d = await api('admin/price/preview',{method:'POST',body:new FormData(e.target)});
+  const d = await api('admin/price/preview',{method:'POST',body:await ZZWS_I18N_WORKBOOKS.userImport(new FormData(e.target),categoryLabels)});
   draft = d.draft;const difference=d.difference;el('priceDifference').textContent=difference?'Ավելացված՝ '+difference.added+' · հեռացված՝ '+difference.removed+' · գինը փոխված՝ '+difference.changed+' · անփոփոխ՝ '+difference.unchanged:'';el('priceWarnings').replaceChildren(...(difference?.warnings||[]).map(w=>{const p=document.createElement('p');p.textContent=w.articul+' · '+w.name+' · '+({ws:'Մեծածախ գին',kp:'Խոշոր գործընկերոջ գին',kpPromo:'Խոշոր գործընկերոջ ակցիոն գին',retail:'Զեղչված մանրածախ գին',base:'Հիմնական մանրածախ գին'}[w.source]||'Գին')+': '+w.before+' → '+w.after+' ('+w.percent+'%)';return p;})); const counts=d.priceSummary;
   el('summary').textContent = `Ֆայլում ստուգված ապրանքներ՝ ${d.count}։ `+(counts?`Մեծածախ գին ունի՝ ${counts.ws}։ Խոշոր գործընկերոջ հիմնական գին՝ ${counts.kp}։ Խոշոր գործընկերոջ ակցիոն գին՝ ${counts.kpPromo}։ Առանց որևէ մեծածախ գնի՝ ${counts.withoutWholesale}։ `:'')+(d.sampleMode==='priced'?'Ստորև ցույց են տրված մինչև հինգ օրինակ՝ մեծածախ գնով։ Սա ամբողջ ցանկը չէ։':'Ստորև ֆայլի առաջին մինչև հինգ տողերի օրինակներն են։ Սա ամբողջ ցանկը չէ։')+' «—» նշանակում է՝ այս տեսակի գին ֆայլում նշված չէ կամ զրոյական է․ ապրանքը անվճար չէ։ Ցուցադրված են ֆայլի գները․ հաճախորդի վերջնական գինը որոշվում է նրա կատեգորիայի կանոններով։';
-  const price=value=>value>0?Number(value).toLocaleString('hy-AM')+' ֏':'—';
+  const price=value=>value>0?Number(value).toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'))+' ֏':'—';
   el('sample').replaceChildren(table(['Արտիկուլ','Բրենդ','Անվանում','Մանրածախ գին','Մեծածախ գին','Խոշոր գործընկերոջ հիմնական գին','Խոշոր գործընկերոջ ակցիոն գին'],d.sample.map(p => [p.articul,p.brand,p.name,price(p.retail),price(p.ws),price(p.kp),price(p.kpPromo)])));
   el('preview').hidden = false; status('Ֆայլը ստուգված է։ Գործող գնացուցակը դեռ չի փոխվել։');
 }); };
@@ -89,7 +89,7 @@ el('publish').onclick = () => run(async () => { if (!draft) return; el('publish'
 } finally { el('publish').disabled = false; } });
 async function loadVersions() {
   const d = await api('admin/price/versions');
-  el('versions').replaceChildren(table(['Ամսաթիվ','Տարբերակ','Գործողություն'],d.versions.map(v => [new Date(v.created*1000).toLocaleString('hy-AM',{timeZone:'Asia/Yerevan'}),v.label?'№'+v.label:'Գնացուցակ · '+new Date(v.created*1000).toLocaleString('hy-AM',{timeZone:'Asia/Yerevan'}),
+  el('versions').replaceChildren(table(['Ամսաթիվ','Տարբերակ','Գործողություն'],d.versions.map(v => [new Date(v.created*1000).toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'),{timeZone:'Asia/Yerevan'}),v.label?'№'+v.label:'Գնացուցակ · '+new Date(v.created*1000).toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'),{timeZone:'Asia/Yerevan'}),
     v.id === d.active ? 'Գործող' : button('Վերականգնել', async () => { if (!confirm('Վերադարձնե՞լ գնացուցակի այս տարբերակը։')) return; await api('admin/price/rollback',{method:'POST',body:JSON.stringify({version:v.id})}); await loadVersions(); status('Տարբերակը վերականգնված է'); })])));
 }
 async function loadUsers() {
@@ -132,7 +132,7 @@ el('issueInvitation').onclick=()=>run(async()=>{const target=users.find(u=>u.id=
 el('newUser').onclick = () => editUser(); el('cancelUser').onclick = () => { el('userForm').hidden = true; };
 el('usersImportForm').onsubmit = e => { e.preventDefault(); run(async () => {
   userDraft = null; el('usersPreview').hidden = true;
-  const d = await api('admin/users/preview',{method:'POST',body:new FormData(e.target)});
+  const d = await api('admin/users/preview',{method:'POST',body:await ZZWS_I18N_WORKBOOKS.userImport(new FormData(e.target),categoryLabels)});
   userDraft = d.draft;
   const scopeLabels={owner:'Սեփականատեր՝ ամբողջ հասանելիություն',manager:'Պատվերների մենեջեր',price:'Գնացուցակի օպերատոր',viewer:'Միայն դիտում'},receiptLabels={inherit:'Ընդհանուր կարգավորում',on:'Միացված է',off:'Անջատված է',until:'Ժամանակավորապես անջատված է'},yes=value=>value==null?'Պահպանել նախկինը':value?'Այո':'Ոչ';
   el('usersChanges').replaceChildren(table(['Մուտքանուն','Անվանում','Գործողություն','Դեր','Կատեգորիա','Հասանելիություն','Աշխատակցի իրավունքներ','Android','Telegram','Ստուգում (վրկ)','Ստացման վերահսկում','Ապրանքների կանոններ'],d.users.map(u=>[u.login,u.client,u.action==='create'?'Նոր հաշիվ':'Թարմացնել և ավարտել աշխատաշրջանները',u.role==='admin'?'Ադմինիստրատոր':'Հաճախորդ',categoryLabel(u.sheet),yes(u.active),u.role==='admin'?(scopeLabels[u.scope]||'Իրավունքները նշանակված չեն'):'Չի կիրառվում',yes(u.mobile),yes(u.telegram),u.refresh??'—',receiptLabels[u.receipt]||'Պահպանել նախկինը',u.accessChanged?'Փոխվում են':'Պահպանել նախկինը'])));
@@ -257,7 +257,7 @@ el('setupForm').onsubmit = e => { e.preventDefault(); run(async () => {
 }); };
 el('userTemplate').onclick = () => run(async () => {
   const response=await ZZWS.request('admin/users/template'); if(!response.ok)throw new Error('Մուտք գործեք որպես ադմինիստրատոր');
-  const url=URL.createObjectURL(await response.blob());const a=document.createElement('a');a.href=url;a.download='Users-template.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  const url=URL.createObjectURL(await ZZWS_I18N_WORKBOOKS.localizeBlob(await response.blob()));const a=document.createElement('a');a.href=url;a.download='Users-template.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 });
 
 // The category editor is a separate window; drafts only affect prices after explicit save.

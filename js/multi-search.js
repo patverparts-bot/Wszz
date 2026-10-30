@@ -3,7 +3,7 @@
  let priorText=null,priorProducts=null,priorResult=null;
  function compile(raw,products){
   if(raw===priorText&&products===priorProducts)return priorResult;
-  const indexed=products.map(p=>({articul:p.articul,code:normalize(p.articul),name:normalize(p.name)})),parts=[];
+  const indexed=products.map(p=>({articul:p.articul,code:normalize(p.articul),name:normalize(p.name)+" "+normalize(ZZWS_I18N.russian(p.name))})),parts=[];
   const matchesTerm=(p,text)=>/^\d+$/.test(text)?p.code===text:p.code===text||p.name.includes(text);
   const found=text=>indexed.some(p=>matchesTerm(p,text));
   if(/[,;\n]/.test(raw)){

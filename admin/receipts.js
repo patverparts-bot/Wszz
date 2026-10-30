@@ -27,6 +27,6 @@
   }catch(e){if(e.status===401)reset();}}
  function start(user){reset();admin=user.id;owner=(user.permissions||[]).includes('users');el('receiptGlobalPanel').hidden=!owner;if(owner)loadGlobal();poll();}
  function reset(){admin=null;owner=false;++clientTicket;++noticeTicket;++globalTicket;for(const id of ['receiptGlobalControls','clientReceiptControls','adminReceiptNoticeList'])el(id)?.replaceChildren();for(const id of ['adminReceiptNotices','adminReceiptBadge','clientReceiptControlPanel'])if(el(id))el(id).hidden=true;}
- function proof(order,root){root.replaceChildren();root.hidden=!order.received_at;if(order.received_at){root.append(node('strong','Հաճախորդը հաստատել է ստացումը'),node('p',order.receipt?.statement||'Ապրանքներն ամբողջությամբ և առանց վնասվածքների ստացված են։'),node('small',new Date(order.received_at).toLocaleString('hy-AM',{timeZone:'Asia/Yerevan'})));}}
+ function proof(order,root){root.replaceChildren();root.hidden=!order.received_at;if(order.received_at){root.append(node('strong','Հաճախորդը հաստատել է ստացումը'),node('p',order.receipt?.statement||'Ապրանքներն ամբողջությամբ և առանց վնասվածքների ստացված են։'),node('small',new Date(order.received_at).toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'),{timeZone:'Asia/Yerevan'})));}}
  window.ZZWS_ADMIN_RECEIPTS={start,reset,poll,loadClient,loadGlobal,proof};
 })();

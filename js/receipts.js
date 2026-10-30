@@ -13,7 +13,7 @@
  function stop(){owner=null;state=null;submitting=false;++ticket;el('receiptConfirmationDialog')?.remove();for(const id of ['receiptLimitNotice','receiptCartNotice','receiptResultNotice'])if(el(id)){el(id).replaceChildren();el(id).hidden=true;}}
  function showPending(){closeOrderModal();el('pendingReceiptOnly').checked=true;openPersonalCabinet();ZZWS_ORDERS.load();}
  function render(order,root){
-  if(order.received_at){const proof=node('div',null,'receipt-proof');proof.append(node('strong','Ստացումն արդեն հաստատված է'),node('p',order.receipt?.statement||'Ապրանքներն ամբողջությամբ և առանց վնասվածքների ստացված են։'),node('small',new Date(order.received_at).toLocaleString('hy-AM',{timeZone:'Asia/Yerevan'})));root.append(proof);return;}
+  if(order.received_at){const proof=node('div',null,'receipt-proof');proof.append(node('strong','Ստացումն արդեն հաստատված է'),node('p',order.receipt?.statement||'Ապրանքներն ամբողջությամբ և առանց վնասվածքների ստացված են։'),node('small',new Date(order.received_at).toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'),{timeZone:'Asia/Yerevan'})));root.append(proof);return;}
   if(!['confirmed','in_progress','completed'].includes(order.status)){root.append(node('p',order.status==='new'?'Ստացումը կարող եք հաստատել ադմինիստրատորի կողմից պատվերը հաստատելուց հետո։':order.status==='rejected'?'Մերժված պատվերի ստացումը չի հաստատվում։':'Այս կարգավիճակով ստացման հաստատումը հասանելի չէ։','order-info'));return;}
   const button=node('button','Հաստատել ապրանքների ստացումը','confirm-receipt-button');button.type='button';button.onclick=()=>confirmReceipt(order).catch(e=>alert(ZZWS.message(e)));root.append(button);
  }

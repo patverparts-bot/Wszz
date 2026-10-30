@@ -26,7 +26,7 @@
   const who=window.ZZWS_HELP_USER,dialog=document.createElement('dialog');document.getElementById('contextGuideDialog')?.remove();dialog.id='contextGuideDialog';dialog.className='zzws-context-guide';dialog.setAttribute('aria-label',labels[topic]);
   const close=document.createElement('button');close.type='button';close.textContent='Փակել';close.onclick=()=>{dialog.close();dialog.remove();};const root=document.createElement('div');root.className='context-guide-body';root.textContent='Բեռնվում է…';const header=document.createElement('div');header.className='context-guide-header';const title=document.createElement('h2');title.textContent='Օգնություն';header.append(title,close);dialog.append(header,root);document.body.append(dialog);dialog.showModal();
   try{
-   const response=await fetch(guideFor(topic)+'?v=20261030-order-notices');if(!response.ok)throw Error();
+   const response=await fetch(guideFor(topic)+'?v=7.1.0-bilingual');if(!response.ok)throw Error();
    const source=new DOMParser().parseFromString(await response.text(),'text/html');
    if(window.ZZWS_HELP_USER!==who||!allowed(topic)||!dialog.isConnected){dialog.close();dialog.remove();return false;}
    const section=source.getElementById('guide-'+topic)?.closest('section');if(!section)throw Error();root.replaceChildren(document.importNode(section,true));
@@ -41,7 +41,7 @@
    if(!allowed(topic)||(!admin&&(topic.startsWith('admin-')||['confirmation','backup','client-category','bootstrap','mfa','user-sessions','user-emails','channels','invitation-email','report-email','email-settings','offers','receipt-notices','apk-publish'].includes(topic))))continue;
    for(const selector of selectors)for(const target of document.querySelectorAll(selector)){
     if(attached.has(target))continue;
-    const link=document.createElement('a');link.className='context-help';link.dataset.helpTopic=topic;link.dataset.helpTarget=selector;link.href=guideFor(topic)+'#guide-'+topic;link.textContent='?';link.title='Օգնություն․ '+labels[topic];link.setAttribute('aria-label',link.title);
+    const link=document.createElement('a');link.className='context-help';link.dataset.helpTopic=topic;link.dataset.helpTarget=selector;link.href=guideFor(topic)+'?v=7.1.0-bilingual#guide-'+topic;link.textContent='?';link.title='Օգնություն․ '+labels[topic];link.setAttribute('aria-label',link.title);
     link.onclick=event=>{event.preventDefault();event.stopPropagation();openTopic(topic);};
     if(target.matches('input[type=checkbox],input[type=radio]'))(target.closest('label')||target).after(link);
     else if(['INPUT','SELECT','TEXTAREA'].includes(target.tagName)){target.parentElement.classList.add('has-context-help');link.classList.add('field-help');target.parentElement.append(link);}

@@ -34,7 +34,7 @@ function findBulkAddProduct(query) {
 
   const normalizedQuery = query.toLowerCase().replace(/\s+/g, ' ').trim();
   if (!normalizedQuery) return [];
-  return allProducts.filter(product => String(product.name || '').toLowerCase().replace(/\s+/g, ' ').includes(normalizedQuery));
+  return allProducts.filter(product => ZZWS_I18N.search(String(product.name || '').replace(/\s+/g,' '),normalizedQuery));
 }
 
 function resolveBulkAddInput(value) {

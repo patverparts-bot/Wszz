@@ -10,12 +10,12 @@
   Object.assign(copy.hy,{detailsTitle:'Ապրանքի մանրամասները',details:'Բոլոր բնութագրերը',requirements:'Ընտրված պայմանները',exactMatch:'Ճշգրիտ համապատասխանություն',nearMatch:'Մոտ չափերով տարբերակ',nearGroup:'Մոտ չափերով այլընտրանքներ',nearNote:'Այս տարբերակների չափերը տարբերվում են ձեր նշածից։ Համեմատեք չափերը նախքան ընտրելը։',width:'Լայնություն',depth:'Խորություն',height:'Բարձրություն',requested:'Ձեր նշածը',cm:'սմ'});
   Object.assign(copy.hy,{orderableGroup:'Կարելի է ավելացնել զամբյուղ',managerGroup:'Ճշտել մենեջերի հետ',managerNote:'Այս ապրանքները հիմա հնարավոր չէ ավելացնել զամբյուղ։ Գինը և պատվիրելու հնարավորությունը ճշտեք մենեջերի հետ։',notOrderable:'Այս ապրանքի գինը և պատվիրելու հնարավորությունը ճշտեք մենեջերի հետ։',retailReference:'Մանրածախ գինը՝ որպես տեղեկություն։ Պատվերի գինը ճշտեք մենեջերի հետ։'});
   Object.assign(copy.hy,{contactManager:'Կապվել մենեջերի հետ',copyInquiry:'Պատճենել հարցումը',inquiryCopied:'Հարցումը պատճենված է։',copyFailed:'Չհաջողվեց պատճենել։ Կարող եք բացել նամակը։',sku:'Արտիկուլ',publicGroup:'Ձեր կատալոգից դուրս մոդելներ',publicNote:'Այս մոդելները կան zigzag.am-ի ստուգված տվյալներում, բայց ձեր ընթացիկ կատալոգում չկան։ Գինը, հասանելիությունը և պատվիրելու հնարավորությունը ճշտեք մենեջերի հետ։',outsideCatalog:'Այս ապրանքը ձեր կատալոգում չկա։ Գինը, հասանելիությունը և պատվիրելու հնարավորությունը ճշտեք մենեջերի հետ։',budgetUnconfirmed:'Ձեր բյուջեին համապատասխանությունը դեռ հաստատված չէ։',pricePending:'Գինը՝ ճշտել մենեջերի հետ'});
-  const locale = 'hy';
+  let locale = window.ZZWS_I18N?.language||'hy';
   // Existing administrator reply-to address, checked in the current settings.
   const managerEmail = 'levon.grigoryan@zigzag.am';
   let context = [], selected = [], advisor = null, requirements = '', currentMode = 'specifications', controller, revision = 0, busy = false, owner = null;
-  const t = key => copy[locale][key];
-  const cartWidgets = new WeakMap();
+  const t = key => copy.hy[key]??key;
+  const cartWidgets = new WeakMap(),inquiries=new WeakMap();
   const create = (tag, className, text) => { const el = document.createElement(tag); if (className) el.className = className; if (text !== undefined) el.textContent = text; return el; };
   const button = (text, onClick, className) => { const b = create('button', className, text); b.type = 'button'; b.addEventListener('click', onClick); return b; };
   const avatar = size => { const img = create('img'); img.src = 'zigzag-avatar.svg?v=1.2-hy-blue'; img.alt = ''; img.width = img.height = size; return img; };
@@ -64,7 +64,7 @@
     revision++; controller?.abort(); busy = false; controller = null; send.disabled = false; input.value = ''; context = []; selected = []; advisor = null; requirements = ''; currentMode = 'specifications'; messages.replaceChildren(); messages.removeAttribute('aria-busy'); updateContext(); mode.textContent = t('mode');
     if (closeDialog) { if (dialog.open) dialog.close(); owner = null; } else { welcome(); input.focus(); }
   }
-  function bubble(text, user = false) { const el = create('div', 'zigzag-message' + (user ? ' zigzag-message-user' : '')); el.append(create('span', 'zigzag-message-label', user ? t('you') : 'ԶիգԶագ'), document.createTextNode(text)); messages.append(el); return el; }
+  function bubble(text, user = false) { const el = create('div', 'zigzag-message' + (user ? ' zigzag-message-user' : '')); if(user)el.dataset.i18nSkip='true'; el.append(create('span', 'zigzag-message-label', user ? t('you') : 'ԶիգԶագ'), document.createTextNode(text)); messages.append(el); return el; }
   function scroll() { messages.scrollTop = messages.scrollHeight; }
   function revealReply(reply){messages.scrollTo({top:reply.getBoundingClientRect().top-messages.getBoundingClientRect().top+messages.scrollTop-8,behavior:'instant'});}
   function syncCartControls(){for(const root of [messages,detailsBody])for(const widget of root.querySelectorAll('.zigzag-cart-controls'))cartWidgets.get(widget)?.();}
@@ -74,11 +74,11 @@
     let source='';try{const u=new URL(product.sourceUrl);if(u.protocol==='https:'&&u.hostname==='www.zigzag.am'&&!u.username&&!u.password&&!u.port)source='\nԱպրանքի էջ՝ '+u.href;}catch{}
     const message='Բարև ձեզ,\n\nԽնդրում եմ ճշտել այս ապրանքի գինը, հասանելիությունը և պատվիրելու հնարավորությունը։\n\nՄոդել՝ '+product.name+'\nԱրտիկուլ՝ '+product.articul+source;
     const email=create('a','zigzag-contact-manager',t('contactManager'));
-    email.href='mailto:'+managerEmail+'?subject='+encodeURIComponent('Հարցում ապրանքի մասին՝ '+product.name)+'&body='+encodeURIComponent(message);
+    const refreshInquiry=()=>{email.href='mailto:'+managerEmail+'?subject='+encodeURIComponent(ZZWS_I18N.t('Հարցում ապրանքի մասին՝ '+product.name))+'&body='+encodeURIComponent(ZZWS_I18N.t(message));};inquiries.set(email,refreshInquiry);refreshInquiry();
     email.setAttribute('aria-label',t('contactManager')+'՝ '+product.name);
     const copy=button(t('copyInquiry'),async()=>{
       if(serverIdentity?.id!==owner)return;
-      try{await navigator.clipboard.writeText(message);status.textContent=t('inquiryCopied');}catch{status.textContent=t('copyFailed');}
+      try{await navigator.clipboard.writeText(ZZWS_I18N.t(message));status.textContent=t('inquiryCopied');}catch{status.textContent=t('copyFailed');}
     },'zigzag-copy-inquiry');
     links.append(email,copy,status);return links;
   }
@@ -217,6 +217,7 @@
   form.addEventListener('submit', event => { event.preventDefault(); submit(input.value); });
   function askProduct(articul){if(busy)return;open();advisor=null;requirements='';context=[];selected=[];updateContext();return submit(t('example')+articul);}
   document.addEventListener('click', event => { const b = event.target.closest?.('[data-zigzag-art]'); if (b) askProduct(b.dataset.zigzagArt); });
+  window.addEventListener('zzws:languagechange',()=>{locale=ZZWS_I18N.language;labels();updateContext();for(const email of document.querySelectorAll('.zigzag-contact-manager'))inquiries.get(email)?.();});
   labels();
   window.ZZWS_ASSISTANT = Object.freeze({open, reset, ask: askProduct});
 })();
