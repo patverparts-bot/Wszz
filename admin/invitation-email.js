@@ -3,7 +3,7 @@
  const node=(tag,text)=>{const e=document.createElement(tag);if(text)e.textContent=text;return e;};
  window.ZZWS_INVITATION_EMAIL=Object.freeze({async attach(dialog,{targetId,invitation}){
   if(!targetId)return;
-  const panel=node('fieldset'),legend=node('legend','Հրավերն ուղարկել էլ․ փոստով'),status=node('p'),send=node('button','Ուղարկել էլ․ փոստով');send.type='button';send.disabled=true;status.setAttribute('role','status');panel.append(legend,status,send);dialog.append(panel);
+  const panel=node('fieldset'),legend=node('legend','Հրավերն ուղարկել էլ․ փոստով'),status=node('p'),send=node('button','Ուղարկել էլ․ փոստով');panel.id='invitationEmailPanel';send.type='button';send.disabled=true;status.setAttribute('role','status');panel.append(legend,status,send);dialog.append(panel);
   const choices=[];
   try{
    const options=await ZZWS.json('admin/users/invitation-email/options',{method:'POST',body:JSON.stringify({id:targetId})});
