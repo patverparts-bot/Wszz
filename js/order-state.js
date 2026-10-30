@@ -413,6 +413,7 @@ function openPersonalCabinet() {
   renderOrderHistoryList();
   ZZWS_ORDERS.load();
   document.getElementById('cabinetModal').classList.remove('hidden');
+  window.ZZWS_ADMIN_RESOURCES?.refresh();
 }
 
 function closePersonalCabinet() {

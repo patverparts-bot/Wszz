@@ -1,6 +1,8 @@
 (() => {
  'use strict';
- const endpoint='me/resources/apk';
+ const apkFile='ZZWS-7.0.8-production.apk',apkVersion='7.0.8';
+ const apkHash='d211e577d921f218bc80f02b49532ebb1f776327b46417c7797523443ef18b51';
+ const apkUrl=new URL('../'+apkFile,document.currentScript.src).href;
  let owner=null,ticket=0,mount=null,loading=false;
  const node=(tag,text)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;return n;};
  function root(){
@@ -11,33 +13,48 @@
  }
  function reset(){owner=null;++ticket;loading=false;const box=root();if(box){box.replaceChildren();box.hidden=true;}}
  function textError(error){return window.ZZWS?.message(error)||'Չհաջողվեց կատարել գործողությունը։';}
+ async function availability(button,notice,who,requestTicket){
+  button.disabled=true;button.textContent='Ստուգվում է APK-ի հասանելիությունը…';
+  try{
+   const response=await fetch(apkUrl,{method:'HEAD',credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',redirect:'error'});
+   if(!response.ok||!/^(application\/vnd\.android\.package-archive|application\/octet-stream)(;|$)/i.test(response.headers.get('content-type')||''))throw Error('APK-ը դեռ հասանելի չէ։ Փորձեք ավելի ուշ։');
+   if(owner!==who||requestTicket!==ticket)return;
+   button.textContent='Ներբեռնել ZZWS Android հավելվածը';button.onclick=()=>download(button,notice,who,requestTicket);button.disabled=false;notice.textContent='';
+  }catch(error){if(owner===who&&requestTicket===ticket){notice.textContent=textError(error);button.textContent='Կրկին ստուգել APK-ը';button.onclick=()=>availability(button,notice,who,requestTicket);button.disabled=false;}}
+ }
  async function download(button,notice,who,requestTicket){
   if(loading||owner!==who||requestTicket!==ticket)return;loading=true;button.disabled=true;notice.textContent='Ֆայլը բեռնվում է…';
   try{
-   const response=await ZZWS.request(endpoint);
+   const permission=await ZZWS.json('me/resources');
+   if(owner!==who||requestTicket!==ticket)return;
+   if(permission.mobileAdminEnabled!==true)throw Error('Ներբեռնման թույլտվությունը փոխվել է։');
+   // Public GitHub asset: never send the ZZWS session or API key to this URL.
+   const response=await fetch(apkUrl,{credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',redirect:'error'});
    if(!response.ok){const e=new Error('APK-ի ներբեռնումը հասանելի չէ։ Թարմացրեք մուտքը կամ դիմեք սեփականատիրոջը։');e.status=response.status;throw e;}
    if(!/^(application\/vnd\.android\.package-archive|application\/octet-stream)(;|$)/i.test(response.headers.get('content-type')||''))throw Error('Սերվերը վերադարձրել է ոչ ճիշտ APK ֆայլ։');
    const blob=await response.blob();if(blob.size<4||blob.size>150*1024*1024)throw Error('APK ֆայլի չափը սխալ է։');
    const signature=new Uint8Array(await blob.slice(0,4).arrayBuffer());if(signature[0]!==80||signature[1]!==75||signature[2]!==3||signature[3]!==4)throw Error('APK ֆայլը չի ստուգվել։');
+   const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',await blob.arrayBuffer())),v=>v.toString(16).padStart(2,'0')).join('');
+   if(digest!==apkHash)throw Error('APK ֆայլի ստուգումը ձախողվել է։ Թարմացրեք էջը կամ դիմեք սեփականատիրոջը։');
    if(owner!==who||requestTicket!==ticket)return;
    const current=await ZZWS.json('me/resources');
    if(owner!==who||requestTicket!==ticket)return;
-   if(current.mobileAdminEnabled!==true||current.apk?.available!==true)throw Error('Ներբեռնման թույլտվությունը փոխվել է։');
-   const link=node('a'),url=URL.createObjectURL(blob);link.href=url;link.download=/^[A-Za-z0-9._-]+\.apk$/i.test(current.apk.filename||'')?current.apk.filename:'ZZWS-Admin.apk';link.hidden=true;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+   if(current.mobileAdminEnabled!==true)throw Error('Ներբեռնման թույլտվությունը փոխվել է։');
+   const link=node('a'),url=URL.createObjectURL(blob);link.href=url;link.download=apkFile;link.hidden=true;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
    notice.textContent='APK ֆայլը ներբեռնված է։ Տեղադրեք այն ձեր Android սարքում։';
   }catch(error){if(owner===who&&requestTicket===ticket)notice.textContent=textError(error);}
-  finally{loading=false;if(button.isConnected)button.disabled=false;}
+  finally{if(owner===who&&requestTicket===ticket){loading=false;if(button.isConnected)button.disabled=false;}}
  }
  function render(data,who,requestTicket){
   const box=root();if(!box)return;box.replaceChildren();box.hidden=true;
   const mobile=data.mobileAdminEnabled===true,telegram=data.telegramEnabled===true;
   if(!mobile&&!telegram)return;
   box.style.cssText='padding:16px;margin:16px 0;border:1px solid #94a3b8;border-radius:12px;line-height:1.6';
+  if(box.id==='catalogAdminResources')box.style.cssText+='max-height:34vh;overflow:auto;flex-shrink:0;';
   box.append(node('h3','ZZWS Admin և Telegram'));const notice=node('p');notice.setAttribute('role','status');notice.style.fontSize='13px';
   if(mobile){
    const card=node('div');card.append(node('h4','ZZWS Admin՝ Android հավելված'));
-   if(data.apk?.available===true){const button=node('button','Ներբեռնել ZZWS Admin APK');button.type='button';button.dataset.resource='apk';button.style.cssText='padding:10px 14px;border:1px solid #2563eb;border-radius:8px;background:#1d4ed8;color:white;cursor:pointer';button.onclick=()=>download(button,notice,who,requestTicket);card.append(button);if(typeof data.apk.version==='string')card.append(node('p','Տարբերակ՝ '+data.apk.version));}
-   else card.append(node('p','APK-ը դեռ պատրաստ չէ ներբեռնման համար։ Դիմեք սեփականատիրոջը։'));
+   const button=node('button');button.type='button';button.dataset.resource='apk';button.style.cssText='padding:10px 14px;border:1px solid #2563eb;border-radius:8px;background:#1d4ed8;color:white;cursor:pointer';card.append(button);card.append(node('p','Տարբերակ՝ '+apkVersion));availability(button,notice,who,requestTicket);
    card.append(node('p','Մուտք գործեք ձեր ZZWS ադմինիստրատորի հաշվով։ Հավելվածը չի ընդլայնում հաշվի իրավունքները։'));box.append(card);
   }
   if(telegram){
@@ -72,3 +89,4 @@
  window.ZZWS_ADMIN_RESOURCES=Object.freeze({start,reset,refresh});
  window.addEventListener('zzws:session-changed',event=>event.detail?.user?start(event.detail.user):reset());
 })();
+
