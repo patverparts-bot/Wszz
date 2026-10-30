@@ -16,6 +16,33 @@ export function createApkHandler({service,origins,baselineVersionCode=70008,now=
  }
  async function release(code){const result=await store().download(releasePath(code));if(result.error)fail(503,'APK թողարկումը հասանելի չէ։');let r;try{r=JSON.parse(await result.data.text());}catch{fail(503,'APK թողարկման տվյալները վնասված են։');}if(!validRelease(r))fail(503,'APK թողարկման տվյալները սխալ են։');return r;}
  async function latest(){if(!await bucket())return null;const files=await checked(store().list('releases',{limit:1,sortBy:{column:'name',order:'desc'}}));if(!files.length)return null;const match=/^(\d{10})\.json$/.exec(files[0].name);if(!match)fail(503,'APK թողարկման տվյալները սխալ են։');return release(Number(match[1]));}
+ async function pruneReleases(){
+  // Delete only releases proven older than two published versions. New concurrent
+  // publications can only move this boundary forward, never endanger the keepers.
+  for(let batch=0;batch<8;batch++){
+   const files=await checked(store().list('releases',{limit:22,sortBy:{column:'name',order:'desc'}}));
+   if(files.length<=2)return;
+   const versions=await Promise.all(files.map(async file=>{
+    const match=/^(\d{10})\.json$/.exec(file.name);if(!match)fail(503,'APK թողարկման տվյալները սխալ են։');
+    const r=await release(Number(match[1]));if(releasePath(r.versionCode)!=='releases/'+file.name)fail(503,'APK թողարկման տվյալները սխալ են։');
+    return r;
+   }));
+   const protectedPaths=new Set(versions.slice(0,2).map(r=>r.objectPath));
+   const older=versions.slice(2),paths=[...new Set(older.map(r=>r.objectPath))].filter(path=>!protectedPaths.has(path));
+   // Keep old manifests until their files have been removed. A failed delete is
+   // then discoverable and retryable; never touch unpublished/in-flight uploads.
+   if(paths.length)await checked(store().remove(paths));
+   await checked(store().remove(older.map(r=>releasePath(r.versionCode))));
+  }
+  fail(503,'APK մաքրումը կշարունակվի հաջորդ հրապարակման ժամանակ։');
+ }
+ async function retention(){
+  // Publishing has already committed. Cleanup trouble must not claim it failed.
+  for(let attempt=0;attempt<2;attempt++){
+   try{await pruneReleases();return {keptVersions:2,cleanupPending:false};}catch{}
+  }
+  console.error('APK retention cleanup pending');return {keptVersions:2,cleanupPending:true};
+ }
  async function identity(req,upload=false){
   const token=(req.headers.get('authorization')||'').replace(/^Bearer /,'');if(!/^[a-f0-9]{64}$/.test(token))fail(401,'Մուտք գործեք համակարգ։');
   const session=await checked(service.from('zzws_sessions').select('user_id,expires,setup_only,confirmed_until').eq('hash',await hash(new TextEncoder().encode(token))).gt('expires',new Date(now()).toISOString()).maybeSingle());if(!session)fail(401,'Մուտք գործեք համակարգ։');
@@ -34,7 +61,7 @@ export function createApkHandler({service,origins,baselineVersionCode=70008,now=
   try{
    if(origin&&!origins.includes(origin))fail(403,'Հասանելիությունն արգելված է։');if(req.method==='OPTIONS')return new Response(null,{status:204,headers});
    const url=new URL(req.url),path=url.pathname.split('/zzws-apk/')[1]||'';
-   if(path==='health'&&req.method==='GET')return json({ok:true,service:'zzws-apk',version:2});
+   if(path==='health'&&req.method==='GET')return json({ok:true,service:'zzws-apk',version:3,retainedVersions:2});
    if(!['current','download','download-link','publish','upload-check'].includes(path))fail(404,'Չի գտնվել։');
    const uploading=['publish','upload-check'].includes(path);
    if(uploading&&req.method!=='POST'||!uploading&&!['GET','HEAD'].includes(req.method))fail(405,'Գործողությունը թույլատրված չէ։');
@@ -62,7 +89,7 @@ export function createApkHandler({service,origins,baselineVersionCode=70008,now=
    if(typeof info.filename!=='string'||!info.filename.toLowerCase().endsWith('.apk')||description.length>4000)fail(400,'Ստուգեք APK ֆայլը և նկարագրությունը։');
    const bytes=input.subarray(4+headerLength);if(bytes.length>MAX_APK_BYTES)fail(413,'APK ֆայլը չպետք է գերազանցի 50 ՄԲ-ը։');
    const metadata=inspectApk(bytes),sha256=await hash(bytes);
-   const previous=await latest();if(metadata.versionCode<baselineVersionCode||previous&&metadata.versionCode<=previous.versionCode){if(previous?.sha256===sha256&&previous.description===description)return json({ok:true,release:previous,unchanged:true});fail(409,'Ընտրեք ավելի նոր APK տարբերակ։ Ընթացիկ թողարկումը պահպանված է։');}
+   const previous=await latest();if(metadata.versionCode<baselineVersionCode||previous&&metadata.versionCode<=previous.versionCode){if(previous?.sha256===sha256&&previous.description===description)return json({ok:true,release:previous,unchanged:true,retention:await retention()});fail(409,'Ընտրեք ավելի նոր APK տարբերակ։ Ընթացիկ թողարկումը պահպանված է։');}
    // Recheck the actor after reading/validating a potentially slow upload.
    await identity(req,true);await bucket(true);
    const r={schemaVersion:1,...metadata,filename:'ZZWS-'+metadata.version+'-production.apk',bytes:bytes.length,sha256,description,objectPath:'files/'+sha256+'.apk',publishedAt:new Date(now()).toISOString(),publisher:actor.id};
@@ -72,7 +99,7 @@ export function createApkHandler({service,origins,baselineVersionCode=70008,now=
    // Immutable, zero-padded version manifests: publish last; concurrent releases cannot downgrade latest.
    const published=await store().upload(releasePath(r.versionCode),JSON.stringify(r),{contentType:'application/json',upsert:false,cacheControl:'0'});if(published.error)fail(String(published.error.statusCode||published.error.status)==='409'?409:503,'Թողարկումը չի հրապարակվել։ Թարմացրեք ընթացիկ տարբերակը և կրկին փորձեք։');
    const audit=await service.from('zzws_audit').insert({actor:actor.id,action:'apk_publish',detail:'ZZWS Android '+r.version+'; versionCode='+r.versionCode+'; SHA-256='+sha256});if(audit.error)console.error('APK audit write failed');
-   return json({ok:true,release:r});
+   return json({ok:true,release:r,retention:await retention()});
   }catch(error){if(!error.status)console.error('APK operation failed');return json({error:error.status?error.message:'Չհաջողվեց կատարել գործողությունը։ Փորձեք կրկին։',...(error.reauthRequired?{reauthRequired:true}:{})},error.status||500);}
  };
 }

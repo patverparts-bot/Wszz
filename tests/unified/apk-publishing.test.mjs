@@ -12,8 +12,8 @@ function zip(entries){let offset=0;const locals=[],central=[];for(const [name,ra
 function apk(code=70008,version='7.0.8',manifest=fixture){const b=Buffer.from(manifest),needle=Buffer.alloc(4);needle.writeUInt32LE(70008);const at=b.indexOf(needle);assert.ok(at>=0);b.writeUInt32LE(code,at);if(version!=='7.0.8'){const old=Buffer.from('7.0.8','utf16le'),at=b.indexOf(old);assert.ok(at>=0);Buffer.from(version,'utf16le').copy(b,at);}return zip([['AndroidManifest.xml',b],['classes.dex',Buffer.from('dex\n035\0')]]);}
 function envelope(bytes,description='New APK',filename='update.apk'){const info=Buffer.from(JSON.stringify({filename,description})),size=Buffer.alloc(4);size.writeUInt32BE(info.length);return Buffer.concat([size,info,bytes]);}
 function fake(options={}){
- const objects=new Map(),audits=[],state={exists:false,public:false,scope:'owner',mobile:true,active:true,setup:false,confirmed:true,expired:false,revoked:false,failFile:false,failManifest:false,revokeAfterFile:false,options:null};
- const service={from(name){const filters={};const builder={select(){return this;},eq(k,v){filters[k]=v;return this;},gt(){return this;},async maybeSingle(){let data=name==='zzws_sessions'?!state.expired&&!state.revoked&&filters.hash===digest(token)?{user_id:'owner',setup_only:state.setup,confirmed_until:state.confirmed?new Date(Date.now()+300000).toISOString():null}:null:name==='zzws_users'?state.active?{id:'owner',profile:{role:'admin'},needs_password_setup:false}:null:name==='zzws_admin_scopes'?{scope:state.scope}:name==='zzws_user_channels'?{mobile_admin_enabled:state.mobile}:null;return {data,error:null};},async insert(row){audits.push(row);return {data:null,error:null};}};return builder;},storage:{async getBucket(){return state.exists?{data:{public:state.public},error:null}:{error:{statusCode:404}};},async createBucket(name,options){state.options=options;state.exists=true;return {data:{name},error:null};},from(){return {async list(){return {data:[...objects.keys()].filter(p=>p.startsWith('releases/')).sort().reverse().slice(0,1).map(p=>({name:p.slice(9)})),error:null};},async download(path){return objects.has(path)?{data:new Blob([objects.get(path)]),error:null}:{error:{statusCode:404}};},async upload(path,body){if(path.startsWith('files/')&&state.failFile||path.startsWith('releases/')&&state.failManifest)return {error:{statusCode:503}};if(objects.has(path))return {error:{statusCode:409}};objects.set(path,typeof body==='string'?Buffer.from(body):Buffer.from(body));if(path.startsWith('files/')&&state.revokeAfterFile)state.revoked=true;return {data:{path},error:null};}};}}};
+ const objects=new Map(),audits=[],state={exists:false,public:false,scope:'owner',mobile:true,active:true,setup:false,confirmed:true,expired:false,revoked:false,failFile:false,failManifest:false,failRemove:false,failRemoveManifest:false,removals:[],revokeAfterFile:false,options:null};
+ const service={from(name){const filters={};const builder={select(){return this;},eq(k,v){filters[k]=v;return this;},gt(){return this;},async maybeSingle(){let data=name==='zzws_sessions'?!state.expired&&!state.revoked&&filters.hash===digest(token)?{user_id:'owner',setup_only:state.setup,confirmed_until:state.confirmed?new Date(Date.now()+300000).toISOString():null}:null:name==='zzws_users'?state.active?{id:'owner',profile:{role:'admin'},needs_password_setup:false}:null:name==='zzws_admin_scopes'?{scope:state.scope}:name==='zzws_user_channels'?{mobile_admin_enabled:state.mobile}:null;return {data,error:null};},async insert(row){audits.push(row);return {data:null,error:null};}};return builder;},storage:{async getBucket(){return state.exists?{data:{public:state.public},error:null}:{error:{statusCode:404}};},async createBucket(name,options){state.options=options;state.exists=true;return {data:{name},error:null};},from(){return {async list(prefix,{limit=100,offset=0,sortBy}={}){let names=[...objects.keys()].filter(p=>p.startsWith(prefix+'/')).map(p=>p.slice(prefix.length+1)).sort();if(sortBy?.order==='desc')names.reverse();return {data:names.slice(offset,offset+limit).map(name=>({name})),error:null};},async remove(paths){state.removals.push([...paths]);if(state.failRemove||state.failRemoveManifest&&paths.some(p=>p.startsWith('releases/')))return {error:{statusCode:503}};for(const path of paths)objects.delete(path);return {data:[],error:null};},async download(path){return objects.has(path)?{data:new Blob([objects.get(path)]),error:null}:{error:{statusCode:404}};},async upload(path,body){if(path.startsWith('files/')&&state.failFile||path.startsWith('releases/')&&state.failManifest)return {error:{statusCode:503}};if(objects.has(path))return {error:{statusCode:409}};objects.set(path,typeof body==='string'?Buffer.from(body):Buffer.from(body));if(path.startsWith('files/')&&state.revokeAfterFile)state.revoked=true;return {data:{path},error:null};}};}}};
  const handle=createApkHandler({service,origins:[origin],...options});
  async function request(path,{method='GET',body,auth=token,requestOrigin=origin,headers={}}={}){return handle(new Request('https://example.invalid/functions/v1/zzws-apk/'+path,{method,headers:{...headers,...(body?{'Content-Type':'application/octet-stream'}:{}),...(auth?{Authorization:'Bearer '+auth}:{}),...(requestOrigin?{Origin:requestOrigin}:{})},...(body?{body,duplex:'half'}:{})}));}
  const publish=async(bytes=apk(),description='New APK')=>{return request('publish',{method:'POST',body:envelope(bytes,description)});};
@@ -73,4 +73,50 @@ test('publishes actual production sized APK using binary transport with Armenian
  const response=await f.publish(bytes,'Նոր տարբերակ');assert.equal(response.status,200);const r=(await response.json()).release;
  assert.equal(r.version,'7.0.10');assert.equal(r.sha256,digest(bytes));assert.equal(r.bytes,bytes.length);assert.equal(r.description,'Նոր տարբերակ');
  assert.equal((await f.publish(bytes,'Նոր տարբերակ')).status,200);
+});
+
+function seedRelease(f,code,version,overrides={}){
+ const bytes=apk(code,version),sha256=digest(bytes),r={schemaVersion:1,...inspectApk(bytes),filename:'ZZWS-'+version+'-production.apk',bytes:bytes.length,sha256,description:'New APK',objectPath:'files/'+sha256+'.apk',publishedAt:new Date().toISOString(),publisher:'owner',...overrides};
+ f.state.exists=true;f.objects.set(r.objectPath,bytes);f.objects.set('releases/'+String(code).padStart(10,'0')+'.json',Buffer.from(JSON.stringify(r)));return r;
+}
+function releaseCodes(f){return [...f.objects.keys()].filter(p=>p.startsWith('releases/')).sort().map(p=>Number(p.slice(9,-5)));}
+
+test('retention keeps two newest published releases and deletes APKs plus metadata',async()=>{
+ const f=fake();for(let i=8;i<=12;i++)seedRelease(f,70000+i,'7.'+Math.floor(i/10)+'.'+i%10);
+ const response=await f.publish(apk(70013,'7.1.3'));assert.equal(response.status,200);assert.deepEqual((await response.json()).retention,{keptVersions:2,cleanupPending:false});
+ assert.deepEqual(releaseCodes(f),[70012,70013]);assert.equal(f.objects.size,4);
+ for(const code of [70012,70013])assert.equal((await f.request('download?versionCode='+code)).status,200);
+ assert.equal((await(await f.request('current')).json()).release.versionCode,70013);
+});
+test('failed publication never runs retention or removes either current release',async()=>{
+ const f=fake();await f.publish();await f.publish(apk(70009,'7.0.9'));const before=new Map(f.objects);
+ f.state.failManifest=true;assert.equal((await f.publish(apk(70010,'7.1.0'))).status,503);assert.deepEqual(releaseCodes(f),[70008,70009]);assert.equal(f.state.removals.length,0);
+ for(const [path,bytes] of before)assert.deepEqual(f.objects.get(path),bytes);
+});
+test('concurrent publications and cleanup preserve the two greatest version codes',async()=>{
+ const f=fake();for(let i=8;i<=10;i++)seedRelease(f,70000+i,'7.'+Math.floor(i/10)+'.'+i%10);
+ const responses=await Promise.all([11,12,13].map(i=>f.publish(apk(70000+i,'7.'+Math.floor(i/10)+'.'+i%10))));assert.ok(responses.every(r=>[200,409].includes(r.status)));
+ assert.deepEqual(releaseCodes(f),[70012,70013]);assert.equal(f.objects.size,4);
+ for(const code of [70012,70013])assert.equal((await f.request('download?versionCode='+code)).status,200);
+});
+test('cleanup failure reports publication success and identical retry finishes cleanup',async()=>{
+ const f=fake();seedRelease(f,70008,'7.0.8');seedRelease(f,70009,'7.0.9');f.state.failRemove=true;
+ let response=await f.publish(apk(70010,'7.1.0'));assert.equal(response.status,200);assert.equal((await response.json()).retention.cleanupPending,true);assert.deepEqual(releaseCodes(f),[70008,70009,70010]);
+ assert.equal((await f.request('download?versionCode=70010')).status,200);f.state.failRemove=false;
+ response=await f.publish(apk(70010,'7.1.0'));assert.equal(response.status,200);assert.equal((await response.json()).retention.cleanupPending,false);assert.deepEqual(releaseCodes(f),[70009,70010]);assert.equal(f.objects.size,4);
+});
+test('failed metadata deletion remains discoverable, and orphan/in-flight uploads are untouched',async()=>{
+ const f=fake();seedRelease(f,70008,'7.0.8');seedRelease(f,70009,'7.0.9');const orphan='files/'+'f'.repeat(64)+'.apk';f.objects.set(orphan,Buffer.from('pending upload'));
+ f.state.failRemoveManifest=true;const response=await f.publish(apk(70010,'7.1.0'));assert.equal((await response.json()).retention.cleanupPending,true);assert.deepEqual(releaseCodes(f),[70008,70009,70010]);
+ f.state.failRemoveManifest=false;await f.publish(apk(70010,'7.1.0'));assert.deepEqual(releaseCodes(f),[70009,70010]);assert.ok(f.objects.has(orphan));
+});
+test('cleanup protects retained paths and fails closed for corrupt version metadata',async()=>{
+ const f=fake();const retained=seedRelease(f,70009,'7.0.9');seedRelease(f,70008,'7.0.8',{objectPath:retained.objectPath,sha256:retained.sha256});
+ await f.publish(apk(70010,'7.1.0'));assert.deepEqual(releaseCodes(f),[70009,70010]);assert.ok(f.objects.has(retained.objectPath));
+ const g=fake();seedRelease(g,70008,'7.0.8',{versionCode:123});seedRelease(g,70009,'7.0.9');const result=await g.publish(apk(70010,'7.1.0'));assert.equal((await result.json()).retention.cleanupPending,true);assert.equal(g.state.removals.length,0);
+});
+
+test('retention drains multiple listing batches without skipping historical releases',async()=>{
+ const f=fake();for(let i=8;i<=34;i++)seedRelease(f,70000+i,'7.'+Math.floor(i/10)+'.'+i%10);
+ const response=await f.publish(apk(70035,'7.3.5'));assert.equal(response.status,200);assert.equal((await response.json()).retention.cleanupPending,false);assert.deepEqual(releaseCodes(f),[70034,70035]);assert.equal(f.objects.size,4);
 });
