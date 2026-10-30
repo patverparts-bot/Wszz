@@ -2,8 +2,8 @@
  'use strict';
  const el=id=>document.getElementById(id);
  let allowed=false,target=null,saving=false,serial=0;
- function reset(){allowed=false;target=null;++serial;const panel=el('adminChannelsPanel');if(panel)panel.hidden=true;window.ZZWS_ADMIN_RESOURCES?.reset();}
- function start(user){reset();allowed=user?.adminScope==='owner'&&Array.isArray(user.permissions)&&user.permissions.includes('users');window.ZZWS_ADMIN_RESOURCES?.start(user,{root:el('adminResourcesPanel')});}
+ function reset(){allowed=false;target=null;++serial;const panel=el('adminChannelsPanel');if(panel)panel.hidden=true;window.ZZWS_ADMIN_RESOURCES?.reset();window.ZZWS_APK_UPLOAD?.reset();}
+ function start(user){reset();allowed=user?.adminScope==='owner'&&Array.isArray(user.permissions)&&user.permissions.includes('users');window.ZZWS_ADMIN_RESOURCES?.start(user,{root:el('adminResourcesPanel')});window.ZZWS_APK_UPLOAD?.start(user);}
  function edit(user){
   ++serial;target=user?.id&&user.role==='admin'?{id:user.id,login:user.login,revision:user.channelRevision??0}:null;
   const panel=el('adminChannelsPanel');if(!panel)return;panel.hidden=!allowed||!target;
