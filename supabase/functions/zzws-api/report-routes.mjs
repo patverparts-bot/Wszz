@@ -56,7 +56,7 @@ export async function reportRoutes(c){
   if(!from&&(await mailConnection(c,await settings())).connection.passwordSet)fail(400,'Նշեք ուղարկողի էլ․ փոստի հասցեն');
   if(p.connection){
    const m=connectionInput(p.connection);if(!from)fail(400,'Նշեք ուղարկողի էլ․ փոստի հասցեն');
-   const saved=await query(service.rpc('zzws_mail_transport_save',{p_actor:user.id,p_revision:m.revision,p_settings_revision:p.revision,p_cc:cc,p_from:from,p_host:m.host,p_port:m.port,p_username:m.username,p_password:m.password}));
+   const saved=await query(service.rpc('zzws_mail_transport_save_v2',{p_actor:user.id,p_revision:m.revision,p_settings_revision:p.revision,p_cc:cc,p_from:from,p_host:m.host,p_port:m.port,p_security:m.security,p_username:m.username,p_password:m.password}));
    return json(await state(saved));
   }
   return json(await state(await query(service.rpc('zzws_email_settings_save',{p_actor:user.id,p_revision:p.revision,p_cc:cc,p_from:from}))));
