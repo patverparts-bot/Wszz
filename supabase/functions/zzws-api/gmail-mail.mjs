@@ -1,8 +1,9 @@
 import {email} from './report-email.mjs';
+import {smtpReady} from './smtp-mail.mjs';
 
 export function mailReady(env){
  const mode=env('ZZWS_REPORT_EMAIL_MODE');
- return mode==='offline'&&env('ZZWS_OFFLINE_MODE')==='true'||mode==='resend'&&!!env('RESEND_API_KEY')||mode==='gmail'&&!!env('ZZWS_GMAIL_APP_PASSWORD')&&!!env('ZZWS_GMAIL_USER');
+ return mode==='offline'&&env('ZZWS_OFFLINE_MODE')==='true'||mode==='resend'&&!!env('RESEND_API_KEY')||mode==='gmail'&&!!env('ZZWS_GMAIL_APP_PASSWORD')&&!!env('ZZWS_GMAIL_USER')||mode==='smtp'&&smtpReady(env);
 }
 
 // SMTP has no idempotency API. Unknown outcomes must be quarantined by the delivery ledger.

@@ -1,4 +1,5 @@
 import {mailReady,sendGmail} from './gmail-mail.mjs';
+import {sendSmtp} from './smtp-mail.mjs';
 import {senderAddress} from './mail-config.mjs';
 import {buildOrderContext} from './order-context.mjs';
 import {email,emailRows,reportRecipients} from './report-email.mjs';
@@ -22,6 +23,7 @@ export async function sendReportMail({job,message,env,fetchImpl=fetch}){
  const mode=env('ZZWS_REPORT_EMAIL_MODE');
  if(mode==='offline'&&env('ZZWS_OFFLINE_MODE')==='true'&&globalThis.__ZZWS_OFFLINE__?.reportEmailSend)return globalThis.__ZZWS_OFFLINE__.reportEmailSend(job,message);
  if(mode==='gmail')return sendGmail({job,message,env});
+ if(mode==='smtp')return sendSmtp({job,message,env});
  if(mode!=='resend'||!env('RESEND_API_KEY'))throw Error('Էլ․ փոստի ծառայությունը կարգավորված չէ');
  const response=await fetchImpl('https://api.resend.com/emails',{method:'POST',redirect:'error',signal:AbortSignal.timeout(20000),headers:{Authorization:'Bearer '+env('RESEND_API_KEY'),'Content-Type':'application/json','Idempotency-Key':'zzws-report/'+job.id},body:JSON.stringify(message)});
  const data=await response.json().catch(()=>null);if(response.ok&&typeof data?.id==='string'&&/^[A-Za-z0-9_-]{1,200}$/.test(data.id))return {result:'accepted',id:data.id};return {result:response.status>=400&&response.status<500?'rejected':'unknown'};
@@ -82,7 +84,7 @@ export async function reportRoutes(c){
  const s=await settings(),recipients=reportRecipients(customer?.profile.emailRows||[],JSON.parse(String(form.get('selectedRows')||'[]')),s.cc,String(form.get('additionalCC')||''),user.replyToEmail),env=n=>Deno.env.get(n),mode=env('ZZWS_REPORT_EMAIL_MODE'),from=senderAddress(s,env);
  if(!mailReady(env))fail(503,'Էլ․ փոստի ծառայությունը կարգավորված չէ');
  if(env('ZZWS_ENVIRONMENT')!=='production'&&mode!=='offline'){const allowed=new Set(String(env('ZZWS_REPORT_TEST_RECIPIENTS')||'').split(',').filter(Boolean).map(v=>email(v)));if([...recipients.to,...recipients.cc].some(v=>!allowed.has(v)))fail(403,'Փորձարկման հասցեն թույլատրված չէ');}
- const fingerprint=await sha(JSON.stringify([o.id,bundleHash,index,recipients,from])),counts={transport:mode==='gmail'?'smtp':'idempotent',bundleHash,reportIndex:index,files:attachments.length,bytes:attachments.reduce((s,f)=>s+f.size,0),to:recipients.to.length,cc:recipients.cc.length};
+ const fingerprint=await sha(JSON.stringify([o.id,bundleHash,index,recipients,from])),counts={transport:['gmail','smtp'].includes(mode)?'smtp':'idempotent',bundleHash,reportIndex:index,files:attachments.length,bytes:attachments.reduce((s,f)=>s+f.size,0),to:recipients.to.length,cc:recipients.cc.length};
  let j=await rpc('zzws_report_claim',{p_actor:user.id,p_order:o.id,p_revision:revision,p_request:requestId,p_fingerprint:fingerprint,p_counts:counts});
  if(['accepted','completed'].includes(j.state))return json(await complete(o,j,prepared));if(j.busy)return json({busy:true,jobId:j.id});if(j.state!=='sending')return json({manual:true,jobId:j.id,attempts:j.attempts});
  const message={from,to:recipients.to,cc:recipients.cc,reply_to:recipients.replyTo,subject:'Վաճառքի Հաշվետվություն',text:'Պատվեր №'+o.number+'։ Կցված է վաճառքի հաշվետվությունը՝ համեմատության համար։',attachments:attachments.map(f=>({filename:f.name,content:b64(f.data)}))};
