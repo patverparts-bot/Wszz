@@ -27,14 +27,20 @@
  const senderInput=node('input');senderInput.type='email';senderInput.autocomplete='email';senderInput.id='reportSender';senderInput.maxLength=254;
  const senderLabel=node('label','Ուղարկողի էլ․ փոստ (From)');senderLabel.append(senderInput);
  const settings=node('fieldset'),settingInputs=[];settings.id='reportEmailSettings';settings.append(node('legend','Հաշվետվությունների էլ․ փոստի կարգավորումներ'),senderLabel,node('p','Հասցեները կարող եք պահպանել մինչև փոստային ծառայությունը միացնելը։ Reply-To-ն վերցվում է գործող ադմինիստրատորի քարտից։'));
+ const connectionFields=node('fieldset');connectionFields.append(node('legend','Փոստային կապ'));
+ const hostInput=node('input'),portInput=node('select'),usernameInput=node('input'),passwordInput=node('input'),passwordState=node('p');
+ hostInput.id='reportMailHost';hostInput.type='text';hostInput.maxLength=253;hostInput.autocomplete='off';usernameInput.id='reportMailUsername';usernameInput.type='text';usernameInput.maxLength=320;usernameInput.autocomplete='off';passwordInput.id='reportMailPassword';passwordInput.type='password';passwordInput.maxLength=4096;passwordInput.autocomplete='new-password';portInput.id='reportMailPort';
+ for(const [value,text]of [['587','587 · STARTTLS'],['465','465 · SSL/TLS']]){const option=node('option',text);option.value=value;portInput.append(option);}
+ for(const [text,input]of [['Փոստային սերվեր',hostInput],['Պորտ և գաղտնագրում',portInput],['Փոստի մուտքանուն',usernameInput],['Փոստի գաղտնաբառ',passwordInput]]){const label=node('label',text);label.append(input);connectionFields.append(label);}
+ passwordState.id='reportMailPasswordStatus';connectionFields.append(passwordState);settings.append(connectionFields);
  for(let i=0;i<3;i++){const l=node('label','Պարտադիր CC '+(i+1)),input=node('input');input.type='email';input.id='reportCC'+(i+1);input.maxLength=254;l.append(input);settings.append(l);settingInputs.push(input);}
  const state=node('p'),deliveryState=node('p');state.id='reportEmailSettingsStatus';state.setAttribute('role','status');state.setAttribute('aria-live','polite');deliveryState.id='reportEmailDeliveryStatus';deliveryState.hidden=true;
- let revision,settingsBusy=false,settingsDirty=false,settingsSession=null;
- const fields=[senderInput,...settingInputs],loadButton=button('Բեռնել CC հասցեները',()=>loadSettings(true)),saveButton=button('Պահպանել փոստի կարգավորումները',saveSettings);saveButton.id='saveReportEmailSettings';loadButton.id='loadReportEmailSettings';
- function settingsControls(){fields.forEach(input=>input.disabled=settingsBusy||!revision);loadButton.disabled=settingsBusy;saveButton.disabled=settingsBusy||!revision||!settingsDirty;}
+ let revision,settingsBusy=false,settingsDirty=false,settingsSession=null,connectionRevision,passwordSet=false,connectionDirty=false;
+ const mailFields=[hostInput,portInput,usernameInput,passwordInput],fields=[senderInput,...settingInputs,...mailFields],loadButton=button('Բեռնել CC հասցեները',()=>loadSettings(true)),saveButton=button('Պահպանել փոստի կարգավորումները',saveSettings),testButton=button('Ստուգել փոստային կապը',testConnection);saveButton.id='saveReportEmailSettings';loadButton.id='loadReportEmailSettings';testButton.id='testReportMailConnection';
+ function settingsControls(){fields.forEach(input=>input.disabled=settingsBusy||!revision);loadButton.disabled=settingsBusy;saveButton.disabled=settingsBusy||!revision||!settingsDirty;testButton.disabled=settingsBusy||settingsDirty||!passwordSet;}
  function settingsStatus(text,error=false){state.textContent=text;state.style.color=error?'#b91c1c':'';state.dataset.error=String(error);}
- function applySettings(r){revision=r.revision;senderInput.value=r.from_email||r.effectiveFrom||'';settingInputs.forEach((v,i)=>v.value=r.cc[i]||'');settingsDirty=false;deliveryState.textContent=r.deliveryIssue||'';deliveryState.hidden=!r.deliveryIssue;}
- fields.forEach(input=>input.addEventListener('input',()=>{settingsDirty=true;settingsStatus('Կան չպահպանված փոփոխություններ։');settingsControls();}));
+ function applySettings(r){revision=r.revision;senderInput.value=r.from_email||r.effectiveFrom||'';settingInputs.forEach((v,i)=>v.value=r.cc[i]||'');const m=r.connection||{};connectionRevision=m.revision;hostInput.value=m.host||'mail.zigzag.am';portInput.value=String(m.port||587);usernameInput.value=m.username||'zz\\Reports-1C';passwordSet=!!m.passwordSet;passwordInput.value='';passwordState.textContent=passwordSet?'Գաղտնաբառը պահպանված է։ Դատարկ թողնելու դեպքում այն չի փոխվի։':'Մուտքագրեք փոստի գաղտնաբառը՝ կապը միացնելու համար։';settingsDirty=false;connectionDirty=false;deliveryState.textContent=r.deliveryIssue||'';deliveryState.hidden=!r.deliveryIssue;}
+ fields.forEach(input=>input.addEventListener('input',()=>{settingsDirty=true;if(mailFields.includes(input))connectionDirty=true;settingsStatus('Կան չպահպանված փոփոխություններ։');settingsControls();}));
  async function loadSettings(force=false){
   if(settingsBusy)return;
   const session=sessionStorage.getItem('zzws_session_v3');if(settingsSession!==session){revision=null;settingsDirty=false;settingsSession=session;fields.forEach(input=>input.value='');deliveryState.hidden=true;}
@@ -45,8 +51,10 @@
  async function saveSettings(){
   if(settingsBusy||!revision||!settingsDirty||!fields.every(input=>input.reportValidity()))return;
   settingsBusy=true;settingsControls();settingsStatus('Պահպանվում է…');
-  try{applySettings(await request('admin/email-settings',{revision,cc:settingInputs.map(v=>v.value.trim()),fromEmail:senderInput.value.trim()}));settingsStatus('Հասցեները պահպանված են սերվերում։');}catch(e){settingsStatus('Չի պահպանվել։ '+ZZWS.message(e),true);}finally{settingsBusy=false;settingsControls();}
+  try{const payload={revision,cc:settingInputs.map(v=>v.value.trim()),fromEmail:senderInput.value.trim()};if(connectionDirty)payload.connection={revision:connectionRevision,host:hostInput.value.trim(),port:Number(portInput.value),username:usernameInput.value.trim(),password:passwordInput.value};applySettings(await request('admin/email-settings',payload));settingsStatus('Հասցեները պահպանված են սերվերում։');}catch(e){settingsStatus('Չի պահպանվել։ '+ZZWS.message(e),true);}finally{settingsBusy=false;settingsControls();}
  }
- settings.append(loadButton,saveButton,state,deliveryState);document.getElementById('email').append(settings);settingsControls();
+ async function testConnection(){if(settingsBusy||settingsDirty||!passwordSet)return;settingsBusy=true;settingsControls();settingsStatus('Ստուգվում է փոստային կապը…');try{const r=await request('admin/email-settings',{action:'test'});settingsStatus(r.message);}catch(e){settingsStatus(ZZWS.message(e),true);}finally{settingsBusy=false;settingsControls();}}
+ settings.append(loadButton,saveButton,testButton,state,deliveryState);document.getElementById('email').append(settings);settingsControls();
  window.ZZWS_REPORT_EMAIL.loadSettings=()=>loadSettings();
+ window.ZZWS_REPORT_EMAIL.clearCredentials=()=>{passwordInput.value='';};
 })();

@@ -1,6 +1,7 @@
 import {mailReady} from './gmail-mail.mjs';
 import {senderAddress} from './mail-config.mjs';
 import {email,emailRows,emailList} from './report-email.mjs';
+import {mailConnection} from './mail-connection.mjs';
 import {sha,sendReportMail} from './report-routes.mjs';
 export async function invitationEmailRoutes(c){
  const {path,req,user,body,query,table,service,json,fail}=c;
@@ -14,9 +15,8 @@ export async function invitationEmailRoutes(c){
  if(path.endsWith('/options'))return json({rows});
  if(!Array.isArray(p.selectedRows)||!p.selectedRows.length||p.selectedRows.length>5||p.selectedRows.some(i=>!Number.isInteger(i)||i<0||i>4||!rows[i]))fail(400,'Ընտրեք քարտում պահպանված էլ․ փոստի տողը');
  if(typeof p.code!=='string'||!/^[a-f0-9]{64}$/.test(p.code))fail(400,'Հրավերի կոդը սխալ է');
- const env=n=>Deno.env.get(n);
+ const settings=await query(table('report_email_settings').select('from_email').eq('id',true).single()),{env}=await mailConnection(c,settings,{withPassword:true});
  if(!mailReady(env))fail(503,'Էլ․ փոստի ծառայությունը դեռ կարգավորված չէ։ Կարող եք պատճենել հրավերի հղումը։');
- const settings=await query(table('report_email_settings').select('from_email').eq('id',true).single());
  const from=senderAddress(settings,env,{invitation:true});
  const base=new URL(env('ZZWS_PUBLIC_SITE_URL')||'https://patverparts-bot.github.io/ZZWS/');
  if(base.protocol!=='https:'||base.username||base.password||base.hash||base.search)fail(503,'Կայքի հասցեն սխալ է կարգավորված');

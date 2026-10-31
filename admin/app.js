@@ -14,6 +14,7 @@ async function api(path, options = {}) {
   catch(e) { if(e.status === 401) showLogin(); throw e; }
 }
 function showLogin() {
+  window.ZZWS_REPORT_EMAIL?.clearCredentials();
   adminNavigationActive=false;adminHistoryPosition=0;updateAdminBackButton();
   pricePreviewTicket++;window.ZZWS_ADMIN_CATALOG_CONTROLS?.reset();window.ZZWS_ADMIN_OPERATIONS?.reset();window.ZZWS_ADMIN_WORKBENCH?.reset();window.ZZWS_ADMIN_TEMPLATES?.reset();
   window.ZZWS_REOPEN_ALERTS?.reset();

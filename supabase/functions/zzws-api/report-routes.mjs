@@ -1,5 +1,6 @@
 import {mailReady,sendGmail} from './gmail-mail.mjs';
-import {sendSmtp} from './smtp-mail.mjs';
+import {sendSmtp,verifySmtp} from './smtp-mail.mjs';
+import {mailConnection,connectionInput} from './mail-connection.mjs';
 import {senderAddress} from './mail-config.mjs';
 import {buildOrderContext} from './order-context.mjs';
 import {email,emailRows,reportRecipients} from './report-email.mjs';
@@ -35,18 +36,30 @@ export async function reportRoutes(c){
  const settings=()=>query(table('report_email_settings').select('*').eq('id',true).single());
  if(path==='admin/email-settings'){
   if(user.role!=='admin'||user.adminScope!=='owner')fail(403,'Հասանելիությունն արգելված է');
-  const state=s=>{
-   const env=n=>Deno.env.get(n),effectiveFrom=s.from_email||env('ZZWS_REPORT_FROM')||'';let deliveryIssue='';
+  const state=async s=>{
+   const {env,connection}=await mailConnection(c,s),effectiveFrom=s.from_email||env('ZZWS_REPORT_FROM')||'';let deliveryIssue='';
    if(!mailReady(env))deliveryIssue='Փոստային ծառայությունը դեռ միացված չէ։ Հասցեները կարող եք պահպանել հիմա։ Ուղարկելու համար դիմեք կայքի պատասխանատուին։';
    else try{senderAddress(s,env);}catch(e){deliveryIssue=e.message;}
-   return {...s,effectiveFrom,deliveryReady:!deliveryIssue,deliveryIssue};
+   return {...s,effectiveFrom,deliveryReady:!deliveryIssue,deliveryIssue,connection};
   };
-  if(req.method==='GET')return json(state(await settings()));
-  const p=await body(req);if(!Array.isArray(p.cc)||p.cc.length!==3)fail(400,'Լրացրեք երեք CC հասցեները');const cc=p.cc.map(v=>email(v,{optional:true}));
-  if(!Object.hasOwn(p,'fromEmail'))return json(state(await query(service.rpc('zzws_report_settings_save',{p_actor:user.id,p_revision:p.revision,p_cc:cc}))));
+  if(req.method==='GET')return json(await state(await settings()));
+  const p=await body(req);
+  if(p.action==='test'){
+   const {env,connection}=await mailConnection(c,await settings(),{withPassword:true});if(!connection.passwordSet)fail(400,'Նախ պահպանեք փոստային կապը և գաղտնաբառը');
+   const result=await verifySmtp({env});if(!result.ok)fail(400,result.reason==='authentication_failed'?'Փոստի մուտքանունը կամ գաղտնաբառը չի ընդունվել։ Ստուգեք տվյալները։':'Չհաջողվեց միանալ փոստային սերվերին։ Ստուգեք սերվերը, պորտը և հասանելիությունը։');
+   return json({ok:true,message:'Կապը և մուտքը հաջողությամբ ստուգված են։ Նամակ չի ուղարկվել։'});
+  }
+  if(!Array.isArray(p.cc)||p.cc.length!==3)fail(400,'Լրացրեք երեք CC հասցեները');const cc=p.cc.map(v=>email(v,{optional:true}));
+  if(!Object.hasOwn(p,'fromEmail'))return json(await state(await query(service.rpc('zzws_report_settings_save',{p_actor:user.id,p_revision:p.revision,p_cc:cc}))));
   // Persist valid settings independently of transport setup; sending still validates the connected sender.
   const from=email(p.fromEmail,{optional:true});
-  return json(state(await query(service.rpc('zzws_email_settings_save',{p_actor:user.id,p_revision:p.revision,p_cc:cc,p_from:from}))));
+  if(!from&&(await mailConnection(c,await settings())).connection.passwordSet)fail(400,'Նշեք ուղարկողի էլ․ փոստի հասցեն');
+  if(p.connection){
+   const m=connectionInput(p.connection);if(!from)fail(400,'Նշեք ուղարկողի էլ․ փոստի հասցեն');
+   const saved=await query(service.rpc('zzws_mail_transport_save',{p_actor:user.id,p_revision:m.revision,p_settings_revision:p.revision,p_cc:cc,p_from:from,p_host:m.host,p_port:m.port,p_username:m.username,p_password:m.password}));
+   return json(await state(saved));
+  }
+  return json(await state(await query(service.rpc('zzws_email_settings_save',{p_actor:user.id,p_revision:p.revision,p_cc:cc,p_from:from}))));
  }
  if(user.role!=='admin'||!user.permissions?.includes('orders:write'))fail(403,'Հասանելիությունն արգելված է');
  const rpc=(name,args)=>query(service.rpc(name,args));
@@ -81,7 +94,7 @@ export async function reportRoutes(c){
  }
  if(form.get('confirmCustomer')!=='true')fail(400,'Հաստատեք ընտրված հաճախորդին');
  const requestId=String(form.get('requestId'));if(!/^[a-f0-9-]{36}$/i.test(requestId))fail(400,'Ուղարկման սխալ նույնացուցիչ');
- const s=await settings(),recipients=reportRecipients(customer?.profile.emailRows||[],JSON.parse(String(form.get('selectedRows')||'[]')),s.cc,String(form.get('additionalCC')||''),user.replyToEmail),env=n=>Deno.env.get(n),mode=env('ZZWS_REPORT_EMAIL_MODE'),from=senderAddress(s,env);
+ const s=await settings(),recipients=reportRecipients(customer?.profile.emailRows||[],JSON.parse(String(form.get('selectedRows')||'[]')),s.cc,String(form.get('additionalCC')||''),user.replyToEmail),{env}=await mailConnection(c,s,{withPassword:true}),mode=env('ZZWS_REPORT_EMAIL_MODE'),from=senderAddress(s,env);
  if(!mailReady(env))fail(503,'Էլ․ փոստի ծառայությունը կարգավորված չէ');
  if(env('ZZWS_ENVIRONMENT')!=='production'&&mode!=='offline'){const allowed=new Set(String(env('ZZWS_REPORT_TEST_RECIPIENTS')||'').split(',').filter(Boolean).map(v=>email(v)));if([...recipients.to,...recipients.cc].some(v=>!allowed.has(v)))fail(403,'Փորձարկման հասցեն թույլատրված չէ');}
  const fingerprint=await sha(JSON.stringify([o.id,bundleHash,index,recipients,from])),counts={transport:['gmail','smtp'].includes(mode)?'smtp':'idempotent',bundleHash,reportIndex:index,files:attachments.length,bytes:attachments.reduce((s,f)=>s+f.size,0),to:recipients.to.length,cc:recipients.cc.length};

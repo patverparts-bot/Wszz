@@ -7,6 +7,12 @@ export function smtpConfiguration(env){
 }
 export function smtpReady(env){try{smtpConfiguration(env);return true;}catch{return false;}}
 
+export async function verifySmtp({env,createTransport}){
+ const config=smtpConfiguration(env),make=createTransport||(await import('npm:nodemailer@10.3.1')).default.createTransport;
+ const transport=make({host:config.host,port:config.port,secure:config.port===465,requireTLS:true,authMethod:'LOGIN',auth:{user:config.user,pass:config.pass},connectionTimeout:12000,greetingTimeout:10000,socketTimeout:15000,logger:false,debug:false,tls:{minVersion:'TLSv1.2',rejectUnauthorized:true,servername:config.host}});
+ try{await transport.verify();return {ok:true};}catch(e){return {ok:false,reason:e.code==='EAUTH'?'authentication_failed':'connection_failed'};}finally{transport.close();}
+}
+
 // Authenticated submission only; TLS is required before transmitting credentials.
 export async function sendSmtp({job,message,env,createTransport}){
  const config=smtpConfiguration(env),from=email(message.from);
