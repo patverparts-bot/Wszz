@@ -33,11 +33,18 @@ export async function reportRoutes(c){
  const settings=()=>query(table('report_email_settings').select('*').eq('id',true).single());
  if(path==='admin/email-settings'){
   if(user.role!=='admin'||user.adminScope!=='owner')fail(403,'Հասանելիությունն արգելված է');
-  if(req.method==='GET'){const s=await settings();return json({...s,effectiveFrom:s.from_email||Deno.env.get('ZZWS_REPORT_FROM')||''});}
+  const state=s=>{
+   const env=n=>Deno.env.get(n),effectiveFrom=s.from_email||env('ZZWS_REPORT_FROM')||'';let deliveryIssue='';
+   if(!mailReady(env))deliveryIssue='Փոստային ծառայությունը դեռ միացված չէ։ Հասցեները կարող եք պահպանել հիմա։ Ուղարկելու համար դիմեք կայքի պատասխանատուին։';
+   else try{senderAddress(s,env);}catch(e){deliveryIssue=e.message;}
+   return {...s,effectiveFrom,deliveryReady:!deliveryIssue,deliveryIssue};
+  };
+  if(req.method==='GET')return json(state(await settings()));
   const p=await body(req);if(!Array.isArray(p.cc)||p.cc.length!==3)fail(400,'Լրացրեք երեք CC հասցեները');const cc=p.cc.map(v=>email(v,{optional:true}));
-  if(!Object.hasOwn(p,'fromEmail'))return json(await query(service.rpc('zzws_report_settings_save',{p_actor:user.id,p_revision:p.revision,p_cc:cc})));
-  let from;try{from=senderAddress({from_email:p.fromEmail},n=>Deno.env.get(n));}catch(e){fail(400,e.message);}
-  return json(await query(service.rpc('zzws_email_settings_save',{p_actor:user.id,p_revision:p.revision,p_cc:cc,p_from:from})));
+  if(!Object.hasOwn(p,'fromEmail'))return json(state(await query(service.rpc('zzws_report_settings_save',{p_actor:user.id,p_revision:p.revision,p_cc:cc}))));
+  // Persist valid settings independently of transport setup; sending still validates the connected sender.
+  const from=email(p.fromEmail,{optional:true});
+  return json(state(await query(service.rpc('zzws_email_settings_save',{p_actor:user.id,p_revision:p.revision,p_cc:cc,p_from:from}))));
  }
  if(user.role!=='admin'||!user.permissions?.includes('orders:write'))fail(403,'Հասանելիությունն արգելված է');
  const rpc=(name,args)=>query(service.rpc(name,args));
