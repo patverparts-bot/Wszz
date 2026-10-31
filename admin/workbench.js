@@ -2,6 +2,11 @@
  const el=id=>document.getElementById(id),node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
  const labels={new:'Նոր',confirmed:'Հաստատված',in_progress:'Ընթացքում',completed:'Առաքված է',received:'Ստացված է',rejected:'Մերժված'};
  let epoch=0,lifecycle=0,rows=[],selected=null,timer,key='',orderTools=null,updatedAt=null,refreshing=false,pollTimer=null;
+ const mobileBack=node('button','← Պատվերների ցանկ');mobileBack.id='managerMobileBack';mobileBack.type='button';el('manager').querySelector('.manager-layout').before(mobileBack);
+ mobileBack.onclick=()=>{
+  const id=selected?.id;el('closeAdminOrder').click();if(!el('adminOrderEditor').hidden)return;
+  const target=[...el('managerQueue').querySelectorAll('[data-manager-order]')].find(b=>b.dataset.managerOrder===id);target?.focus();
+ };
  const safe=fn=>async()=>{const generation=lifecycle;try{await fn();}catch(e){if(generation!==lifecycle)return;if(e.status===401){showLogin();return;}el('managerMessage').textContent=ZZWS.message(e);}};
  function mount(tab){
   const editor=el('adminOrderEditor'),message=el('adminOrderStatus');
@@ -16,7 +21,7 @@
   }
  }
  function customer(order){
-  selected=order;const root=el('managerCustomer');root.replaceChildren();el('managerEmpty').hidden=!!order;
+  selected=order;el('manager').dataset.orderSelected=String(!!order);const root=el('managerCustomer');root.replaceChildren();el('managerEmpty').hidden=!!order;
   if(!order)return;
   root.append(node('h2',order.customer.client),node('p',order.customer.login+' · Պատվեր №'+order.number+' · '+labels[order.status],'help'));
   const details=node('div',null,'manager-customer-data');
@@ -29,7 +34,7 @@
   const root=el('managerQueue');root.replaceChildren();
   for(const order of rows){const b=node('button',null,'manager-order'+(selected?.id===order.id?' is-selected':''));b.type='button';b.dataset.managerOrder=order.id;
    b.append(node('strong','№'+order.number+' · '+order.customer.client),node('span',labels[order.status],'order-status status-'+order.status),node('small',Number(order.total).toLocaleString('hy-AM')+' ֏ · '+new Date(order.created).toLocaleDateString('hy-AM',{timeZone:'Asia/Yerevan'})));
-   b.onclick=safe(async()=>{const opened=await ZZWS_ADMIN_ORDERS.openNotice(order.id);if(opened)customer(opened);});root.append(b);
+   b.onclick=safe(async()=>{const opened=await ZZWS_ADMIN_ORDERS.openNotice(order.id);if(opened){customer(opened);if(matchMedia('(max-width:1100px)').matches){mobileBack.scrollIntoView({block:'start'});mobileBack.focus({preventScroll:true});}}});root.append(b);
   }
   if(!rows.length)root.append(node('p','Ընտրված պայմաններով պատվերներ չկան։','help'));
   el('managerSummary').textContent='Բեռնված պատվերներ՝ '+rows.length+(updatedAt?' · Թարմացված՝ '+updatedAt.toLocaleTimeString('hy-AM',{timeZone:'Asia/Yerevan'}):'');
@@ -50,5 +55,6 @@
  el('managerRefresh').onclick=safe(()=>load());el('managerMore').onclick=safe(()=>load(true));el('managerStatusFilter').onchange=safe(()=>load());
  el('managerSearch').oninput=()=>{++epoch;clearTimeout(timer);timer=setTimeout(safe(()=>load()),300);};
  document.addEventListener('zzws:admin-order',e=>customer(e.detail));
+ document.addEventListener('zzws:admin-order-closed',()=>customer(null));
  window.ZZWS_ADMIN_WORKBENCH={load,mount,reset,customer,start(){clearInterval(pollTimer);pollTimer=setInterval(()=>window.ZZWS_ADMIN_WORKBENCH.poll(),15000);},poll:()=>{if(!document.hidden&&!el('manager').hidden)return load(false,true);}};
 })();

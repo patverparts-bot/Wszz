@@ -1,0 +1,49 @@
+/* Size the workbench from its available content width, including on tablets. */
+#manager{container:manager / inline-size;min-width:0}
+.manager-layout,.manager-layout>aside,.manager-detail,#managerCustomer,#managerEditorHost,#adminOrderEditor{min-width:0;max-width:100%}
+#managerMobileBack{display:none}
+.manager-order{min-width:0;max-width:100%}.manager-order strong,#managerCustomer h2,#selectedOrderTitle{min-width:0;overflow-wrap:anywhere;word-break:normal}
+.admin-order-editor-heading{flex-wrap:wrap;min-width:0;max-width:100%}.admin-order-editor-heading>div{flex:1 1 220px;min-width:0}.admin-order-editor-heading>button{flex:0 1 auto;max-width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere;margin:0}
+.manager-customer-data{grid-template-columns:repeat(2,minmax(0,1fr))}.manager-customer-data>*{min-width:0;overflow-wrap:anywhere}
+#selectedOrderDelivery .order-delivery-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.order-delivery-grid>div{min-width:0;overflow-wrap:anywhere}
+#managerCustomer button,#managerEditorHost button{max-width:100%;min-width:0;white-space:normal!important;overflow-wrap:anywhere}
+#adminOrderEditor[data-order-read-only=true] .admin-order-editor-heading>button:not(#closeAdminOrder){background:#fff;color:#1d4ed8;border:1px solid #93c5fd}
+#managerEditorHost fieldset,#managerEditorHost details,#managerEditorHost .order-workflow-help{min-width:0;max-width:100%;overflow-wrap:anywhere}
+#managerEditorHost .order-lines-scroll{min-width:0;max-width:100%;overscroll-behavior-x:contain}
+@container manager (max-width:980px){
+ .manager-layout{grid-template-columns:minmax(0,1fr);gap:16px}
+ .manager-layout>aside{position:static;max-height:none;overflow:visible;padding:0}
+ .manager-detail{display:none}
+ #managerMobileBack{width:100%;margin:0 0 16px;text-align:left;background:#f8fafc;color:#1d4ed8;border:1px solid #cbd5e1;min-height:44px}
+ #manager[data-order-selected=true]>.manager-toolbar,#manager[data-order-selected=true]>h1,#manager[data-order-selected=true]>.help,#manager[data-order-selected=true]>#managerSummary,#manager[data-order-selected=true]>.manager-layout>aside{display:none}
+ #manager[data-order-selected=true]>#managerMobileBack{display:block}
+ #manager[data-order-selected=true]>.manager-layout>.manager-detail{display:block}
+ .manager-customer-data{display:none}
+ #managerCustomer:not(:empty){padding:16px}
+ #managerCustomer h2{display:none}
+ #managerCustomer .help{font-size:14px;line-height:1.6}
+ #managerCustomer button{width:100%;min-height:44px;margin:8px 0 0}
+ #managerEditorHost .admin-order-editor-heading{display:flex;flex-direction:column;gap:12px;align-items:stretch}
+ #managerEditorHost .admin-order-editor-heading>div{flex:0 1 auto;width:100%}
+ #managerEditorHost .admin-order-editor-heading>button{width:100%;min-height:44px;padding:12px 14px;font-size:14px;line-height:1.5}
+ #selectedOrderTitle{font-size:22px;line-height:1.4;margin:0 0 8px}
+ #selectedOrderMeta{font-size:13px;line-height:1.6}
+ #managerEditorHost .order-workflow-help,#managerEditorHost .receipt-proof{padding:14px;font-size:14px;line-height:1.7}
+ #selectedOrderDelivery .order-delivery-grid{grid-template-columns:minmax(0,1fr);gap:10px}
+ #selectedOrderDelivery .order-delivery-grid div{padding:13px;font-size:14px;line-height:1.7}
+ #managerEditorHost .manager-order-tools>summary{font-size:14px;line-height:1.6;padding:14px 4px}
+ #managerEditorHost fieldset{padding:12px}
+ #managerEditorHost fieldset>button{width:100%;margin:6px 0;min-height:44px;font-size:14px}
+ #managerEditorHost input:not([type=checkbox]),#managerEditorHost select,#managerEditorHost textarea{font-size:16px}
+}
+@media(max-width:850px){
+ main{width:100%;padding-inline:12px;margin-block:18px}
+ #manager{padding:16px}
+ #manager .manager-toolbar{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+ #manager .manager-toolbar label{min-width:0;max-width:none;width:100%;font-size:14px}
+ #manager .manager-toolbar input,#manager .manager-toolbar select{font-size:16px}
+ #manager .manager-toolbar button{margin:0;min-height:44px}
+ .manager-order{padding:14px;gap:8px}.manager-order strong{font-size:15px;line-height:1.6}.manager-order small{font-size:13px;line-height:1.6}
+ header{flex-wrap:wrap;gap:10px}header #logout{margin-left:auto}header .zzws-workspace-switch{font-size:12px}
+ .admin-section-trail{min-width:0}.admin-section-trail .admin-active-section{overflow-wrap:anywhere;min-width:0}
+}

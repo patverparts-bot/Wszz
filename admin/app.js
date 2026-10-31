@@ -14,6 +14,7 @@ async function api(path, options = {}) {
   catch(e) { if(e.status === 401) showLogin(); throw e; }
 }
 function showLogin() {
+  adminNavigationActive=false;adminHistoryPosition=0;updateAdminBackButton();
   pricePreviewTicket++;window.ZZWS_ADMIN_CATALOG_CONTROLS?.reset();window.ZZWS_ADMIN_OPERATIONS?.reset();window.ZZWS_ADMIN_WORKBENCH?.reset();window.ZZWS_ADMIN_TEMPLATES?.reset();
   window.ZZWS_REOPEN_ALERTS?.reset();
   window.ZZWS_ENTRY?.reset();
@@ -39,17 +40,51 @@ function table(headers, rows) {
 function button(label, callback) { const b = document.createElement('button'); b.type='button'; b.textContent = label; b.onclick = () => run(callback); return b; }
 async function run(fn) { try { await fn(); } catch(e) { if(!e.staleSession)status(ZZWS.message(e), true); } }
 const adminTabs=['dashboard','manager','orders','templates','price','users','rules','audit','storage','email','offers','catalogControls','operations'];
+let adminNavigationActive=false,adminHistoryPosition=0,activeAdminTab=null;
+const adminBackButton=document.createElement('button');adminBackButton.id='adminBackSection';adminBackButton.type='button';adminBackButton.textContent='← Նախորդ բաժին';
+const adminSectionTrail=document.createElement('div');adminSectionTrail.className='admin-section-trail';el('adminActiveSection').before(adminSectionTrail);adminSectionTrail.append(adminBackButton,el('adminActiveSection'));
+function updateAdminBackButton(){adminBackButton.disabled=!adminNavigationActive||adminHistoryPosition<=0;}
+function adminHistoryState(tab,position){return {...(history.state&&typeof history.state==='object'?history.state:{}),zzwsAdminNavigation:{version:1,tab,position}};}
+function adminHistoryEntry(){const state=history.state?.zzwsAdminNavigation;return state?.version===1&&adminTabs.includes(state.tab)&&Number.isSafeInteger(state.position)&&state.position>=0?state:null;}
+function adminTabUrl(name){return location.pathname+location.search+'#tab='+name;}
+function startAdminNavigation(name){
+  const saved=adminHistoryEntry();adminNavigationActive=true;
+  if(saved){adminHistoryPosition=saved.position;activeAdminTab=name;history.replaceState(adminHistoryState(name,adminHistoryPosition),'',adminTabUrl(name));}
+  else{
+    // Keep the first Back transition inside the authenticated workspace.
+    adminHistoryPosition=0;activeAdminTab='dashboard';history.replaceState(adminHistoryState('dashboard',0),'',adminTabUrl('dashboard'));
+    if(name!=='dashboard'){adminHistoryPosition=1;activeAdminTab=name;history.pushState(adminHistoryState(name,1),'',adminTabUrl(name));}
+  }
+  updateAdminBackButton();
+}
+adminBackButton.onclick=()=>{if(!adminNavigationActive)return;if(adminHistoryPosition>0&&adminHistoryEntry())history.back();};
+window.addEventListener('popstate',()=>{
+  if(!adminNavigationActive||el('workspace').hidden)return;
+  const state=adminHistoryEntry(),linked=new URLSearchParams(location.hash.slice(1)).get('tab');adminHistoryPosition=state?.position??0;
+  run(()=>selectAdminTab(state?.tab||linked||'dashboard',{history:'restore'}));
+});
+window.addEventListener('hashchange',()=>{
+  if(!adminNavigationActive||el('workspace').hidden)return;
+  const linked=new URLSearchParams(location.hash.slice(1)).get('tab');if(linked===activeAdminTab)return;
+  const state=adminHistoryEntry();adminHistoryPosition=state?.tab===linked?state.position:adminHistoryPosition+1;
+  run(()=>selectAdminTab(linked||'dashboard',{history:'restore'}));
+});
 function rememberedAdminTab(){
   const linked=new URLSearchParams(location.hash.slice(1)).get('tab');if(adminTabs.includes(linked))return linked;
   try{const saved=sessionStorage.getItem('zzws_admin_tab_v1');if(adminTabs.includes(saved))return saved;}catch{}
   return ZZWS_ADMIN_HOME.can('manager')?'manager':'dashboard';
 }
-async function selectAdminTab(name){
+async function selectAdminTab(name,options={}){
   if(!adminTabs.includes(name)||!ZZWS_ADMIN_HOME.can(name))name='dashboard';
   for(const section of adminTabs)el(section).hidden=section!==name;
   document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('admin-tab-active',b.dataset.tab===name);b.setAttribute('aria-current',b.dataset.tab===name?'page':'false');});
   try{sessionStorage.setItem('zzws_admin_tab_v1',name);}catch{}
-  history.replaceState(null,'',location.pathname+location.search+'#tab='+name);ZZWS_ADMIN_WORKBENCH.mount(name);el('adminMoreMenu').open=false;const label=document.querySelector('[data-tab="'+name+'"]')?.cloneNode(true);label?.querySelectorAll('[hidden]').forEach(n=>n.remove());el('adminActiveSection').textContent=name==='templates'?'Հաճախորդի պահպանված զամբյուղները':label?.textContent.trim()||'';
+  if(adminNavigationActive){
+    if(options.history==='restore'||name===activeAdminTab)history.replaceState(adminHistoryState(name,adminHistoryPosition),'',adminTabUrl(name));
+    else{adminHistoryPosition++;history.pushState(adminHistoryState(name,adminHistoryPosition),'',adminTabUrl(name));}
+    activeAdminTab=name;updateAdminBackButton();
+  }
+  ZZWS_ADMIN_WORKBENCH.mount(name);el('adminMoreMenu').open=false;const label=document.querySelector('[data-tab="'+name+'"]')?.cloneNode(true);label?.querySelectorAll('[hidden]').forEach(n=>n.remove());el('adminActiveSection').textContent=name==='templates'?'Հաճախորդի պահպանված զամբյուղները':label?.textContent.trim()||'';
   if(name==='dashboard')await ZZWS_ADMIN_HOME.load();
   if(name==='audit')await loadAudit();
   if(name==='storage')await ZZWS_STORAGE.load();
@@ -65,7 +100,7 @@ async function enter() {
   window.ZZWS_ENTRY?.navigation(user);window.ZZWS_HELP_USER=user;ZZWS_ADMIN_HOME.setUser(user);
   ZZWS_ADMIN_CHANNELS.start(user);
   window.ZZWS_REOPEN_ALERTS?.start(user);
-  const activeTab=rememberedAdminTab();for(const section of adminTabs)el(section).hidden=section!==activeTab;
+  const rememberedTab=rememberedAdminTab(),activeTab=ZZWS_ADMIN_HOME.can(rememberedTab)?rememberedTab:'dashboard';startAdminNavigation(activeTab);for(const section of adminTabs)el(section).hidden=section!==activeTab;
   el('login').hidden = true; el('workspace').hidden = false; el('logout').hidden = false;
   catalogPairs=(await api('admin/catalog-options')).pairs;
   ZZWS_ADMIN_RECEIPTS.start(user);

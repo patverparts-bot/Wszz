@@ -19,6 +19,7 @@
  function controls(){
   reportButton.hidden=!canEdit();reportButton.disabled=busy||!selected;
   const readOnly=!canEdit(),locked=readOnly||busy||!selected;
+  el('adminOrderEditor').dataset.orderReadOnly=String(readOnly);const workflowHelp=el('adminOrderEditor').querySelector('.order-workflow-help');if(workflowHelp)workflowHelp.hidden=readOnly;
   for(const id of ['manualOrderSave','previewFinalFile','previewFinalPaste','applyConfirmation','cancelConfirmation'])el(id).hidden=readOnly;
   for(const field of el('adminOrderEditor').querySelectorAll('input,select,textarea'))field.disabled=locked;
   el('confirmationPaste').closest('fieldset').hidden=readOnly;
@@ -202,7 +203,7 @@
  el('refreshAdminOrders').onclick=()=>run(load);el('orderStatusFilter').onchange=()=>run(load);el('orderSearch').oninput=()=>{++listEpoch;clearTimeout(searchTimer);searchTimer=setTimeout(()=>run(load),350);};for(const id of ['from','to'])el('orderDate'+id).onchange=()=>run(load);el('moreAdminOrders').onclick=()=>run(()=>load(true));el('manualOrderSave').onclick=()=>run(saveManual);
  el('editOrderStatus').onchange=()=>{dirty=true;};el('editOrderComment').oninput=()=>{dirty=true;};el('previewFinalFile').onclick=()=>run(()=>makePreview('file'));el('previewFinalPaste').onclick=()=>run(()=>makePreview('paste'));
  el('confirmOrderCustomer').onchange=controls;el('applyConfirmation').onclick=()=>run(apply);el('cancelConfirmation').onclick=()=>{if(busy)return;preview=null;el('confirmationPreview').hidden=true;controls();};
- el('closeAdminOrder').onclick=()=>{if(busy){waitMessage();return;}if(!dirty||confirm('Փակե՞լ առանց ձեռքով փոփոխությունները պահպանելու։')){++editorEpoch;selected=null;preview=null;dirty=false;el('adminOrderEditor').hidden=true;}};
+ el('closeAdminOrder').onclick=()=>{if(busy){waitMessage();return;}if(!dirty||confirm('Փակե՞լ առանց ձեռքով փոփոխությունները պահպանելու։')){++editorEpoch;selected=null;preview=null;dirty=false;el('adminOrderEditor').hidden=true;document.dispatchEvent(new CustomEvent('zzws:admin-order-closed'));}};
  el('viewOrderExport').onclick=()=>run(viewExport);
  el('downloadFinalTemplate').onclick=()=>run(()=>download('admin/orders/template','Final-order-template.xlsx'));el('exportServerOrder').onclick=()=>run(()=>download('admin/orders/export','Order-'+selected.number+'.xlsx',{id:selected.id}));
  window.ZZWS_ADMIN_ORDERS={load,start,reset,poll,refreshUnread,setRefreshSeconds,openNotice:id=>open(id),context:()=>selected?{...selected}:null,previewTemplate};
