@@ -166,7 +166,8 @@ function setAdminOrderPriceMode(mode) {
 
 function validateCartPrices() {
   if (!isAdminUser()) return true;
-  const missing = Object.keys(cart).filter(articul => getItemWholesalePrice(cart[articul]) <= 0);
+  const selected=window.ZZWS_CHECKOUT?.activeCart()||cart;
+  const missing = Object.keys(selected).filter(articul => getItemWholesalePrice(selected[articul]) <= 0);
   if (missing.length === 0) return true;
   const sample = missing.slice(0, 8).join(', ');
   const extra = missing.length > 8 ? ` և ևս ${missing.length - 8}` : '';
@@ -198,6 +199,7 @@ function updateOrderPanel() {
     orderPanel.classList.add('hidden');
     if (badgeDesk) badgeDesk.classList.add('hidden');
   }
+  window.ZZWS_CHECKOUT?.changed();
 }
 
 function clearOrder() {
@@ -295,13 +297,17 @@ function renderModalItems() {
         </div><span class="print-only">${item.qty}</span></div>
         <div class="basket-line-total"><span class="basket-field-label">Ընդհանուր գումար</span><strong>${sum.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'))} ֏</strong></div>
       </div>`;
+    const replacement=document.createElement('button');replacement.type='button';replacement.className='replacement-open print-hidden';replacement.dataset.replaceArt=articul;replacement.textContent='Փոխարինող մոդել';
+    const tools=document.createElement('div');tools.className='basket-line-actions print-hidden';
+    const remove=document.createElement('button');remove.type='button';remove.className='basket-remove';remove.textContent='Հեռացնել';remove.setAttribute('aria-label','Հեռացնել '+name);remove.onclick=()=>{setDirectQty(articul,0);renderModalItems();window.ZZWS_MEMORY?.capture();};
+    tools.append(replacement,remove);div.append(tools);
     listContainer.appendChild(div);
   });
 
   if (bodyEl) bodyEl.scrollTop = prevScroll;
   document.getElementById('modalTotalSum').innerText = totalSum.toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM')) + ' ֏';
+  window.ZZWS_CHECKOUT?.decorateRows();
 }
-
 function openOrderModal() {
   ZZWS_MEMORY.savedList();
   document.querySelectorAll('[data-admin-price-mode-select]').forEach(select => { select.value = adminOrderPriceMode; });
@@ -318,10 +324,8 @@ function openOrderModal() {
   }
   checkDeliveryBadge();
   document.getElementById('orderModal').classList.remove('hidden');
+  window.ZZWS_CHECKOUT?.open();
 }
-
-
-
 function changeQty(articul, delta) {
   if (!cart[articul]) return;
   cart[articul].qty = Math.min(cart[articul].qty + delta, MAX_QTY);
@@ -345,6 +349,7 @@ function changeQtyFromModal(articul, delta) {
 }
 
 function printOrder() {
+  if(window.ZZWS_CHECKOUT&&!window.ZZWS_CHECKOUT.ready())return;
   if (!validateCartPrices()) return;
   const v = id => (document.getElementById(id).value || '').trim();
   const lines = [`Կազմակերպություն՝ ${getSelectedOrganizationName()}`];
@@ -404,21 +409,36 @@ function saveOrderToHistory(cartItems, orgName, totalSum, actionType = 'Excel') 
   } catch (e) {}
 }
 
+let personalCabinetOpener=null;
 function openPersonalCabinet() {
   if (!authorizedClient) {
     alert('Մուտք գործեք համակարգ։');
     return;
   }
-  document.getElementById('cabinetUserSubtitle').innerText = `Օգտատեր՝ ${authorizedClient} (${isAdminUser()?'Ադմինիստրատոր':({Dealers:'Մշտական Գորրընկեր',KP:'Խոշոր Գործընկեր'}[userSheetType]||'Գործընկեր')})`;
+  document.getElementById('cabinetUserSubtitle').innerText = `Օգտատեր: ${authorizedClient} (${userSheetType})`;
+  document.getElementById('cabinetUserSubtitle').title = document.getElementById('cabinetUserSubtitle').innerText;
+  const opening=document.getElementById('cabinetModal').classList.contains('hidden');
+  if(opening){personalCabinetOpener=document.activeElement;document.getElementById('orderNotificationList').hidden=true;document.querySelector('.cabinet-notifications-link').setAttribute('aria-expanded','false');document.getElementById('cabinetScroll').scrollTop=0;}
+  window.ZZWS_ADMIN_RESOURCES?.refresh();
   renderOrderHistoryList();
   ZZWS_ORDERS.load();
   document.getElementById('cabinetModal').classList.remove('hidden');
-  window.ZZWS_ADMIN_RESOURCES?.refresh();
+  document.body.classList.add('cabinet-open');
+  if(opening)document.getElementById('cabinetClose').focus({preventScroll:true});
 }
 
 function closePersonalCabinet() {
   document.getElementById('cabinetModal').classList.add('hidden');
+  document.body.classList.remove('cabinet-open');
+  if(personalCabinetOpener?.isConnected)personalCabinetOpener.focus({preventScroll:true});
 }
+
+document.getElementById('cabinetModal').addEventListener('keydown',event=>{
+  if(event.key==='Escape'){event.preventDefault();closePersonalCabinet();return;}
+  if(event.key!=='Tab')return;
+  const items=[...document.getElementById('cabinetModal').querySelectorAll('button:not(:disabled),a[href],input:not(:disabled),summary,[tabindex="0"]')].filter(item=>item.getClientRects().length);
+  const first=items[0],last=items.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}
+});
 
 function renderOrderHistoryList() {
   const container = document.getElementById('cabinetHistoryList');

@@ -11,7 +11,7 @@
   const persist=()=>{if(!owner)return;try{localStorage.setItem(key(),JSON.stringify(pending));}catch{banner('Չհաջողվեց պահպանել տեղային պատճենը։ Մի փակեք էջը մինչև համաժամացումը։',true);}};
   function read(){
     const draft={};for(const id of fields)draft[id]=document.getElementById(id)?.value||'';
-    return {cart:copy(cart),favorites:[...favoritesSet],history:cache('history',[]),preferences:{theme:localStorage.getItem('zigzag_theme')||'light',filtersOpen:localStorage.getItem('zigzag_filters_open_'+userStorageId())||'false',priceMode:adminOrderPriceMode,hiddenColumns:JSON.parse(localStorage.getItem('zigzag_columns_'+userStorageId())||'[]')},draft};
+    return {cart:copy(cart),favorites:[...favoritesSet],history:cache('history',[]),preferences:{theme:localStorage.getItem('zigzag_theme')||'light',filtersOpen:localStorage.getItem('zigzag_filters_open_'+userStorageId())||'false',priceMode:adminOrderPriceMode,hiddenColumns:JSON.parse(localStorage.getItem('zigzag_columns_'+userStorageId())||'[]'),dealerOffers:JSON.parse(localStorage.getItem('zigzag_dealer_offers_'+userStorageId())||'[]')},draft};
   }
   function apply(section,value,render=true){
     value=value??(['favorites','history'].includes(section)?[]:{});
@@ -20,6 +20,7 @@
     if(section==='favorites'){favoritesSet=new Set(value);if(render&&catalogLoaded)resetAndRender();}
     if(section==='history'&&render)renderOrderHistoryList();
     if(section==='preferences'){
+      localStorage.setItem('zigzag_dealer_offers_'+userStorageId(),JSON.stringify(value.dealerOffers||[]));
       localStorage.setItem('zigzag_columns_'+userStorageId(),JSON.stringify(value.hiddenColumns||[]));window.ZZWS_COLUMNS?.render();
       const theme=value.theme==='dark'?'dark':'light';localStorage.setItem('zigzag_theme',theme);document.documentElement.classList.toggle('dark',theme==='dark');
       localStorage.setItem('zigzag_filters_open_'+userStorageId(),value.filtersOpen||'false');
@@ -102,7 +103,7 @@
         const count=Object.values(row.cart).reduce((n,item)=>n+(Number(item.qty)||0),0);
         meta.textContent=new Intl.DateTimeFormat((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'),{timeZone:'Asia/Yerevan',dateStyle:'medium',timeStyle:'short'}).format(new Date(row.saved_at))+' · '+Object.keys(row.cart).length+' դիրք · '+count+' հատ';
         info.append(title,meta);box.append(info,actions);
-        for(const [text,action] of [['Բեռնել',async()=>{if(Object.keys(cart).length&&!confirm('Ընթացիկ զամբյուղը փոխարինե՞լ պահպանվածով։'))return;apply('cart',row.cart);apply('draft',row.draft);capture();await flush();renderModalItems();document.getElementById('savedCartsPanel').open=false;}],['Ջնջել',async()=>{if(!confirm('Ջնջե՞լ «'+row.title+'»?'))return;await ZZWS.json('me/carts/delete',{method:'POST',body:JSON.stringify({id:row.id})});await savedList();}]]){const b=document.createElement('button');b.type='button';b.textContent=text;b.className=text==='Ջնջել'?'saved-delete':'saved-secondary';b.setAttribute('aria-label',text+' « զամբյուղը՝'+row.title+'»');b.onclick=()=>action().catch(e=>alert(e.message));actions.append(b);}root.append(box);}
+        for(const [text,action] of [['Ավելացնել ընթացիկ զամբյուղին',async()=>{await ZZWS_PURCHASE_PLANS.preview(row.cart,row.title);}],['Բեռնել',async()=>{if(Object.keys(cart).length&&!confirm('Ընթացիկ զամբյուղը փոխարինե՞լ պահպանվածով։'))return;apply('cart',row.cart);apply('draft',row.draft);capture();await flush();renderModalItems();document.getElementById('savedCartsPanel').open=false;}],['Ջնջել',async()=>{if(!confirm('Ջնջե՞լ «'+row.title+'»?'))return;await ZZWS.json('me/carts/delete',{method:'POST',body:JSON.stringify({id:row.id})});await savedList();}]]){const b=document.createElement('button');b.type='button';b.textContent=text;b.className=text==='Ջնջել'?'saved-delete':'saved-secondary';b.setAttribute('aria-label',text+' « զամբյուղը՝'+row.title+'»');b.onclick=()=>action().catch(e=>alert(e.message));actions.append(b);}root.append(box);}
     }catch(e){root.textContent=e.message;}
   }
   async function saveNamed(){

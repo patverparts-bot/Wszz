@@ -1,3 +1,4 @@
+function checkoutCart(){return window.ZZWS_CHECKOUT?.activeCart()||cart;}
 function buildEmailFormattedText() {
   const orgName = getSelectedOrganizationName();
   const delivDate = (document.getElementById('deliveryDateInput').value || '').trim();
@@ -14,7 +15,7 @@ function buildEmailFormattedText() {
   if (comment) text += `Մեկնաբանություն: ${comment}\n\n`;
 
   let total = 0, i = 1;
-  Object.entries(cart).forEach(([artKey, item]) => {
+  Object.entries(checkoutCart()).forEach(([artKey, item]) => {
     const price = getItemWholesalePrice(item);
     const sum = price * item.qty;
     total += sum;
@@ -35,7 +36,7 @@ function buildViberFormattedText() {
   const comment = (document.getElementById('orderCommentInput').value || '').trim();
 
   let total = 0;
-  Object.values(cart).forEach(item => total += getItemWholesalePrice(item) * item.qty);
+  Object.values(checkoutCart()).forEach(item => total += getItemWholesalePrice(item) * item.qty);
 
   let text = `Բարև ձեզ,\n\nԿից ներկայացնում եմ պատվերի Excel ֆայլը:\nԿազմակերպություն: ${orgName}\nԱռաքման եղանակ: ${deliveryMethod}\n`;
   if (isAdminUser()) text += `Գնային հաշվարկ: ${getOrderPriceLabel()}\n`;
@@ -52,7 +53,7 @@ function sendViaViber() {
   if (!validateCartPrices()) return;
   const orgName = getSelectedOrganizationName();
   let totalSum = 0;
-  Object.values(cart).forEach(item => totalSum += getItemWholesalePrice(item) * item.qty);
+  Object.values(checkoutCart()).forEach(item => totalSum += getItemWholesalePrice(item) * item.qty);
   
   saveOrderToHistory(cart, orgName, totalSum, 'Viber');
 
@@ -69,6 +70,7 @@ function downloadOrderExcel() {
 }
 
 function generateAndDownloadExcel(isFromExternal = false) {
+  if(window.ZZWS_CHECKOUT&&!ZZWS_CHECKOUT.ready())return false;
   if(typeof XLSX==='undefined'){alert('Excel գործիքը չի բեռնվել։ Թարմացրեք էջը և կրկին փորձեք։ Զամբյուղը պահպանված է։');return false;}
   if(!Object.keys(cart).length){alert('Զամբյուղը դատարկ է։');return false;}
   if (!validateCartPrices()) return false;
@@ -80,13 +82,13 @@ function generateAndDownloadExcel(isFromExternal = false) {
   const comment = (document.getElementById('orderCommentInput').value || '').trim();
 
   let currentTotalSum = 0;
-  Object.values(cart).forEach(item => currentTotalSum += getItemWholesalePrice(item) * item.qty);
+  Object.values(checkoutCart()).forEach(item => currentTotalSum += getItemWholesalePrice(item) * item.qty);
 
 
 
   const excelData = [];
   excelData.push({'Արտիկուլ':'Արտիկուլ','Անվանում':'Անվանում','Քանակ (հատ)':'Քանակ','Մեծածախ գին (AMD)':'Միավորի գին','Գումար (AMD)':'Գումար'});
-  for(const [key,item] of Object.entries(cart)){const price=getItemWholesalePrice(item);excelData.push({'Արտիկուլ':getItemArticul(key,item),'Անվանում':getItemName(item),'Քանակ (հատ)':item.qty,'Մեծածախ գին (AMD)':price,'Գումար (AMD)':price*item.qty});}
+  for(const [key,item] of Object.entries(checkoutCart())){const price=getItemWholesalePrice(item);excelData.push({'Արտիկուլ':getItemArticul(key,item),'Անվանում':getItemName(item),'Քանակ (հատ)':item.qty,'Մեծածախ գին (AMD)':price,'Գումար (AMD)':price*item.qty});}
   excelData.push({'Արտիկուլ':'ԸՆԴԱՄԵՆԸ','Գումար (AMD)':currentTotalSum});
   excelData.push({ 'Արտիկուլ': 'ՏԵՂԵԿՈՒԹՅՈՒՆՆԵՐ ՊԱՏՎԻՐԱՏՈՒԻ ԵՎ ԱՌԱՔՄԱՆ ՄԱՍԻՆ', 'Անվանում': '', 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '' });
   excelData.push({ 'Արտիկուլ': 'Կոնտրագենտ:', 'Անվանում': (window.ZZWS_ASSISTED?.customer()?.client||authorizedClient), 'Քանակ (հատ)': '', 'Մեծածախ գին (AMD)': '', 'Գումար (AMD)': '' });

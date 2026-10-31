@@ -322,6 +322,7 @@ function loadSavedFilters() {
 }
 
 function clearAllFilters() {
+  window.ZZWS_DEALER?.clearFilters();
   clearBrandSelection();
   clearCategorySelection();
   document.getElementById('sortBy').value = 'default';
@@ -394,7 +395,6 @@ function handleImageError(imgElement) {
   }
 }
 function getProductImageHtml(articul, productName) {
-  if(window.ZZWS_CONFIG?.offline)return `<div class="product-img-container"><img src="/offline/assets/product.svg" alt="${escapeHtml(productName)}" class="product-img" onload="markProductImageLoaded(this)"></div>`;
   const cleanArt = String(articul).trim();
   const a1 = cleanArt.charAt(0) || '0';
   const a2 = cleanArt.charAt(1) || '0';
@@ -403,7 +403,7 @@ function getProductImageHtml(articul, productName) {
   const photoUrl = photoSuffix ? (photoSuffix.startsWith('https://www.zigzag.am/') ? photoSuffix : `https://www.zigzag.am${window.ZZWS_PRODUCT_PHOTO_PREFIX}${photoSuffix}`) : '';
 
   return `
-    <div class="product-img-container">
+    <button type="button" class="product-img-container product-technical-trigger" data-product-technical="${escapeHtml(cleanArt)}" data-product-name="${escapeHtml(productName)}" aria-label="Բացել տեխնիկական բնութագրերը՝ ${escapeHtml(productName)}" aria-haspopup="dialog">
       <img src="${escapeHtml(photoUrl || initialUrl)}" 
            data-articul="${escapeHtml(cleanArt)}"
            data-step="${photoUrl ? '0' : '1'}"
@@ -413,7 +413,7 @@ function getProductImageHtml(articul, productName) {
            loading="lazy"
            onload="markProductImageLoaded(this)"
            onerror="handleImageError(this)">
-    </div>
+    </button>
   `;
 }
 

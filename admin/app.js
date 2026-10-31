@@ -3,7 +3,7 @@ const categoryLabel=id=>categoryLabels[id]||id;
 const el = id => document.getElementById(id);
 function finishSessionLoading(){document.documentElement.removeAttribute('data-session-pending');}
 function sessionLoadFailed(message){document.documentElement.setAttribute('data-session-pending','true');el('sessionLoadingText').textContent=message||'Չհաջողվեց թարմացնել տվյալները։ Ստուգեք կապը։';el('sessionSpinner').hidden=true;el('sessionRetryActions').hidden=false;}
-let draft = null, userDraft = null, users = [];
+let draft = null, userDraft = null, users = [], pricePreviewTicket=0;
 let catalogPairs=[],userAccessEditor=null,groupEditors={},groupRevision=null;
 let editingUserId=null,editingProfile=null,auditEntries=[],categoryByGroup={KP:'KP',Dealers:'Dealers'};
 let categoryDefaults=null;
@@ -14,6 +14,7 @@ async function api(path, options = {}) {
   catch(e) { if(e.status === 401) showLogin(); throw e; }
 }
 function showLogin() {
+  pricePreviewTicket++;window.ZZWS_ADMIN_CATALOG_CONTROLS?.reset();window.ZZWS_ADMIN_OPERATIONS?.reset();window.ZZWS_ADMIN_WORKBENCH?.reset();window.ZZWS_ADMIN_TEMPLATES?.reset();
   window.ZZWS_REOPEN_ALERTS?.reset();
   window.ZZWS_ENTRY?.reset();
   window.ZZWS_HELP_USER=null;
@@ -37,22 +38,22 @@ function table(headers, rows) {
 }
 function button(label, callback) { const b = document.createElement('button'); b.type='button'; b.textContent = label; b.onclick = () => run(callback); return b; }
 async function run(fn) { try { await fn(); } catch(e) { if(!e.staleSession)status(ZZWS.message(e), true); } }
-const adminTabs=['dashboard','orders','price','users','rules','audit','storage','email','offers'];
+const adminTabs=['dashboard','manager','orders','templates','price','users','rules','audit','storage','email','offers','catalogControls','operations'];
 function rememberedAdminTab(){
   const linked=new URLSearchParams(location.hash.slice(1)).get('tab');if(adminTabs.includes(linked))return linked;
   try{const saved=sessionStorage.getItem('zzws_admin_tab_v1');if(adminTabs.includes(saved))return saved;}catch{}
-  return 'dashboard';
+  return ZZWS_ADMIN_HOME.can('manager')?'manager':'dashboard';
 }
 async function selectAdminTab(name){
   if(!adminTabs.includes(name)||!ZZWS_ADMIN_HOME.can(name))name='dashboard';
   for(const section of adminTabs)el(section).hidden=section!==name;
   document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('admin-tab-active',b.dataset.tab===name);b.setAttribute('aria-current',b.dataset.tab===name?'page':'false');});
   try{sessionStorage.setItem('zzws_admin_tab_v1',name);}catch{}
-  history.replaceState(null,'',location.pathname+location.search+'#tab='+name);
+  history.replaceState(null,'',location.pathname+location.search+'#tab='+name);ZZWS_ADMIN_WORKBENCH.mount(name);el('adminMoreMenu').open=false;const label=document.querySelector('[data-tab="'+name+'"]')?.cloneNode(true);label?.querySelectorAll('[hidden]').forEach(n=>n.remove());el('adminActiveSection').textContent=name==='templates'?'Հաճախորդի պահպանված զամբյուղները':label?.textContent.trim()||'';
   if(name==='dashboard')await ZZWS_ADMIN_HOME.load();
   if(name==='audit')await loadAudit();
   if(name==='storage')await ZZWS_STORAGE.load();
-  if(name==='orders')await ZZWS_ADMIN_ORDERS.load();
+  if(name==='orders')await ZZWS_ADMIN_ORDERS.load();if(name==='manager')await ZZWS_ADMIN_WORKBENCH.load();if(name==='templates')await ZZWS_ADMIN_TEMPLATES.load();if(name==='catalogControls')await ZZWS_ADMIN_CATALOG_CONTROLS.load();if(name==='operations')await ZZWS_ADMIN_OPERATIONS.load();
   if(name==='offers')await ZZWS_OFFERS.load();
   if(name==='email')await ZZWS_REPORT_EMAIL.loadSettings();
 }
@@ -68,25 +69,24 @@ async function enter() {
   el('login').hidden = true; el('workspace').hidden = false; el('logout').hidden = false;
   catalogPairs=(await api('admin/catalog-options')).pairs;
   ZZWS_ADMIN_RECEIPTS.start(user);
-  ZZWS_ADMIN_ORDERS.start(user);
+  ZZWS_ADMIN_ORDERS.start(user);ZZWS_ADMIN_WORKBENCH.start();
   const permissions=user.permissions||[];await Promise.all([...(permissions.includes('price:read')?[loadVersions()]:[]),...(permissions.includes('users')?[loadUsers()]:[]),...(permissions.includes('rules')?[loadGroupRules()]:[])]);await selectAdminTab(activeTab);finishSessionLoading(); status('Մուտք եք գործել որպես ' + user.client);
 }
 el('loginForm').onsubmit = e => { e.preventDefault(); run(async () => { await completeSecureLogin(await api('login', {method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(e.target)))})); e.target.reset(); let identity=await api('me');if(identity.needsPasswordSetup){identity=await requirePasswordSetup(identity);if(!identity)return;}await ZZWS_ENTRY.choose(identity,enter); }); };
 el('logout').onclick = () => run(async () => { await api('logout',{method:'POST'}); showLogin(); status('Դուք դուրս եք եկել'); });
 document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => run(()=>selectAdminTab(b.dataset.tab)));
+el('priceForm').querySelector('input[type=file]').addEventListener('change',()=>{pricePreviewTicket++;draft=null;el('preview').hidden=true;el('publish').disabled=true;});
 el('priceForm').onsubmit = e => { e.preventDefault(); run(async () => {
-  draft = null; el('preview').hidden = true; status('Ֆայլը ստուգվում է…');
-  const d = await api('admin/price/preview',{method:'POST',body:await ZZWS_I18N_WORKBOOKS.userImport(new FormData(e.target),categoryLabels)});
-  draft = d.draft;const difference=d.difference;el('priceDifference').textContent=difference?'Ավելացված՝ '+difference.added+' · հեռացված՝ '+difference.removed+' · գինը փոխված՝ '+difference.changed+' · անփոփոխ՝ '+difference.unchanged:'';el('priceWarnings').replaceChildren(...(difference?.warnings||[]).map(w=>{const p=document.createElement('p');p.textContent=w.articul+' · '+w.name+' · '+({ws:'Մեծածախ գին',kp:'Խոշոր գործընկերոջ գին',kpPromo:'Խոշոր գործընկերոջ ակցիոն գին',retail:'Զեղչված մանրածախ գին',base:'Հիմնական մանրածախ գին'}[w.source]||'Գին')+': '+w.before+' → '+w.after+' ('+w.percent+'%)';return p;})); const counts=d.priceSummary;
-  el('summary').textContent = `Ֆայլում ստուգված ապրանքներ՝ ${d.count}։ `+(counts?`Մեծածախ գին ունի՝ ${counts.ws}։ Խոշոր գործընկերոջ հիմնական գին՝ ${counts.kp}։ Խոշոր գործընկերոջ ակցիոն գին՝ ${counts.kpPromo}։ Առանց որևէ մեծածախ գնի՝ ${counts.withoutWholesale}։ `:'')+(d.sampleMode==='priced'?'Ստորև ցույց են տրված մինչև հինգ օրինակ՝ մեծածախ գնով։ Սա ամբողջ ցանկը չէ։':'Ստորև ֆայլի առաջին մինչև հինգ տողերի օրինակներն են։ Սա ամբողջ ցանկը չէ։')+' «—» նշանակում է՝ այս տեսակի գին ֆայլում նշված չէ կամ զրոյական է․ ապրանքը անվճար չէ։ Ցուցադրված են ֆայլի գները․ հաճախորդի վերջնական գինը որոշվում է նրա կատեգորիայի կանոններով։';
-  const price=value=>value>0?Number(value).toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'))+' ֏':'—';
-  el('sample').replaceChildren(table(['Արտիկուլ','Բրենդ','Անվանում','Մանրածախ գին','Մեծածախ գին','Խոշոր գործընկերոջ հիմնական գին','Խոշոր գործընկերոջ ակցիոն գին'],d.sample.map(p => [p.articul,p.brand,p.name,price(p.retail),price(p.ws),price(p.kp),price(p.kpPromo)])));
-  el('preview').hidden = false; status('Ֆայլը ստուգված է։ Գործող գնացուցակը դեռ չի փոխվել։');
+  const ticket=++pricePreviewTicket;draft = null; el('publish').disabled=true; el('preview').hidden = true; status('Ֆայլը ստուգվում է…');
+  let d;try{d=await api('admin/price/preview',{method:'POST',body:new FormData(e.target)});}catch(error){if(ticket!==pricePreviewTicket)return;ZZWS_PRICE_REVIEW.errors(error);throw error;}if(ticket!==pricePreviewTicket)return;
+  draft = d.draft;const difference=d.difference;el('priceDifference').textContent=difference?'Ավելացված՝ '+difference.added+' · հեռացված՝ '+difference.removed+' · գինը փոխված՝ '+difference.changed+' · անփոփոխ՝ '+difference.unchanged:'';el('priceWarnings').replaceChildren(...(difference?.warnings||[]).map(w=>{const p=document.createElement('p');p.textContent=w.articul+' · '+w.name+' · '+({ws:'Մեծածախ գին',kp:'KP գին',kpPromo:'KP ակցիոն գին',retail:'Զեղչված մանրածախ գին',base:'Հիմնական մանրածախ գին'}[w.source]||'Գին')+': '+w.before+' → '+w.after+' ('+w.percent+'%)';return p;})); el('summary').textContent = `Ստուգված ապրանքներ՝ ${d.count}։ Առաջին հինգ տողերը՝`;
+  el('sample').replaceChildren(table(['Արտիկուլ','Բրենդ','Անվանում','WS','KP'],d.sample.map(p => [p.articul,p.brand,p.name,p.ws,p.kpPromo||p.kp])));
+  ZZWS_PRICE_REVIEW.show(d);el('publish').disabled=false;el('preview').hidden = false; status('Ֆայլը ստուգված է։ Գործող գնացուցակը դեռ չի փոխվել։');
 }); };
-el('publish').onclick = () => run(async () => { if (!draft) return; el('publish').disabled = true; try {
-  await api('admin/price/publish',{method:'POST',body:JSON.stringify({draft})}); draft = null; el('preview').hidden = true;
+el('publish').onclick = () => run(async () => { if (!draft||!ZZWS_PRICE_REVIEW.confirm()) return;const publishing=draft,ticket=pricePreviewTicket; el('publish').disabled = true; try {
+  await api('admin/price/publish',{method:'POST',body:JSON.stringify({draft:publishing})});if(ticket===pricePreviewTicket){draft = null; el('preview').hidden = true;}
   await loadVersions(); status('Նոր գնացուցակը հրապարակված է');
-} finally { el('publish').disabled = false; } });
+} finally { el('publish').disabled = !draft; } });
 async function loadVersions() {
   const d = await api('admin/price/versions');
   el('versions').replaceChildren(table(['Ամսաթիվ','Տարբերակ','Գործողություն'],d.versions.map(v => [new Date(v.created*1000).toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'),{timeZone:'Asia/Yerevan'}),v.label?'№'+v.label:'Գնացուցակ · '+new Date(v.created*1000).toLocaleString((window.ZZWS_I18N?.language==='ru'?'ru-RU':'hy-AM'),{timeZone:'Asia/Yerevan'}),
@@ -119,7 +119,7 @@ function editUser(user = {}) {
   el('passwordSetupState').textContent=!user.id||user.needsPasswordSetup?'Առաջին մուտք՝ մուտքանունով և մեկանգամյա հրավերի կոդով։':'Օգտատերն արդեն սահմանել է գաղտնաբառը։';
   el('adminOrdersRefresh').value=user.ordersRefreshSeconds??5;el('saveAdminPolling').hidden=!user.id;el('adminPollingStatus').textContent='';
   ZZWS_REPORT_EMAIL.edit(user);updateClientCategory();ZZWS_ADMIN_RECEIPTS.loadClient(user);ZZWS_CARD_LAYOUT.edit(user,users);
-  f.scrollIntoView({behavior:'smooth'});
+  el('userSavedBaskets').hidden=!user.id||user.role!=='client'||!ZZWS_ADMIN_HOME.can('templates');f.scrollIntoView({behavior:'smooth'});
 }
 el('resetUserPassword').onclick=()=>run(async()=>{
   if(!editingUserId)return;
@@ -280,3 +280,5 @@ el('saveAdminPolling').onclick=()=>run(async()=>{
  if(editingUserId!==id)return;editingProfile.profileRevision=data.profileRevision;editingProfile.ordersRefreshSeconds=data.seconds;const row=users.find(u=>u.id===id);if(row)Object.assign(row,{profileRevision:data.profileRevision,ordersRefreshSeconds:data.seconds});
  if(window.ZZWS_HELP_USER?.id===id)ZZWS_ADMIN_ORDERS.setRefreshSeconds(data.seconds);el('adminPollingStatus').textContent='Միջակայքը պահպանված է՝ '+data.seconds+' վայրկյան։';
 });
+
+el('userSavedBaskets').onclick=()=>run(()=>ZZWS_ADMIN_TEMPLATES.openCustomer(editingUserId));

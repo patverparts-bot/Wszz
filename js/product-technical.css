@@ -1,0 +1,19 @@
+.product-technical-trigger{padding:0;border:0;background:transparent;color:inherit;cursor:pointer;font:inherit;text-align:inherit}
+.product-technical-trigger:focus-visible{outline:3px solid #60a5fa;outline-offset:3px;border-radius:8px}
+.product-technical-dialog{padding:0;width:min(740px,calc(100vw - 24px));max-width:740px;max-height:90vh;max-height:90dvh;color:#172033;background:#fff;overflow:hidden;border:1px solid #cbd5e1;border-radius:16px}
+.product-technical-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;border-bottom:1px solid #e2e8f0}
+.product-technical-dialog h2{font-size:18px;font-weight:750;line-height:1.4;margin:0}
+.product-technical-dialog button{min-height:44px;margin:0;padding:10px 14px;flex:none}
+.product-technical-body{padding:16px;max-height:calc(90vh - 84px);max-height:calc(90dvh - 84px);overflow-y:auto;overscroll-behavior:contain}
+.product-technical-name{font-weight:700;font-size:15px;overflow-wrap:anywhere}
+.product-technical-meta{font-size:12px;color:#64748b;margin:8px 0 14px;overflow-wrap:anywhere}
+.product-technical-specs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);font-size:13px;margin:16px 0;line-height:1.6}
+.product-technical-specs dt,.product-technical-specs dd{padding:10px 8px;border-bottom:1px solid #e2e8f0;overflow-wrap:anywhere;margin:0}
+.product-technical-specs dt{color:#64748b}
+.product-technical-body>a{display:inline-block;min-height:44px;padding-top:10px;color:#2563eb;text-decoration:underline}
+.dark .product-technical-dialog{background:#172033;color:#e2e8f0;border-color:#475569}
+.dark .product-technical-dialog>header,.dark .product-technical-specs dt,.dark .product-technical-specs dd{border-color:#37465d}
+.dark .product-technical-meta,.dark .product-technical-specs dt{color:#94a3b8}
+.dark .product-technical-body>a{color:#93c5fd}
+@media print{.product-img-container.product-technical-trigger{display:flex!important}}
+@media(max-width:420px){.product-technical-specs{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);font-size:12px}.product-technical-specs dt,.product-technical-specs dd{padding:9px 5px}.product-technical-body{padding:12px}}

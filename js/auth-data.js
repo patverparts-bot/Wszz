@@ -11,6 +11,13 @@ async function secureApi(path, options = {}) {
   catch(e) { if (e.status === 401) lockCatalog(); throw e; }
 }
 function lockCatalog() {
+  window.ZZWS_PRODUCT_TECHNICAL?.reset();
+  window.ZZWS_CHECKOUT?.reset();
+  window.ZZWS_DEALER?.reset();
+  window.ZZWS_REPLACEMENTS?.reset();
+  window.ZZWS_PURCHASE_PLANS?.reset();
+  window.ZZWS_CATALOG_CONTROLS?.reset();
+
   window.ZZWS_ASSISTANT?.reset();
   window.ZZWS_BULLETINS?.reset();
   window.ZZWS_CATALOG_VIEW?.reset();
@@ -149,7 +156,7 @@ function notifyIfPriceChanged() {
 let lastPriceStamp = '';
 async function fetchPriceStamp() {
   const context=window.ZZWS_CATALOG_VIEW?.key()||'';let data;try{data=await secureApi(window.ZZWS_CATALOG_VIEW?.active()?ZZWS_CATALOG_VIEW.path('/version'):'catalog/version');}catch(error){if(error.status===403&&context===(window.ZZWS_CATALOG_VIEW?.key()||''))window.ZZWS_CATALOG_VIEW?.invalidate(error);throw error;}if(context!==(window.ZZWS_CATALOG_VIEW?.key()||''))return null;
-  return data.version;
+  return data.version+':'+(data.presentationRevision||0);
 }
 
 let loadedPriceFingerprint = '';
@@ -382,7 +389,7 @@ function priceDateFromRows(rows) {
 
 async function fetchPriceRows() {
   const identity=serverIdentity?.id,context=window.ZZWS_CATALOG_VIEW?.key()||'';const data=window.ZZWS_CATALOG_VIEW?.active()?await ZZWS_CATALOG_VIEW.fetch():await secureApi('catalog');if(identity!==serverIdentity?.id||context!==(window.ZZWS_CATALOG_VIEW?.key()||''))throw {staleCatalog:true};
-  return {rows:data.products, dateText:data.updated};
+  window.ZZWS_CATALOG_CONTROLS?.apply(data);return {rows:data.products, dateText:data.updated};
 }
 
 function applyPriceDate(dateText) {
@@ -441,6 +448,7 @@ function finalizeDataLoad() {
 function parseExcelRows(products, isSilent = false) {
   allProducts = products;
   finalizeDataLoad();
+  window.ZZWS_DEALER?.refresh();
   if (isSilent && !document.getElementById('orderModal').classList.contains('hidden')) renderModalItems();
 }
 

@@ -2,6 +2,16 @@
 (() => {
   const key = value => String(value).toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');
   const names = {
+    'Nominal power (4 Ohms) (W)':'Անվանական հզորություն՝ 4 Օմ (Վտ)','Nominal power (6 Ohms) (W)':'Անվանական հզորություն՝ 6 Օմ (Վտ)',
+    Type:'Տեսակ','Housing material':'Կորպուսի նյութ',Material:'Նյութ','Cord length (m)':'Լարի երկարություն (մ)',Quantity:'Քանակ','Size (cm)':'Չափս (սմ)',
+    'Bluetooth Built-in Мodule':'Ներկառուցված Bluetooth','USB port':'USB միացք','Battery operation (Till/hr)':'Մարտկոցով աշխատանք (մինչև ժամ)','Volume(l)':'Ծավալ (լ)',
+    'Diameter (cm)':'Տրամագիծ (սմ)','Water Tank Capacity(l)':'Ջրի տարայի ծավալ (լ)','Battery type':'Մարտկոցի տեսակ','Built-in Microphone':'Ներկառուցված խոսափող',
+    'Number of speeds':'Արագությունների քանակ','Number of Nozzles':'Գլխադիրների քանակ','Cable Type':'Մալուխի տեսակ','Frequency range (Hz)':'Հաճախականության միջակայք (Հց)',
+    'Built-in Memory (ROM)':'Ներկառուցված հիշողություն (ROM)','Operative memory (RAM)':'Օպերատիվ հիշողություն (RAM)',Covering:'Ծածկույթ','Remote control':'Հեռակառավարում',
+    'CPU type':'Պրոցեսորի տեսակ','Operating voltage':'Աշխատանքային լարում','Battery charging time (hr)':'Մարտկոցի լիցքավորման ժամանակ (ժ)','Type of connection':'Միացման տեսակ',
+    'CPU Manufacturer':'Պրոցեսորի արտադրող','Sensitivity (dB)':'Զգայունություն (դԲ)','Power consumption (W)':'Սպառվող հզորություն (Վտ)','Headset type':'Ականջակալի տեսակ',
+    'Front Speakers Power (W)':'Առջևի բարձրախոսների հզորություն (Վտ)','Resistance(Om)':'Դիմադրություն (Օմ)',Usage:'Կիրառություն','Number of Cores':'Միջուկների քանակ',
+    'Bowl Capacity (l)':'Ամանի ծավալ (լ)','Nominal power (8 Ohms) (W)':'Անվանական հզորություն՝ 8 Օմ (Վտ)','Number of channels':'Ալիքների քանակ','Volume control':'Ձայնի կարգավորում',
     Manufacturer:'Արտադրող',Warranty:'Երաշխիք',Color:'Գույն',Colour:'Գույն',
     'Load Capacity (kg)':'Տարողություն (կգ)','Capacity (kg)':'Տարողություն (կգ)',
     'Spin Speed (RPM)':'Քամման արագություն (պտ/րոպե)','Energy Rating':'Էներգախնայողության դաս',

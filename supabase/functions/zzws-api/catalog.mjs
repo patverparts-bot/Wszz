@@ -1,0 +1,97 @@
+import {email,emailRows} from './report-email.mjs';
+import { effectiveRules, permits, selectPrice, validateAccess, validateContacts } from './rules.mjs';
+export const norm = v => String(v??'').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');
+import {catalogNumber as number,validateCatalogProducts} from './catalog-contract.mjs';
+export function parsePrice(rows,issues=null) {
+  const hi=rows.slice(0,25).findIndex(r=>r.some(c=>/artikul|артикул|արտիկուլ/i.test(String(c??''))));
+  if(hi<0) throw Error('Վերնագրերի տողը չի գտնվել');
+  const headers=rows[hi].map(c=>String(c??'').trim());
+  const find=(...words)=>headers.findIndex(h=>words.some(w=>h.toLowerCase().includes(w.toLowerCase())));
+  const c={art:find('art','артикул','արտիկուլ'),brand:find('brand','бренд','բրենդ'),category:find('group','группа','категория','խումբ','կատեգորիա'),
+    name:find('name','наименование','номенклатура','անվանում'),retail:find('Զեղչված','discount'),base:find('roznich','розница','մանրածախ'),
+    ws:find('wholesale','опт','մեծածախ'),kp:find("Key Partner's AMD"),kpPromo:find("Key Partner's promo AMD")};
+  if(c.retail<0)c.retail=c.base;
+  for(const key of ['art','brand','category','name','retail','ws'])if(c[key]<0)throw Error('Բացակայում է պարտադիր սյունակը՝ '+({art:'Արտիկուլ',brand:'Բրենդ',category:'Կատեգորիա',name:'Անվանում',retail:'Մանրածախ գին',ws:'Մեծածախ գին'}[key]));
+  const stocks=headers.map((h,i)=>({h,i})).filter(v=>/^\d{3}$/.test(v.h));
+  if(!stocks.length)throw Error('Պահեստների սյունակները չեն գտնվել');
+  const result=[], seen=new Set();
+  for(const [offset,row] of rows.slice(hi+1).entries()) {
+   try{
+    const get=k=>row[c[k]];
+    const articul=String(get('art')??'').trim(); if(!articul)continue;
+    if(articul.length>30||seen.has(articul))throw Error('Կրկնվող կամ սխալ արտիկուլ՝ '+articul);
+    seen.add(articul);
+    const p={articul,stocks:{}};
+    for(const k of ['brand','category','name']){p[k]=String(get(k)??'').trim();if(p[k].length>1000)throw Error('Անվանումը չափազանց երկար է');}
+    for(const k of ['retail','base','ws','kp','kpPromo'])p[k]=number(get(k));
+    for(const {h,i} of stocks)p.stocks[h]=number(row[i]);
+    result.push(p);
+   }catch(e){if(!issues)throw e;if(issues.length<100)issues.push({row:hi+offset+2,articul:String(row[c.art]??'').slice(0,100),message:e.message});}
+  }
+  if(issues?.length)throw Error('Գնացուցակի տողերում սխալներ կան');
+  if(!result.length)throw Error('Գնացուցակում ապրանքներ չկան');
+  return validateCatalogProducts(result);
+}
+export function inspectPrice(rows){
+ const issues=[];try{return {products:parsePrice(rows,issues),issues};}
+ catch(e){return {products:[],issues:issues.length?issues:[{row:null,articul:'',message:e.message}]};}
+}
+
+export function project(products,user,storedRules,{forOrder=false}={}) {
+  const result=[],admin=user.role==='admin',kp=user.sheet==='KP'&&!admin,domus=/ԴՈՄՈՒՍ|ДОМУՍ|DOMUS/i.test(user.client);
+  const group=effectiveRules(storedRules)[user.sheet||'Dealers'];
+  if(!group)throw Error('Հաճախորդի կատեգորիան չի գտնվել');
+  const allowed=(user.brands||[]).map(norm);
+  for(const p of products){
+    const brand=norm(p.brand);
+    if(!admin){
+      if(user.catalogAccess){if(!permits(p,user.catalogAccess))continue;}
+      else if(kp&&(!user.allBrands&&!allowed.includes(brand)))continue;
+      if(!permits(p,group.access))continue;
+    }
+    const selected=selectPrice(p,group.pricing);
+    const wholesale=admin?p.ws:selected.price,kpPrice=p.kpPromo||p.kp,retail=p.retail;
+    if(!admin&&(wholesale<=0||(group.pricing.hideAboveRetail&&retail>0&&wholesale>retail)))continue;
+    const entries=Object.entries(p.stocks),base=entries.filter(([n])=>['003','023','026','031'].includes(n)).reduce((s,[,q])=>s+q,0);
+    const other=entries.filter(([n])=>!['003','023','026','031'].includes(n)).reduce((s,[,q])=>s+q,0);
+    if(!forOrder&&(admin?base+other<=0:base<=0&&other<group.stock.otherFrom))continue;
+    const margin=price=>retail>0&&price>0?(domus?retail/price:(1-price/retail)*100):0;
+    const item={articul:p.articul,brand:p.brand,category:p.category,name:p.name,retail,wholesale,
+      isPromo:retail>0&&p.base>retail,isWholesalePromo:!admin&&selected.source==='kpPromo',hasWholesale:wholesale>0||(admin&&kpPrice>0),
+      marginVal:margin(wholesale),stockAvailable:base>=group.stock.availableFrom,stockStatus:admin?entries.filter(([,q])=>q>0).map(([n,q])=>`${n}: ${q}`).join(', '):(base>=group.stock.availableFrom?'Առկա է':'Ճշտել'),hasMainStock:base>0};
+    if(admin)Object.assign(item,{kpPrice,kpIsPromo:!!p.kpPromo,kpMarginVal:margin(kpPrice),targetWarehousesStock:base});
+    if(admin||user.allowResale)item.resaleWholesale=p.ws;
+    result.push(item);
+  }
+  return result;
+}
+export function validateProfile(p){
+  const login=String(p.login||'').trim().toLowerCase(),client=String(p.client||'').trim();
+  if(!/^[a-z0-9][a-z0-9._-]{0,79}$/.test(login))throw Error('Մուտքանուն՝ լատինատառ տառեր, թվեր, կետ, գծիկ կամ ընդգծում');
+  if(!client||client.length>200)throw Error('Նշեք հաճախորդի անվանումը');
+  const role=p.role||'client',sheet=p.sheet||'Dealers';
+  if(!['admin','client'].includes(role)||(!['Dealers','KP'].includes(sheet)&&!/^cat_[a-z0-9_-]{1,60}$/.test(sheet)))throw Error('Սխալ դեր կամ գնային խումբ');
+  const brands=p.brands||[];if(!Array.isArray(brands)||brands.length>100||brands.some(b=>typeof b!=='string'||b.length>100))throw Error('Բրենդների սխալ ցանկ');
+  const rowsList=validateContacts(p.rowsList??[],client);
+  const profile={client,role,sheet,brands,allBrands:p.allBrands===true,allowResale:p.allowResale===true,rowsList};
+  if(Object.hasOwn(p,'emailRows'))profile.emailRows=emailRows(p.emailRows);
+  if(Object.hasOwn(p,'replyToEmail'))profile.replyToEmail=email(p.replyToEmail,{optional:true});
+  if(role==='admin'){const seconds=Number(p.ordersRefreshSeconds??5);if(!Number.isInteger(seconds)||seconds<5||seconds>300)throw Error('Պատվերների թարմացման միջակայքը՝ 5-ից 300 վայրկյան');profile.ordersRefreshSeconds=seconds;}
+  if(Object.hasOwn(p,'catalogAccess'))profile.catalogAccess=p.catalogAccess===null?null:validateAccess(p.catalogAccess);
+  return {login,profile};
+}
+export function parseUsers(rows){
+  if(rows[0]?.slice(0,3).join(',')!=='login,client,sheet')throw Error('Օգտագործեք օգտատերերի ձևանմուշը');
+  const seen=new Set(),result=[];
+  for(const row of rows.slice(1)){
+    if(!row.some(c=>c!==null&&c!==undefined&&c!==''))continue;
+    const p=Object.fromEntries(rows[0].map((h,i)=>[h,String(row[i]??'').trim()]));
+    p.brands=(p.brands||'').split(',').map(v=>v.trim()).filter(Boolean);p.allBrands=['true','1','yes'].includes(String(p.allBrands||'').toLowerCase());
+    p.rowsList=[1,2,3].map(i=>{const suffix=i===1?'':String(i);return {organization:p['organization'+suffix]||'',address:p['address'+suffix]||'',contact:p['contact'+suffix]||''};});
+    const user=validateProfile(p);user.preserveExtraContacts=!rows[0].some(h=>['organization2','address2','contact2','organization3','address3','contact3'].includes(h));
+    if(seen.has(user.login))throw Error('Կրկնվող մուտքանուն՝ '+user.login);seen.add(user.login);result.push(user);
+  }
+  if(!result.length||result.length>1000)throw Error('Թույլատրվում է 1-ից 1000 օգտատեր');
+  return result;
+}
+
